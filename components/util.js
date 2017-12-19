@@ -1,7 +1,5 @@
 export const CMAJOR = [true, false, true, false, true, true, false, true, false, true, false, true];
-export const EMPTY_SCALE = () => {
-  return [false, false, false, false, false, false, false, false, false, false, false, false];
-}
+import { uniq } from 'lodash';
 
 
 export class ScaleNode {
@@ -29,11 +27,10 @@ export class ScaleNode {
 
 
 export const notesToPegs = (notes) => {
-  if (!(notes instanceof Array)) {
-    console.log(notes);
-  }
+  // if (!(notes instanceof Array)) {
+  //   // console.log(notes);
+  // }
   const pegs = [];
-  // console.log(notes);
   notes.forEach((note, i) => {
     if (note) pegs.push(i)
   });
@@ -43,7 +40,7 @@ export const notesToPegs = (notes) => {
 
 
 export const pegsToNotes = (pegs) => {
-  const notes = EMPTY_SCALE();
+  const notes = Array(false, false, false, false, false, false, false, false, false, false, false, false);
   pegs.forEach(peg => {
     notes[peg] = true;
   });
@@ -67,23 +64,32 @@ export const tweek = (notes, pegNum) => {
 
 
 
-export const neighbors = notes => {
-  const neighbors = [];
-  const pegs = notesToPegs(notes);
+export const neighbors = node => {
+  const neighborKeys = [], result = [];
+  const dirs = ["R", "B", "T", "L"];
+  const { parentDir, notes } = node;
   let temp;
 
-  pegs.forEach((peg, num) => {
-    temp = tweek(notes, num + 1);
-    if (!isEqual(notes, temp)) {
-      neighbors.push(temp)
+  notesToPegs(notes).forEach((peg, i) => {
+    temp = tweek(notes, i + 1);
+    if (!isEqual(notes, temp)) neighborKeys.push(temp);
+  });
+
+  dirs.forEach(dir => {
+    if (dir === parentDir) {
+      result.push(null);
+    } else {
+      result.push(neighborKeys.shift());
     }
   })
-  return neighbors;
+  // console.log(result);
+  return result;
 };
 
 
 
 export const isEqual = (notes1, notes2) => {
+  if (!notes1 || !notes2) return;
   if (notes1.length === notes2.length) {
     for (let i = 0; i < notes1.length; i++) {
       if (notes1[i] !== notes2[i]) return false;
@@ -99,23 +105,40 @@ export const buildKeyWheel = (start) => {
   const queue = [start];
   const visited = [start];
   let currentNode, neighbs, node;
+  const dirs = ["L", "T", "B", "R"];
 
   while (visited.length < 36) {
-    currentNode = queue.pop();
-    neighbs = neighbors(currentNode.notes);
-    neighbs.forEach(neighborKey => {
+    currentNode = queue.shift();
+    neighbs = neighbors(currentNode);
+    neighbs.forEach((neighborKey, i) => {
+      if (!neighborKey) return;
       node = new ScaleNode(neighborKey);
-      if (!currentNode.parent || !isEqual(neighborKey, currentNode.parent.notes)) {
-        currentNode.addChild(node);
-        visited.push(node);
-        queue.push(node);
+      node.parentDir = dirs[i];
+      if (!(currentNode.parent && isEqual(neighborKey, currentNode.parent.notes))) {
+        if (visited.indexOf(neighborKey) < 0) {
+          currentNode.addChild(node);
+          visited.push(node);
+          queue.push(node);
+        }
       }
     });
   }
-  visited.forEach(notes => {
-    notesToPegs(notes);
-  });
+  // visited.forEach(node => {
+  //   console.log(node);
+  // });
   return start;
+};
+
+
+
+export const getCenter = (center, d, dir) => {
+  const result = {
+    "L": { x: center.x + d, y: center.y + d },
+    "B": { x: center.x + d, y: center.y - d },
+    "T": { x: center.x - d, y: center.y + d },
+    "R": { x: center.x - d, y: center.y - d }
+  };
+  return result[dir];
 };
 
 //

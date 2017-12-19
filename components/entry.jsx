@@ -12,13 +12,25 @@ class Root extends React.Component {
     };
   }
 
-  componentDidMount() {
+  componentWillMount() {
     const start = buildKeyWheel(this.state.start);
   }
 
+  // renderChildren() {
+  //   const ScaleComponents = [];
+  //   let currentNode = this.state.start;
+  //   let center
+  //   ScaleComponents.push(<Scale notes={this.state.notes} center={}/>)
+  //   while (ScaleComponents.length < 36) {
+  //
+  //   }
+  // }
+
   render() {
     return (
-      <Scale notes={this.state.notes} />
+      <div>
+        <Scale start={this.state.start} center={{ x: 600, y: 400}} />
+      </div>
     );
   }
 }

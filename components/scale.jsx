@@ -1,15 +1,19 @@
 import React from 'react';
+import { getCenter } from './util';
 
 //make functional component
 class Scale extends React.Component {
+
+
+
   render() {
-    const center = { x: 200, y: 200 };
+    const center = this.props.center;
+
     const noteRadius = 14;
     const scaleRadius = 36;
     return (
-      <div style={{
-      }}>
-        {this.props.notes.map((note, i) => {
+      <div>
+        {this.props.start.notes.map((note, i) => {
           return (
             <div key={i}
               style={{
@@ -25,6 +29,13 @@ class Scale extends React.Component {
               left: center.x + scaleRadius * Math.sin(Math.PI * i / 6)
             }}><span>{i}</span></div>
           )
+        })}
+        {this.props.start.children.map((node, i) => {
+          let dir = node.parentDir;
+          console.log(getCenter(center, 100, dir));
+          return (
+            <Scale key={i} start={node} center={getCenter(center, 100, dir)} />
+          );
         })}
       </div>
     )
