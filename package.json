@@ -2,14 +2,16 @@
   "name": "key_wheel_2",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "entry.jsx",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "webpack -w"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "lodash": "^4.17.4",
     "react": "^16.2.0",
     "react-dom": "^16.2.0"
   },

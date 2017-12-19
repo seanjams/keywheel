@@ -1,8 +1,9 @@
+var path = require('path');
+
 module.exports = {
   context: __dirname,
-  entry: 'components/entry.jsx'),
+  entry: './components/entry.jsx',
   output: {
-    path: path.resolve(__dirname),
     filename: 'bundle.js'
   },
   resolve: {
