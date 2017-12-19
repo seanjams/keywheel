@@ -30,11 +30,15 @@ class Scale extends React.Component {
             }}><span>{i}</span></div>
           )
         })}
+        <div style={{
+          position: "absolute",
+          top: center.y,
+          left: center.x
+        }}>{this.props.num}</div>
         {this.props.start.children.map((node, i) => {
           let dir = node.parentDir;
-          console.log(getCenter(center, 100, dir));
           return (
-            <Scale key={i} start={node} center={getCenter(center, 100, dir)} />
+            <Scale key={i} start={node} center={getCenter(center, 100, dir)} num={this.props.num + 1}/>
           );
         })}
       </div>

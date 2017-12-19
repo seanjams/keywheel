@@ -8,12 +8,25 @@ class Root extends React.Component {
     super(props);
     this.state = {
       start: new ScaleNode(),
-      notes: CMAJOR
+      // notes: CMAJOR
     };
   }
 
   componentWillMount() {
     const start = buildKeyWheel(this.state.start);
+    start.children.slice(1).forEach(child => {
+      child.children.forEach(subChild => {
+        subChild.children = [];
+      })
+
+    });
+    // start.children[0].children.slice(1).forEach(subChild => {
+    //   subChild.children = [];
+    // })
+    // start.children[0].children[0].children.slice(1).forEach(subChild => {
+    //   subChild.children = [];
+    // })
+    console.log(start);
   }
 
   // renderChildren() {
@@ -29,7 +42,7 @@ class Root extends React.Component {
   render() {
     return (
       <div>
-        <Scale start={this.state.start} center={{ x: 600, y: 400}} />
+        <Scale start={this.state.start} center={{ x: 500, y: 400}} num={1}/>
       </div>
     );
   }

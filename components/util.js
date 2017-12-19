@@ -24,12 +24,7 @@ export class ScaleNode {
   }
 }
 
-
-
 export const notesToPegs = (notes) => {
-  // if (!(notes instanceof Array)) {
-  //   // console.log(notes);
-  // }
   const pegs = [];
   notes.forEach((note, i) => {
     if (note) pegs.push(i)
@@ -37,11 +32,11 @@ export const notesToPegs = (notes) => {
   return pegs;
 };
 
-
-
 export const pegsToNotes = (pegs) => {
   const notes = Array(false, false, false, false, false, false, false, false, false, false, false, false);
   pegs.forEach(peg => {
+    if (peg < 0) peg += 12;
+    if (peg > 11) peg -= 12;
     notes[peg] = true;
   });
   return notes;
@@ -59,37 +54,74 @@ export const tweek = (notes, pegNum) => {
   } else {
     pegs[idx] = pegs[idx + 1] - pegs[idx] + pegs[idx - 1];
   }
+  // console.log(pegs);
   return pegsToNotes(pegs);
 };
-
 
 
 export const neighbors = node => {
   const neighborKeys = [], result = [];
   const dirs = ["R", "B", "T", "L"];
   const { parentDir, notes } = node;
+  const parentNotes = node.parent ? node.parent.notes : null;
   let temp;
 
   notesToPegs(notes).forEach((peg, i) => {
     temp = tweek(notes, i + 1);
-    if (!isEqual(notes, temp)) neighborKeys.push(temp);
+    if (!isEqual(notes, temp) && !isEqual(parentNotes, temp)) neighborKeys.push(temp);
   });
 
-  dirs.forEach(dir => {
-    if (dir === parentDir) {
-      result.push(null);
-    } else {
-      result.push(neighborKeys.shift());
+  if (neighborKeys.length === 1) {
+
+    switch (parentDir) {
+      case "B":
+        return [neighborKeys[0], null, null, null];
+      case "R":
+        return [null, neighborKeys[0], null, null];
+      case "L":
+        return [null, null, neighborKeys[0], null];
+      case "T":
+        return [null, null, null, neighborKeys[0]];
     }
-  })
-  // console.log(result);
+
+    // switch(parentDir) {
+    // case "L":
+    //   result.push(null);
+    //   result.push(null);
+    //   break;
+    // case "T":
+    //
+    //     break;
+    // case "B":
+    //
+    //     break;
+    // case "R":
+    //
+    //     break;
+    //
+    // }
+  } else {
+    dirs.forEach(dir => {
+      if (dir === parentDir) {
+        result.push(null);
+      } else {
+        result.push(neighborKeys.shift() || null);
+      }
+    });
+    // if(isEqual(notes, pegsToNotes([1,3,4,5,7,9,11]))) console.log(neighborKeys);
+    return result;
+  }
+
+
+
+  // console.log(node.notes, result);
   return result;
 };
 
 
 
 export const isEqual = (notes1, notes2) => {
-  if (!notes1 || !notes2) return;
+  if (!notes1 || !notes2) return false;
   if (notes1.length === notes2.length) {
     for (let i = 0; i < notes1.length; i++) {
       if (notes1[i] !== notes2[i]) return false;
@@ -103,23 +135,36 @@ export const isEqual = (notes1, notes2) => {
 
 export const buildKeyWheel = (start) => {
   const queue = [start];
-  const visited = [start];
-  let currentNode, neighbs, node;
+  const visited = [start.notes];
+  let currentNode, neighbs, temp, notSeen;
   const dirs = ["L", "T", "B", "R"];
 
   while (visited.length < 36) {
+
     currentNode = queue.shift();
     neighbs = neighbors(currentNode);
+    if (isEqual(currentNode.notes, pegsToNotes([1,3,4,6,7,9,11]))) console.log(neighbs);
+    //whats happening is our "4" child is generating 3 children, the first of which is in the 4th position
     neighbs.forEach((neighborKey, i) => {
+
       if (!neighborKey) return;
-      node = new ScaleNode(neighborKey);
-      node.parentDir = dirs[i];
-      if (!(currentNode.parent && isEqual(neighborKey, currentNode.parent.notes))) {
-        if (visited.indexOf(neighborKey) < 0) {
-          currentNode.addChild(node);
-          visited.push(node);
-          queue.push(node);
-        }
+      notSeen = true;
+      temp = new ScaleNode(neighborKey);
+      temp.parentDir = dirs[i];
+
+      visited.forEach(key => {
+        if (isEqual(key, neighborKey)) notSeen = false;
+
+      })
+      console.log(notSeen);
+
+      if (notSeen) {
+        // console.log("NOT SEEN", notesToPegs(temp.notes));
+        currentNode.addChild(temp);
+        visited.push(temp.notes);
+        queue.push(temp);
+      } else {
+        // console.log("SEEN", );
       }
     });
   }
@@ -128,8 +173,6 @@ export const buildKeyWheel = (start) => {
   // });
   return start;
 };
-
-
 
 export const getCenter = (center, d, dir) => {
   const result = {
@@ -141,26 +184,27 @@ export const getCenter = (center, d, dir) => {
   return result[dir];
 };
 
-//
+
 // let node = new ScaleNode();
-// console.log(buildKeyWheel);
 
 // const test1 = () => {
 //   const scaleNode = new ScaleNode();
-//   const scaleNode2 = new ScaleNode(1);
-//   scaleNode.addChild(scaleNode2);
-//   console.log(scaleNode.children.includes(scaleNode2));
-//   console.log(scaleNode2.parent === scaleNode);
-// }
-//
+//   let notes = scaleNode.notes;
+//   notes = tweek(notes, 3)
+//   notes = tweek(notes, 2)
+//   notes = tweek(notes, 7)
+//   notes = tweek(notes, 1)
+//   console.log(notesToPegs(notes));
+// };
+
 // const test2 = () => {
 //   const scaleNode = new ScaleNode();
 //   const scaleNode2 = new ScaleNode(1);
 //   scaleNode.addChild(scaleNode2);
 //   scaleNode.removeChild(scaleNode2);
 //   console.log(scaleNode.children.length === 0);
-// }
-//
-// console.log("RUNNNING");
+// };
+
+// console.log("RUNNNING TESTS");
 // test1();
 // test2();

@@ -60,7 +60,7 @@
 /******/ 	__webpack_require__.p = "";
 /******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = 14);
+/******/ 	return __webpack_require__(__webpack_require__.s = 15);
 /******/ })
 /************************************************************************/
 /******/ ([
@@ -303,9 +303,9 @@ module.exports = emptyFunction;
 /* WEBPACK VAR INJECTION */(function(process) {
 
 if (process.env.NODE_ENV === 'production') {
-  module.exports = __webpack_require__(15);
-} else {
   module.exports = __webpack_require__(16);
+} else {
+  module.exports = __webpack_require__(17);
 }
 
 /* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(0)))
@@ -577,7 +577,7 @@ module.exports = warning;
 if (process.env.NODE_ENV !== 'production') {
   var invariant = __webpack_require__(5);
   var warning = __webpack_require__(6);
-  var ReactPropTypesSecret = __webpack_require__(17);
+  var ReactPropTypesSecret = __webpack_require__(18);
   var loggedTypeFailures = {};
 }
 
@@ -876,7 +876,7 @@ module.exports = shallowEqual;
  * 
  */
 
-var isTextNode = __webpack_require__(20);
+var isTextNode = __webpack_require__(21);
 
 /*eslint-disable no-bitwise */
 
@@ -940,21 +940,254 @@ module.exports = focusNode;
 "use strict";
 
 
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.getCenter = exports.buildKeyWheel = exports.isEqual = exports.neighbors = exports.tweek = exports.pegsToNotes = exports.notesToPegs = exports.ScaleNode = exports.CMAJOR = undefined;
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+var _lodash = __webpack_require__(29);
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+var CMAJOR = exports.CMAJOR = [true, false, true, false, true, true, false, true, false, true, false, true];
+
+var ScaleNode = exports.ScaleNode = function () {
+  function ScaleNode() {
+    var notes = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : CMAJOR;
+    var root = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 0;
+
+    _classCallCheck(this, ScaleNode);
+
+    //consider rendering root different color
+    this.root = root;
+    this.notes = notes;
+    this.parent = null;
+    this.parentDir = null;
+    this.children = [];
+  }
+
+  _createClass(ScaleNode, [{
+    key: "addChild",
+    value: function addChild(node) {
+      node.parent = this;
+      this.children.push(node);
+    }
+  }, {
+    key: "removeChild",
+    value: function removeChild(node) {
+      node.parent = null;
+      var idx = this.children.indexOf(node);
+      this.children.splice(idx, 1);
+    }
+  }]);
+
+  return ScaleNode;
+}();
+
+var notesToPegs = exports.notesToPegs = function notesToPegs(notes) {
+  var pegs = [];
+  notes.forEach(function (note, i) {
+    if (note) pegs.push(i);
+  });
+  return pegs;
+};
+
+var pegsToNotes = exports.pegsToNotes = function pegsToNotes(pegs) {
+  var notes = Array(false, false, false, false, false, false, false, false, false, false, false, false);
+  pegs.forEach(function (peg) {
+    if (peg < 0) peg += 12;
+    if (peg > 11) peg -= 12;
+    notes[peg] = true;
+  });
+  return notes;
+};
+
+var tweek = exports.tweek = function tweek(notes, pegNum) {
+  var pegs = notesToPegs(notes);
+  var idx = pegNum - 1;
+  if (pegNum === 1) {
+    pegs[idx] = pegs[1] - pegs[0] + pegs[6] - 12;
+  } else if (pegNum === 7) {
+    pegs[idx] = 12 + pegs[0] - pegs[6] + pegs[5];
+  } else {
+    pegs[idx] = pegs[idx + 1] - pegs[idx] + pegs[idx - 1];
+  }
+  // console.log(pegs);
+  return pegsToNotes(pegs);
+};
+
+var neighbors = exports.neighbors = function neighbors(node) {
+  var neighborKeys = [],
+      result = [];
+  var dirs = ["R", "B", "T", "L"];
+  var parentDir = node.parentDir,
+      notes = node.notes;
+
+  var parentNotes = node.parent ? node.parent.notes : null;
+  var temp = void 0;
+
+  notesToPegs(notes).forEach(function (peg, i) {
+    temp = tweek(notes, i + 1);
+    if (!isEqual(notes, temp) && !isEqual(parentNotes, temp)) neighborKeys.push(temp);
+  });
+
+  if (neighborKeys.length === 1) {
+
+    switch (parentDir) {
+      case "B":
+        return [neighborKeys[0], null, null, null];
+      case "R":
+        return [null, neighborKeys[0], null, null];
+      case "L":
+        return [null, null, neighborKeys[0], null];
+      case "T":
+        return [null, null, null, neighborKeys[0]];
+    }
+
+    // switch(parentDir) {
+    // case "L":
+    //   result.push(null);
+    //   result.push(null);
+    //   break;
+    // case "T":
+    //
+    //     break;
+    // case "B":
+    //
+    //     break;
+    // case "R":
+    //
+    //     break;
+    //
+    // }
+  } else {
+    dirs.forEach(function (dir) {
+      if (dir === parentDir) {
+        result.push(null);
+      } else {
+        result.push(neighborKeys.shift() || null);
+      }
+    });
+    // if(isEqual(notes, pegsToNotes([1,3,4,5,7,9,11]))) console.log(neighborKeys);
+    return result;
+  }
+
+  // console.log(node.notes, result);
+  return result;
+};
+
+var isEqual = exports.isEqual = function isEqual(notes1, notes2) {
+  if (!notes1 || !notes2) return false;
+  if (notes1.length === notes2.length) {
+    for (var i = 0; i < notes1.length; i++) {
+      if (notes1[i] !== notes2[i]) return false;
+    }
+    return true;
+  }
+  return false;
+};
+
+var buildKeyWheel = exports.buildKeyWheel = function buildKeyWheel(start) {
+  var queue = [start];
+  var visited = [start.notes];
+  var currentNode = void 0,
+      neighbs = void 0,
+      temp = void 0,
+      notSeen = void 0;
+  var dirs = ["L", "T", "B", "R"];
+
+  while (visited.length < 36) {
+
+    currentNode = queue.shift();
+    neighbs = neighbors(currentNode);
+    if (isEqual(currentNode.notes, pegsToNotes([1, 3, 4, 6, 7, 9, 11]))) console.log(neighbs);
+    //whats happening is our "4" child is generating 3 children, the first of which is in the 4th position
+    neighbs.forEach(function (neighborKey, i) {
+
+      if (!neighborKey) return;
+      notSeen = true;
+      temp = new ScaleNode(neighborKey);
+      temp.parentDir = dirs[i];
+
+      visited.forEach(function (key) {
+        if (isEqual(key, neighborKey)) notSeen = false;
+      });
+      console.log(notSeen);
+
+      if (notSeen) {
+        // console.log("NOT SEEN", notesToPegs(temp.notes));
+        currentNode.addChild(temp);
+        visited.push(temp.notes);
+        queue.push(temp);
+      } else {
+        // console.log("SEEN", );
+      }
+    });
+  }
+  // visited.forEach(node => {
+  //   console.log(node);
+  // });
+  return start;
+};
+
+var getCenter = exports.getCenter = function getCenter(center, d, dir) {
+  var result = {
+    "L": { x: center.x + d, y: center.y + d },
+    "B": { x: center.x + d, y: center.y - d },
+    "T": { x: center.x - d, y: center.y + d },
+    "R": { x: center.x - d, y: center.y - d }
+  };
+  return result[dir];
+};
+
+// let node = new ScaleNode();
+
+// const test1 = () => {
+//   const scaleNode = new ScaleNode();
+//   let notes = scaleNode.notes;
+//   notes = tweek(notes, 3)
+//   notes = tweek(notes, 2)
+//   notes = tweek(notes, 7)
+//   notes = tweek(notes, 1)
+//   console.log(notesToPegs(notes));
+// };
+
+// const test2 = () => {
+//   const scaleNode = new ScaleNode();
+//   const scaleNode2 = new ScaleNode(1);
+//   scaleNode.addChild(scaleNode2);
+//   scaleNode.removeChild(scaleNode2);
+//   console.log(scaleNode.children.length === 0);
+// };
+
+// console.log("RUNNNING TESTS");
+// test1();
+// test2();
+
+/***/ }),
+/* 15 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
 var _react = __webpack_require__(2);
 
 var _react2 = _interopRequireDefault(_react);
 
-var _reactDom = __webpack_require__(18);
+var _reactDom = __webpack_require__(19);
 
 var _reactDom2 = _interopRequireDefault(_reactDom);
 
-var _scale = __webpack_require__(27);
+var _scale = __webpack_require__(28);
 
 var _scale2 = _interopRequireDefault(_scale);
 
-var _util = __webpack_require__(28);
+var _util = __webpack_require__(14);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
@@ -973,8 +1206,8 @@ var Root = function (_React$Component) {
     var _this = _possibleConstructorReturn(this, (Root.__proto__ || Object.getPrototypeOf(Root)).call(this, props));
 
     _this.state = {
-      start: new _util.ScaleNode(),
-      notes: _util.CMAJOR
+      start: new _util.ScaleNode()
+      // notes: CMAJOR
     };
     return _this;
   }
@@ -983,6 +1216,18 @@ var Root = function (_React$Component) {
     key: 'componentWillMount',
     value: function componentWillMount() {
       var start = (0, _util.buildKeyWheel)(this.state.start);
+      start.children.slice(1).forEach(function (child) {
+        child.children.forEach(function (subChild) {
+          subChild.children = [];
+        });
+      });
+      // start.children[0].children.slice(1).forEach(subChild => {
+      //   subChild.children = [];
+      // })
+      // start.children[0].children[0].children.slice(1).forEach(subChild => {
+      //   subChild.children = [];
+      // })
+      console.log(start);
     }
 
     // renderChildren() {
@@ -1001,7 +1246,7 @@ var Root = function (_React$Component) {
       return _react2.default.createElement(
         'div',
         null,
-        _react2.default.createElement(_scale2.default, { start: this.state.start, center: { x: 600, y: 400 } })
+        _react2.default.createElement(_scale2.default, { start: this.state.start, center: { x: 500, y: 400 }, num: 1 })
       );
     }
   }]);
@@ -1015,7 +1260,7 @@ document.addEventListener('DOMContentLoaded', function () {
 });
 
 /***/ }),
-/* 15 */
+/* 16 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -1043,7 +1288,7 @@ isValidElement:K,version:"16.2.0",__SECRET_INTERNALS_DO_NOT_USE_OR_YOU_WILL_BE_F
 
 
 /***/ }),
-/* 16 */
+/* 17 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -2408,7 +2653,7 @@ module.exports = react;
 /* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(0)))
 
 /***/ }),
-/* 17 */
+/* 18 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -2427,7 +2672,7 @@ module.exports = ReactPropTypesSecret;
 
 
 /***/ }),
-/* 18 */
+/* 19 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -2465,15 +2710,15 @@ if (process.env.NODE_ENV === 'production') {
   // DCE check should happen before ReactDOM bundle executes so that
   // DevTools can report bad minification during injection.
   checkDCE();
-  module.exports = __webpack_require__(19);
+  module.exports = __webpack_require__(20);
 } else {
-  module.exports = __webpack_require__(22);
+  module.exports = __webpack_require__(23);
 }
 
 /* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(0)))
 
 /***/ }),
-/* 19 */
+/* 20 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -2709,7 +2954,7 @@ Z.injectIntoDevTools({findFiberByHostInstance:pb,bundleType:0,version:"16.2.0",r
 
 
 /***/ }),
-/* 20 */
+/* 21 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -2724,7 +2969,7 @@ Z.injectIntoDevTools({findFiberByHostInstance:pb,bundleType:0,version:"16.2.0",r
  * @typechecks
  */
 
-var isNode = __webpack_require__(21);
+var isNode = __webpack_require__(22);
 
 /**
  * @param {*} object The object to check.
@@ -2737,7 +2982,7 @@ function isTextNode(object) {
 module.exports = isTextNode;
 
 /***/ }),
-/* 21 */
+/* 22 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -2765,7 +3010,7 @@ function isNode(object) {
 module.exports = isNode;
 
 /***/ }),
-/* 22 */
+/* 23 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -2799,8 +3044,8 @@ var containsNode = __webpack_require__(12);
 var focusNode = __webpack_require__(13);
 var emptyObject = __webpack_require__(4);
 var checkPropTypes = __webpack_require__(7);
-var hyphenateStyleName = __webpack_require__(23);
-var camelizeStyleName = __webpack_require__(25);
+var hyphenateStyleName = __webpack_require__(24);
+var camelizeStyleName = __webpack_require__(26);
 
 /**
  * WARNING: DO NOT manually require this module.
@@ -18167,7 +18412,7 @@ module.exports = reactDom;
 /* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(0)))
 
 /***/ }),
-/* 23 */
+/* 24 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -18182,7 +18427,7 @@ module.exports = reactDom;
 
 
 
-var hyphenate = __webpack_require__(24);
+var hyphenate = __webpack_require__(25);
 
 var msPattern = /^ms-/;
 
@@ -18209,7 +18454,7 @@ function hyphenateStyleName(string) {
 module.exports = hyphenateStyleName;
 
 /***/ }),
-/* 24 */
+/* 25 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -18245,7 +18490,7 @@ function hyphenate(string) {
 module.exports = hyphenate;
 
 /***/ }),
-/* 25 */
+/* 26 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -18260,7 +18505,7 @@ module.exports = hyphenate;
 
 
 
-var camelize = __webpack_require__(26);
+var camelize = __webpack_require__(27);
 
 var msPattern = /^-ms-/;
 
@@ -18288,7 +18533,7 @@ function camelizeStyleName(string) {
 module.exports = camelizeStyleName;
 
 /***/ }),
-/* 26 */
+/* 27 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -18323,7 +18568,7 @@ function camelize(string) {
 module.exports = camelize;
 
 /***/ }),
-/* 27 */
+/* 28 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -18339,7 +18584,7 @@ var _react = __webpack_require__(2);
 
 var _react2 = _interopRequireDefault(_react);
 
-var _util = __webpack_require__(28);
+var _util = __webpack_require__(14);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
@@ -18362,6 +18607,8 @@ var Scale = function (_React$Component) {
   _createClass(Scale, [{
     key: 'render',
     value: function render() {
+      var _this2 = this;
+
       var center = this.props.center;
 
       var noteRadius = 14;
@@ -18392,10 +18639,18 @@ var Scale = function (_React$Component) {
             )
           );
         }),
+        _react2.default.createElement(
+          'div',
+          { style: {
+              position: "absolute",
+              top: center.y,
+              left: center.x
+            } },
+          this.props.num
+        ),
         this.props.start.children.map(function (node, i) {
           var dir = node.parentDir;
-          console.log((0, _util.getCenter)(center, 100, dir));
-          return _react2.default.createElement(Scale, { key: i, start: node, center: (0, _util.getCenter)(center, 100, dir) });
+          return _react2.default.createElement(Scale, { key: i, start: node, center: (0, _util.getCenter)(center, 100, dir), num: _this2.props.num + 1 });
         })
       );
     }
@@ -18405,191 +18660,6 @@ var Scale = function (_React$Component) {
 }(_react2.default.Component);
 
 exports.default = Scale;
-
-/***/ }),
-/* 28 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-exports.getCenter = exports.buildKeyWheel = exports.isEqual = exports.neighbors = exports.tweek = exports.pegsToNotes = exports.notesToPegs = exports.ScaleNode = exports.CMAJOR = undefined;
-
-var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
-
-var _lodash = __webpack_require__(29);
-
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-var CMAJOR = exports.CMAJOR = [true, false, true, false, true, true, false, true, false, true, false, true];
-
-var ScaleNode = exports.ScaleNode = function () {
-  function ScaleNode() {
-    var notes = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : CMAJOR;
-    var root = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 0;
-
-    _classCallCheck(this, ScaleNode);
-
-    //consider rendering root different color
-    this.root = root;
-    this.notes = notes;
-    this.parent = null;
-    this.parentDir = null;
-    this.children = [];
-  }
-
-  _createClass(ScaleNode, [{
-    key: "addChild",
-    value: function addChild(node) {
-      node.parent = this;
-      this.children.push(node);
-    }
-  }, {
-    key: "removeChild",
-    value: function removeChild(node) {
-      node.parent = null;
-      var idx = this.children.indexOf(node);
-      this.children.splice(idx, 1);
-    }
-  }]);
-
-  return ScaleNode;
-}();
-
-var notesToPegs = exports.notesToPegs = function notesToPegs(notes) {
-  // if (!(notes instanceof Array)) {
-  //   // console.log(notes);
-  // }
-  var pegs = [];
-  notes.forEach(function (note, i) {
-    if (note) pegs.push(i);
-  });
-  return pegs;
-};
-
-var pegsToNotes = exports.pegsToNotes = function pegsToNotes(pegs) {
-  var notes = Array(false, false, false, false, false, false, false, false, false, false, false, false);
-  pegs.forEach(function (peg) {
-    notes[peg] = true;
-  });
-  return notes;
-};
-
-var tweek = exports.tweek = function tweek(notes, pegNum) {
-  var pegs = notesToPegs(notes);
-  var idx = pegNum - 1;
-  if (pegNum === 1) {
-    pegs[idx] = pegs[1] - pegs[0] + pegs[6] - 12;
-  } else if (pegNum === 7) {
-    pegs[idx] = 12 + pegs[0] - pegs[6] + pegs[5];
-  } else {
-    pegs[idx] = pegs[idx + 1] - pegs[idx] + pegs[idx - 1];
-  }
-  return pegsToNotes(pegs);
-};
-
-var neighbors = exports.neighbors = function neighbors(node) {
-  var neighborKeys = [],
-      result = [];
-  var dirs = ["R", "B", "T", "L"];
-  var parentDir = node.parentDir,
-      notes = node.notes;
-
-  var temp = void 0;
-
-  notesToPegs(notes).forEach(function (peg, i) {
-    temp = tweek(notes, i + 1);
-    if (!isEqual(notes, temp)) neighborKeys.push(temp);
-  });
-
-  dirs.forEach(function (dir) {
-    if (dir === parentDir) {
-      result.push(null);
-    } else {
-      result.push(neighborKeys.shift());
-    }
-  });
-  // console.log(result);
-  return result;
-};
-
-var isEqual = exports.isEqual = function isEqual(notes1, notes2) {
-  if (!notes1 || !notes2) return;
-  if (notes1.length === notes2.length) {
-    for (var i = 0; i < notes1.length; i++) {
-      if (notes1[i] !== notes2[i]) return false;
-    }
-    return true;
-  }
-  return false;
-};
-
-var buildKeyWheel = exports.buildKeyWheel = function buildKeyWheel(start) {
-  var queue = [start];
-  var visited = [start];
-  var currentNode = void 0,
-      neighbs = void 0,
-      node = void 0;
-  var dirs = ["L", "T", "B", "R"];
-
-  while (visited.length < 36) {
-    currentNode = queue.shift();
-    neighbs = neighbors(currentNode);
-    neighbs.forEach(function (neighborKey, i) {
-      if (!neighborKey) return;
-      node = new ScaleNode(neighborKey);
-      node.parentDir = dirs[i];
-      if (!(currentNode.parent && isEqual(neighborKey, currentNode.parent.notes))) {
-        if (visited.indexOf(neighborKey) < 0) {
-          currentNode.addChild(node);
-          visited.push(node);
-          queue.push(node);
-        }
-      }
-    });
-  }
-  // visited.forEach(node => {
-  //   console.log(node);
-  // });
-  return start;
-};
-
-var getCenter = exports.getCenter = function getCenter(center, d, dir) {
-  var result = {
-    "L": { x: center.x + d, y: center.y + d },
-    "B": { x: center.x + d, y: center.y - d },
-    "T": { x: center.x - d, y: center.y + d },
-    "R": { x: center.x - d, y: center.y - d }
-  };
-  return result[dir];
-};
-
-//
-// let node = new ScaleNode();
-// console.log(buildKeyWheel);
-
-// const test1 = () => {
-//   const scaleNode = new ScaleNode();
-//   const scaleNode2 = new ScaleNode(1);
-//   scaleNode.addChild(scaleNode2);
-//   console.log(scaleNode.children.includes(scaleNode2));
-//   console.log(scaleNode2.parent === scaleNode);
-// }
-//
-// const test2 = () => {
-//   const scaleNode = new ScaleNode();
-//   const scaleNode2 = new ScaleNode(1);
-//   scaleNode.addChild(scaleNode2);
-//   scaleNode.removeChild(scaleNode2);
-//   console.log(scaleNode.children.length === 0);
-// }
-//
-// console.log("RUNNNING");
-// test1();
-// test2();
 
 /***/ }),
 /* 29 */
