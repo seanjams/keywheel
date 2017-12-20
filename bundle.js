@@ -18666,8 +18666,6 @@ var Scale = function (_React$Component) {
   _createClass(Scale, [{
     key: 'render',
     value: function render() {
-      var _this2 = this;
-
       var noteRadius = 14;
       var scaleRadius = 36;
       var _props = this.props,
@@ -18690,9 +18688,6 @@ var Scale = function (_React$Component) {
           return _react2.default.createElement(
             'div',
             { key: i,
-              onClick: function onClick() {
-                return _this2.props.handleClick(i);
-              },
               style: {
                 position: "absolute",
                 width: noteRadius,
