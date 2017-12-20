@@ -27,12 +27,29 @@ export const EMPTY = [
   false,
   false
 ];
+const NOTENAMES = [
+  "C",
+  "Db",
+  "D",
+  "Eb",
+  "E",
+  "F",
+  "Gb",
+  "G",
+  "Ab",
+  "A",
+  "Bb",
+  "B"
+];
+
 export const DIRS = ["L", "T", "B", "R"];
 
+const MAJOR = [2,2,1,2,2,2,1];
+const MELMINOR = [2,1,2,2,2,2,1];
+const NEAPOLITAN = [1,2,2,2,2,2,1];
+
 export class ScaleNode {
-  constructor(notes = CMAJOR, center = { x:800, y:400 }) {
-    //consider rendering root different color
-    // this.root = root;
+  constructor(notes = CMAJOR, center = { x: 800, y: 400 }) {
     this.rank = 0;
     this.notes = notes;
     this.center = center;
@@ -101,7 +118,7 @@ export const generateNeighbors = (node, visited) => {
       neighborKeys = rotate(neighborKeys);
     }
     neighborKeys.forEach((newKey, i) => {
-      newKey.center = getCenter(center, 80, DIRS[i]);
+      newKey.center = getCenter(center, 90, DIRS[i]);
     })
   } else {
     const deltaX = 2 * center.x - parentCenter.x;
@@ -119,7 +136,7 @@ export const generateNeighbors = (node, visited) => {
   return { data: neighborKeys, adjustedPegs };
 };
 
-export const buildKeyWheel = (start) => {
+export const buildKeyWheel = start => {
   const queue = [start];
   const result = [start];
   const visited = [start.notes];
@@ -139,6 +156,41 @@ export const buildKeyWheel = (start) => {
     });
   }
   return result;
+};
+
+export const keyReader = notes => {
+  const pegs = notesToPegs(notes);
+  let intervals = [];
+  let root = pegs[0];
+
+  for (let i = 0; i < pegs.length; i++) {
+    if (i === pegs.length - 1) {
+      intervals.push(12 + pegs[0] - pegs[i]);
+    } else {
+      intervals.push(pegs[i + 1] -  pegs[i]);
+    }
+  }
+
+  for (let i = 0; i < 7; i++) {
+    let isMajorMatch = true;
+    let isMinorMatch = true;
+    let isNeaMatch = true;
+    for (let j = 0; j < intervals.length; j++) {
+      if (intervals[j] !== MAJOR[j]) isMajorMatch = false;
+      if (intervals[j] !== MELMINOR[j]) isMinorMatch = false;
+      if (intervals[j] !== NEAPOLITAN[j]) isNeaMatch = false;
+    }
+    if (isMajorMatch) {
+      return `${NOTENAMES[root]} Maj`;
+    } else if (isMinorMatch) {
+      return `${NOTENAMES[root]} mel`;
+    } else if (isNeaMatch) {
+      return `${NOTENAMES[root]} neo`;
+    }
+    root += intervals[0];
+    intervals = rotate(intervals);
+  }
+  return null
 };
 
 //////////////////////////////////////////////////////////////////
@@ -226,8 +278,7 @@ export const getCenter = (center, d, parentDirection) => {
 // let node = new ScaleNode();
 
 // const test1 = () => {
-//   let arr = pegsToNotes([0,2,4,6,7,9,11]);
-//   console.log(isSameType(arr, CMAJOR));
+//   keyReader(CMAJOR);
 // };
 //
 // console.log("RUNNNING TESTS");

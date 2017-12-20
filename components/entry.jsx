@@ -7,8 +7,9 @@ import { ScaleNode, buildKeyWheel, pegsToNotes, EMPTY } from './util';
 class Root extends React.Component {
   constructor(props) {
     super(props);
+    const start = new ScaleNode(pegsToNotes([0,2,4,5,7,9,11]), { x: 800, y: 400 });
     this.state = {
-      scales: buildKeyWheel(new ScaleNode(pegsToNotes([0,2,4,5,7,9,11]))),
+      scales: buildKeyWheel(start),
       selectedNotes: []
     };
     this.handleClick = this.handleClick.bind(this);
@@ -29,16 +30,20 @@ class Root extends React.Component {
     return (
       <div>
         <Input handleClick={this.handleClick} />
-        {scales.map((node, i) => {
-          let isMatch = true;
-          selectedNotes.forEach(i => {
-            if (!node.notes[i]) isMatch = false;
-          });
-          let result = isMatch ? selectedNotes: [];
-          return (
-            <Scale key={i} node={node} selectedNotes={result} />
-          )
-        })}
+        <div style={{
+          width: "80%"
+        }}>
+          {scales.map((node, i) => {
+            let isMatch = true;
+            selectedNotes.forEach(i => {
+              if (!node.notes[i]) isMatch = false;
+            });
+            let result = isMatch ? selectedNotes: [];
+            return (
+              <Scale key={i} node={node} selectedNotes={result} handleClick={this.handleClick}/>
+            )
+          })}
+        </div>
       </div>
     );
   }

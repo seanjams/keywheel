@@ -1,15 +1,11 @@
 import React from 'react';
-import { getCenter } from './util';
+import { getCenter, keyReader } from './util';
 
 class Scale extends React.Component {
 
-  componentWillReceiveProps(nextProps) {
-    console.log(nextProps.selectedNotes);
-  }
-
   render() {
-    const noteRadius = 14;
-    const scaleRadius = 36;
+    const noteRadius = 16;
+    const scaleRadius = 40;
     const { node, selectedNotes } = this.props
     const { rank, notes, center } = node;
     return (
@@ -19,10 +15,11 @@ class Scale extends React.Component {
           if (selectedNotes.includes(i)) {
             noteColor = "yellow";
           } else {
-            noteColor = note ? "#AAF" : "white";
+            noteColor = note ? "#AAF" : "#eee";
           }
           return (
             <div key={i}
+              onClick={() => this.props.handleClick(i)}
               style={{
               position: "absolute",
               width: noteRadius,
@@ -34,18 +31,28 @@ class Scale extends React.Component {
               textAlign: "center",
               top: center.y - scaleRadius * Math.cos(Math.PI * i / 6),
               left: center.x + scaleRadius * Math.sin(Math.PI * i / 6)
-            }}><span>{i}</span></div>
+            }}><span style={{
+              position: "relative",
+              top: "0.3em"
+            }}>{i}</span></div>
           )
         })}
         <div style={{
           position: "absolute",
-          top: center.y,
-          left: center.x
-        }}>{rank}</div>
+          top: center.y - 4,
+          left: center.x,
+          fontSize: "12px",
+          textAlign: "center"
+        }}>
+          {keyReader(notes).split(" ").map((piece, i) => {
+            return (
+              <p key={i}>{piece}</p>
+            )
+          })}
+        </div>
       </div>
     );
   }
-
 }
 
 export default Scale;

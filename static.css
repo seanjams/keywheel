@@ -1,0 +1,8 @@
+body {
+  background: #eee;
+  font-family: 'Helvetica';
+}
+
+.input-note:hover {
+  background: #ccc;
+}

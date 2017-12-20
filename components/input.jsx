@@ -19,7 +19,7 @@ class Input extends React.Component {
   render() {
     const noteRadius = 30;
     const scaleRadius = 100;
-    const center = { x: 200, y: 400 }
+    const center = { x: 150, y: 350 }
     const { notes } = this.state;
     return (
       <div>
@@ -30,17 +30,21 @@ class Input extends React.Component {
                 e.preventDefault();
                 this.toggleNote(i);
               }}
+              className="input-note"
               style={{
               position: "absolute",
               width: noteRadius,
               height: noteRadius,
               borderRadius: noteRadius,
-              backgroundColor: note ? "#88D": "white",
+              backgroundColor: note ? "yellow": "#eee",
               border: "1px solid black",
               textAlign: "center",
               top: center.y - scaleRadius * Math.cos(Math.PI * i / 6),
               left: center.x + scaleRadius * Math.sin(Math.PI * i / 6)
-            }}><span>{i}</span></div>
+            }}><span style={{
+              position: "relative",
+              top: "0.4em"
+            }}>{i}</span></div>
           )
         })}
       </div>

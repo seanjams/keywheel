@@ -943,7 +943,7 @@ module.exports = focusNode;
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.getCenter = exports.rotate = exports.isSameType = exports.pegsToNotes = exports.notesToPegs = exports.includesKey = exports.isEqual = exports.buildKeyWheel = exports.generateNeighbors = exports.tweek = exports.ScaleNode = exports.DIRS = exports.EMPTY = exports.CMAJOR = undefined;
+exports.getCenter = exports.rotate = exports.isSameType = exports.pegsToNotes = exports.notesToPegs = exports.includesKey = exports.isEqual = exports.keyReader = exports.buildKeyWheel = exports.generateNeighbors = exports.tweek = exports.ScaleNode = exports.DIRS = exports.EMPTY = exports.CMAJOR = undefined;
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
@@ -953,7 +953,13 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 
 var CMAJOR = exports.CMAJOR = [true, false, true, false, true, true, false, true, false, true, false, true];
 var EMPTY = exports.EMPTY = [false, false, false, false, false, false, false, false, false, false, false, false];
+var NOTENAMES = ["C", "Db", "D", "Eb", "E", "F", "Gb", "G", "Ab", "A", "Bb", "B"];
+
 var DIRS = exports.DIRS = ["L", "T", "B", "R"];
+
+var MAJOR = [2, 2, 1, 2, 2, 2, 1];
+var MELMINOR = [2, 1, 2, 2, 2, 2, 1];
+var NEAPOLITAN = [1, 2, 2, 2, 2, 2, 1];
 
 var ScaleNode = exports.ScaleNode = function () {
   function ScaleNode() {
@@ -962,8 +968,6 @@ var ScaleNode = exports.ScaleNode = function () {
 
     _classCallCheck(this, ScaleNode);
 
-    //consider rendering root different color
-    // this.root = root;
     this.rank = 0;
     this.notes = notes;
     this.center = center;
@@ -1042,7 +1046,7 @@ var generateNeighbors = exports.generateNeighbors = function generateNeighbors(n
       neighborKeys = rotate(neighborKeys);
     }
     neighborKeys.forEach(function (newKey, i) {
-      newKey.center = getCenter(center, 80, DIRS[i]);
+      newKey.center = getCenter(center, 90, DIRS[i]);
     });
   } else {
     var deltaX = 2 * center.x - parentCenter.x;
@@ -1082,6 +1086,41 @@ var buildKeyWheel = exports.buildKeyWheel = function buildKeyWheel(start) {
     });
   }
   return result;
+};
+
+var keyReader = exports.keyReader = function keyReader(notes) {
+  var pegs = notesToPegs(notes);
+  var intervals = [];
+  var root = pegs[0];
+
+  for (var i = 0; i < pegs.length; i++) {
+    if (i === pegs.length - 1) {
+      intervals.push(12 + pegs[0] - pegs[i]);
+    } else {
+      intervals.push(pegs[i + 1] - pegs[i]);
+    }
+  }
+
+  for (var _i = 0; _i < 7; _i++) {
+    var isMajorMatch = true;
+    var isMinorMatch = true;
+    var isNeaMatch = true;
+    for (var j = 0; j < intervals.length; j++) {
+      if (intervals[j] !== MAJOR[j]) isMajorMatch = false;
+      if (intervals[j] !== MELMINOR[j]) isMinorMatch = false;
+      if (intervals[j] !== NEAPOLITAN[j]) isNeaMatch = false;
+    }
+    if (isMajorMatch) {
+      return NOTENAMES[root] + " Maj";
+    } else if (isMinorMatch) {
+      return NOTENAMES[root] + " mel";
+    } else if (isNeaMatch) {
+      return NOTENAMES[root] + " neo";
+    }
+    root += intervals[0];
+    intervals = rotate(intervals);
+  }
+  return null;
 };
 
 //////////////////////////////////////////////////////////////////
@@ -1168,8 +1207,7 @@ var getCenter = exports.getCenter = function getCenter(center, d, parentDirectio
 // let node = new ScaleNode();
 
 // const test1 = () => {
-//   let arr = pegsToNotes([0,2,4,6,7,9,11]);
-//   console.log(isSameType(arr, CMAJOR));
+//   keyReader(CMAJOR);
 // };
 //
 // console.log("RUNNNING TESTS");
@@ -1220,8 +1258,9 @@ var Root = function (_React$Component) {
 
     var _this = _possibleConstructorReturn(this, (Root.__proto__ || Object.getPrototypeOf(Root)).call(this, props));
 
+    var start = new _util.ScaleNode((0, _util.pegsToNotes)([0, 2, 4, 5, 7, 9, 11]), { x: 800, y: 400 });
     _this.state = {
-      scales: (0, _util.buildKeyWheel)(new _util.ScaleNode((0, _util.pegsToNotes)([0, 2, 4, 5, 7, 9, 11]))),
+      scales: (0, _util.buildKeyWheel)(start),
       selectedNotes: []
     };
     _this.handleClick = _this.handleClick.bind(_this);
@@ -1242,6 +1281,8 @@ var Root = function (_React$Component) {
   }, {
     key: 'render',
     value: function render() {
+      var _this2 = this;
+
       var _state = this.state,
           selectedNotes = _state.selectedNotes,
           scales = _state.scales;
@@ -1250,14 +1291,20 @@ var Root = function (_React$Component) {
         'div',
         null,
         _react2.default.createElement(_input2.default, { handleClick: this.handleClick }),
-        scales.map(function (node, i) {
-          var isMatch = true;
-          selectedNotes.forEach(function (i) {
-            if (!node.notes[i]) isMatch = false;
-          });
-          var result = isMatch ? selectedNotes : [];
-          return _react2.default.createElement(_scale2.default, { key: i, node: node, selectedNotes: result });
-        })
+        _react2.default.createElement(
+          'div',
+          { style: {
+              width: "80%"
+            } },
+          scales.map(function (node, i) {
+            var isMatch = true;
+            selectedNotes.forEach(function (i) {
+              if (!node.notes[i]) isMatch = false;
+            });
+            var result = isMatch ? selectedNotes : [];
+            return _react2.default.createElement(_scale2.default, { key: i, node: node, selectedNotes: result, handleClick: _this2.handleClick });
+          })
+        )
       );
     }
   }]);
@@ -18615,15 +18662,12 @@ var Scale = function (_React$Component) {
   }
 
   _createClass(Scale, [{
-    key: 'componentWillReceiveProps',
-    value: function componentWillReceiveProps(nextProps) {
-      console.log(nextProps.selectedNotes);
-    }
-  }, {
     key: 'render',
     value: function render() {
-      var noteRadius = 14;
-      var scaleRadius = 36;
+      var _this2 = this;
+
+      var noteRadius = 16;
+      var scaleRadius = 40;
       var _props = this.props,
           node = _props.node,
           selectedNotes = _props.selectedNotes;
@@ -18639,11 +18683,14 @@ var Scale = function (_React$Component) {
           if (selectedNotes.includes(i)) {
             noteColor = "yellow";
           } else {
-            noteColor = note ? "#AAF" : "white";
+            noteColor = note ? "#AAF" : "#eee";
           }
           return _react2.default.createElement(
             'div',
             { key: i,
+              onClick: function onClick() {
+                return _this2.props.handleClick(i);
+              },
               style: {
                 position: "absolute",
                 width: noteRadius,
@@ -18658,7 +18705,10 @@ var Scale = function (_React$Component) {
               } },
             _react2.default.createElement(
               'span',
-              null,
+              { style: {
+                  position: "relative",
+                  top: "0.3em"
+                } },
               i
             )
           );
@@ -18667,10 +18717,18 @@ var Scale = function (_React$Component) {
           'div',
           { style: {
               position: "absolute",
-              top: center.y,
-              left: center.x
+              top: center.y - 4,
+              left: center.x,
+              fontSize: "12px",
+              textAlign: "center"
             } },
-          rank
+          (0, _util.keyReader)(notes).split(" ").map(function (piece, i) {
+            return _react2.default.createElement(
+              'p',
+              { key: i },
+              piece
+            );
+          })
         )
       );
     }
@@ -35926,7 +35984,7 @@ var Input = function (_React$Component) {
 
       var noteRadius = 30;
       var scaleRadius = 100;
-      var center = { x: 200, y: 400 };
+      var center = { x: 150, y: 350 };
       var notes = this.state.notes;
 
       return _react2.default.createElement(
@@ -35940,12 +35998,13 @@ var Input = function (_React$Component) {
                 e.preventDefault();
                 _this2.toggleNote(i);
               },
+              className: 'input-note',
               style: {
                 position: "absolute",
                 width: noteRadius,
                 height: noteRadius,
                 borderRadius: noteRadius,
-                backgroundColor: note ? "#88D" : "white",
+                backgroundColor: note ? "yellow" : "#eee",
                 border: "1px solid black",
                 textAlign: "center",
                 top: center.y - scaleRadius * Math.cos(Math.PI * i / 6),
@@ -35953,7 +36012,10 @@ var Input = function (_React$Component) {
               } },
             _react2.default.createElement(
               'span',
-              null,
+              { style: {
+                  position: "relative",
+                  top: "0.4em"
+                } },
               i
             )
           );
