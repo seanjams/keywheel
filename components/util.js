@@ -4,7 +4,7 @@ const EMPTY = [false, false, false, false, false, false, false, false, false, fa
 const DIRS = ["L", "T", "B", "R"];
 
 export class ScaleNode {
-  constructor(notes = CMAJOR, center = { x:500, y:400 }) {
+  constructor(notes = CMAJOR, center = { x:700, y:400 }) {
     //consider rendering root different color
     // this.root = root;
     this.notes = notes;
@@ -51,10 +51,10 @@ export const tweek = (notes, idx) => {
 };
 
 export const generateNeighbors = (node, visited) => {
-  const neighborKeys = [], adjustedPegs = [], result = [];
-  const dirs = ["L", "T", "B", "R"];
+  const adjustedPegs = [];
   const { notes, parentCenter, center } = node;
   const parentNotes = node.parent ? node.parent.notes : null;
+  let neighborKeys = [];
   let temp, parentTweekStatus;
 
   for (var i = 0; i < notesToPegs(notes).length; i++) {
@@ -70,6 +70,9 @@ export const generateNeighbors = (node, visited) => {
   }
 
   if (!parentNotes) {
+    while(!isSameType(neighborKeys[0].notes, neighborKeys[1].notes)) {
+      neighborKeys = rotate(neighborKeys);
+    }
     neighborKeys.forEach((newKey, i) => {
       newKey.center = getCenter(center, 80, DIRS[i]);
     })
@@ -153,22 +156,22 @@ export const isSameType = (notes1, notes2) => {
     if (isEqual(notes1, temp)) {
       return true;
     } else {
-      temp = rotateNotes(temp);
+      temp = rotate(temp);
     }
   }
   return false;
 };
 
-export const rotateNotes = notes => {
-  const newNotes = [];
-  for (let i = 0; i < notes.length; i++) {
-    if (i === notes.length - 1) {
-      newNotes.push(notes[0]);
+export const rotate = arr => {
+  const result = [];
+  for (let i = 0; i < arr.length; i++) {
+    if (i === arr.length - 1) {
+      result.push(arr[0]);
     } else {
-      newNotes.push(notes[i+1]);
+      result.push(arr[i+1]);
     }
   }
-  return newNotes;
+  return result;
 };
 
 export const getCenter = (center, d, dir) => {

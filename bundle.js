@@ -943,7 +943,7 @@ module.exports = focusNode;
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.getCenter = exports.rotateNotes = exports.isSameType = exports.pegsToNotes = exports.notesToPegs = exports.includesKey = exports.isEqual = exports.buildKeyWheel = exports.generateNeighbors = exports.tweek = exports.ScaleNode = undefined;
+exports.getCenter = exports.rotate = exports.isSameType = exports.pegsToNotes = exports.notesToPegs = exports.includesKey = exports.isEqual = exports.buildKeyWheel = exports.generateNeighbors = exports.tweek = exports.ScaleNode = undefined;
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
@@ -958,7 +958,7 @@ var DIRS = ["L", "T", "B", "R"];
 var ScaleNode = exports.ScaleNode = function () {
   function ScaleNode() {
     var notes = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : CMAJOR;
-    var center = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : { x: 500, y: 400 };
+    var center = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : { x: 700, y: 400 };
 
     _classCallCheck(this, ScaleNode);
 
@@ -1014,15 +1014,13 @@ var tweek = exports.tweek = function tweek(notes, idx) {
 };
 
 var generateNeighbors = exports.generateNeighbors = function generateNeighbors(node, visited) {
-  var neighborKeys = [],
-      adjustedPegs = [],
-      result = [];
-  var dirs = ["L", "T", "B", "R"];
+  var adjustedPegs = [];
   var notes = node.notes,
       parentCenter = node.parentCenter,
       center = node.center;
 
   var parentNotes = node.parent ? node.parent.notes : null;
+  var neighborKeys = [];
   var temp = void 0,
       parentTweekStatus = void 0;
 
@@ -1039,6 +1037,9 @@ var generateNeighbors = exports.generateNeighbors = function generateNeighbors(n
   }
 
   if (!parentNotes) {
+    while (!isSameType(neighborKeys[0].notes, neighborKeys[1].notes)) {
+      neighborKeys = rotate(neighborKeys);
+    }
     neighborKeys.forEach(function (newKey, i) {
       newKey.center = getCenter(center, 80, DIRS[i]);
     });
@@ -1123,22 +1124,22 @@ var isSameType = exports.isSameType = function isSameType(notes1, notes2) {
     if (isEqual(notes1, temp)) {
       return true;
     } else {
-      temp = rotateNotes(temp);
+      temp = rotate(temp);
     }
   }
   return false;
 };
 
-var rotateNotes = exports.rotateNotes = function rotateNotes(notes) {
-  var newNotes = [];
-  for (var i = 0; i < notes.length; i++) {
-    if (i === notes.length - 1) {
-      newNotes.push(notes[0]);
+var rotate = exports.rotate = function rotate(arr) {
+  var result = [];
+  for (var i = 0; i < arr.length; i++) {
+    if (i === arr.length - 1) {
+      result.push(arr[0]);
     } else {
-      newNotes.push(notes[i + 1]);
+      result.push(arr[i + 1]);
     }
   }
-  return newNotes;
+  return result;
 };
 
 var getCenter = exports.getCenter = function getCenter(center, d, dir) {
@@ -1210,7 +1211,7 @@ var Root = function (_React$Component) {
     var _this = _possibleConstructorReturn(this, (Root.__proto__ || Object.getPrototypeOf(Root)).call(this, props));
 
     _this.state = {
-      start: new _util.ScaleNode()
+      start: new _util.ScaleNode((0, _util.pegsToNotes)([1, 3, 5, 7, 9, 10, 11]))
     };
     return _this;
   }
@@ -18567,8 +18568,6 @@ var _react2 = _interopRequireDefault(_react);
 var _util = __webpack_require__(14);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-//make functional component
 
 var Scale = function Scale(_ref) {
   var start = _ref.start,

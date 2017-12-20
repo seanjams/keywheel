@@ -1,8 +1,6 @@
 import React from 'react';
 import { getCenter } from './util';
 
-//make functional component
-
 const Scale = ({start, center, num}) => {
   const noteRadius = 14;
   const scaleRadius = 36;
