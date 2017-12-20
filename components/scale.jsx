@@ -19,7 +19,6 @@ class Scale extends React.Component {
           }
           return (
             <div key={i}
-              onClick={() => this.props.handleClick(i)}
               style={{
               position: "absolute",
               width: noteRadius,
