@@ -4,8 +4,8 @@ import { getCenter, keyReader } from './util';
 class Scale extends React.Component {
 
   render() {
-    const noteRadius = 16;
-    const scaleRadius = 40;
+    const noteRadius = 14;
+    const scaleRadius = 36;
     const { node, selectedNotes } = this.props
     const { rank, notes, center } = node;
     return (
@@ -33,7 +33,7 @@ class Scale extends React.Component {
               left: center.x + scaleRadius * Math.sin(Math.PI * i / 6)
             }}><span style={{
               position: "relative",
-              top: "0.3em"
+              top: "0.2em"
             }}>{i}</span></div>
           )
         })}

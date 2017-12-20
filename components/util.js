@@ -118,7 +118,7 @@ export const generateNeighbors = (node, visited) => {
       neighborKeys = rotate(neighborKeys);
     }
     neighborKeys.forEach((newKey, i) => {
-      newKey.center = getCenter(center, 90, DIRS[i]);
+      newKey.center = getCenter(center, DIRS[i]);
     })
   } else {
     const deltaX = 2 * center.x - parentCenter.x;
@@ -255,7 +255,7 @@ export const rotate = arr => {
   return result;
 };
 
-export const getCenter = (center, d, parentDirection) => {
+export const getCenter = (center, parentDirection, d = 80) => {
   const result = {
     "L": { x: center.x + d, y: center.y + d },
     "B": { x: center.x + d, y: center.y - d },

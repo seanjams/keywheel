@@ -18,8 +18,8 @@ class Input extends React.Component {
 
   render() {
     const noteRadius = 30;
-    const scaleRadius = 100;
-    const center = { x: 150, y: 350 }
+    const scaleRadius = 80;
+    const center = { x: 120, y: 300 }
     const { notes } = this.state;
     return (
       <div>

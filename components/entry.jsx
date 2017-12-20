@@ -7,7 +7,7 @@ import { ScaleNode, buildKeyWheel, pegsToNotes, EMPTY } from './util';
 class Root extends React.Component {
   constructor(props) {
     super(props);
-    const start = new ScaleNode(pegsToNotes([0,2,4,5,7,9,11]), { x: 800, y: 400 });
+    const start = new ScaleNode(pegsToNotes([0,2,4,5,7,9,11]), { x: 720, y: 350 });
     this.state = {
       scales: buildKeyWheel(start),
       selectedNotes: []
