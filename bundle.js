@@ -943,7 +943,7 @@ module.exports = focusNode;
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.getCenter = exports.buildKeyWheel = exports.isEqual = exports.neighbors = exports.tweek = exports.pegsToNotes = exports.notesToPegs = exports.ScaleNode = exports.CMAJOR = undefined;
+exports.getCenter = exports.rotateNotes = exports.isSameType = exports.pegsToNotes = exports.notesToPegs = exports.includesKey = exports.isEqual = exports.buildKeyWheel = exports.generateNeighbors = exports.tweek = exports.ScaleNode = undefined;
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
@@ -951,20 +951,23 @@ var _lodash = __webpack_require__(29);
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-var CMAJOR = exports.CMAJOR = [true, false, true, false, true, true, false, true, false, true, false, true];
+var CMAJOR = [true, false, true, false, true, true, false, true, false, true, false, true];
+var EMPTY = [false, false, false, false, false, false, false, false, false, false, false, false];
+var DIRS = ["L", "T", "B", "R"];
 
 var ScaleNode = exports.ScaleNode = function () {
   function ScaleNode() {
     var notes = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : CMAJOR;
-    var root = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 0;
+    var center = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : { x: 500, y: 400 };
 
     _classCallCheck(this, ScaleNode);
 
     //consider rendering root different color
-    this.root = root;
+    // this.root = root;
     this.notes = notes;
+    this.center = center;
     this.parent = null;
-    this.parentDir = null;
+    this.parentCenter = null;
     this.children = [];
   }
 
@@ -972,12 +975,14 @@ var ScaleNode = exports.ScaleNode = function () {
     key: "addChild",
     value: function addChild(node) {
       node.parent = this;
+      node.parentCenter = this.center;
       this.children.push(node);
     }
   }, {
     key: "removeChild",
     value: function removeChild(node) {
       node.parent = null;
+      node.parentCenter = null;
       var idx = this.children.indexOf(node);
       this.children.splice(idx, 1);
     }
@@ -986,97 +991,95 @@ var ScaleNode = exports.ScaleNode = function () {
   return ScaleNode;
 }();
 
-var notesToPegs = exports.notesToPegs = function notesToPegs(notes) {
-  var pegs = [];
-  notes.forEach(function (note, i) {
-    if (note) pegs.push(i);
-  });
-  return pegs;
-};
-
-var pegsToNotes = exports.pegsToNotes = function pegsToNotes(pegs) {
-  var notes = Array(false, false, false, false, false, false, false, false, false, false, false, false);
-  pegs.forEach(function (peg) {
-    if (peg < 0) peg += 12;
-    if (peg > 11) peg -= 12;
-    notes[peg] = true;
-  });
-  return notes;
-};
-
-var tweek = exports.tweek = function tweek(notes, pegNum) {
+var tweek = exports.tweek = function tweek(notes, idx) {
   var pegs = notesToPegs(notes);
-  var idx = pegNum - 1;
-  if (pegNum === 1) {
+  var temp = pegs[idx];
+  var tweekStatus = 0;
+
+  if (idx === 0) {
     pegs[idx] = pegs[1] - pegs[0] + pegs[6] - 12;
-  } else if (pegNum === 7) {
+  } else if (idx === 6) {
     pegs[idx] = 12 + pegs[0] - pegs[6] + pegs[5];
   } else {
     pegs[idx] = pegs[idx + 1] - pegs[idx] + pegs[idx - 1];
   }
-  // console.log(pegs);
-  return pegsToNotes(pegs);
-};
 
-var neighbors = exports.neighbors = function neighbors(node) {
-  var neighborKeys = [],
-      result = [];
-  var dirs = ["R", "B", "T", "L"];
-  var parentDir = node.parentDir,
-      notes = node.notes;
-
-  var parentNotes = node.parent ? node.parent.notes : null;
-  var temp = void 0;
-
-  notesToPegs(notes).forEach(function (peg, i) {
-    temp = tweek(notes, i + 1);
-    if (!isEqual(notes, temp) && !isEqual(parentNotes, temp)) neighborKeys.push(temp);
-  });
-
-  if (neighborKeys.length === 1) {
-
-    switch (parentDir) {
-      case "B":
-        return [neighborKeys[0], null, null, null];
-      case "R":
-        return [null, neighborKeys[0], null, null];
-      case "L":
-        return [null, null, neighborKeys[0], null];
-      case "T":
-        return [null, null, null, neighborKeys[0]];
-    }
-
-    // switch(parentDir) {
-    // case "L":
-    //   result.push(null);
-    //   result.push(null);
-    //   break;
-    // case "T":
-    //
-    //     break;
-    // case "B":
-    //
-    //     break;
-    // case "R":
-    //
-    //     break;
-    //
-    // }
-  } else {
-    dirs.forEach(function (dir) {
-      if (dir === parentDir) {
-        result.push(null);
-      } else {
-        result.push(neighborKeys.shift() || null);
-      }
-    });
-    // if(isEqual(notes, pegsToNotes([1,3,4,5,7,9,11]))) console.log(neighborKeys);
-    return result;
+  if (temp > pegs[idx]) {
+    tweekStatus--;
+  } else if (temp < pegs[idx]) {
+    tweekStatus++;
   }
 
-  // console.log(node.notes, result);
-  return result;
+  return { notes: pegsToNotes(pegs), tweekStatus: tweekStatus };
 };
+
+var generateNeighbors = exports.generateNeighbors = function generateNeighbors(node, visited) {
+  var neighborKeys = [],
+      adjustedPegs = [],
+      result = [];
+  var dirs = ["L", "T", "B", "R"];
+  var notes = node.notes,
+      parentCenter = node.parentCenter,
+      center = node.center;
+
+  var parentNotes = node.parent ? node.parent.notes : null;
+  var temp = void 0,
+      parentTweekStatus = void 0;
+
+  for (var i = 0; i < notesToPegs(notes).length; i++) {
+    temp = tweek(notes, i);
+    if (!isEqual(notes, temp.notes)) {
+      if (isEqual(parentNotes, temp.notes)) {
+        parentTweekStatus = temp.tweekStatus;
+      } else if (!includesKey(visited, temp.notes)) {
+        neighborKeys.push(temp);
+      }
+      adjustedPegs.push(i + 1);
+    };
+  }
+
+  if (!parentNotes) {
+    neighborKeys.forEach(function (newKey, i) {
+      newKey.center = getCenter(center, 80, DIRS[i]);
+    });
+  } else {
+    var deltaX = 2 * center.x - parentCenter.x;
+    var deltaY = 2 * center.y - parentCenter.y;
+    neighborKeys.forEach(function (newKey) {
+      if (isSameType(parentNotes, newKey.notes) && !isEqual(parentNotes, newKey.notes)) {
+        newKey.center = { x: deltaX, y: parentCenter.y };
+      } else if (newKey.tweekStatus === parentTweekStatus) {
+        newKey.center = { x: parentCenter.x, y: deltaY };
+      } else {
+        newKey.center = { x: deltaX, y: deltaY };
+      }
+    });
+  }
+  return { data: neighborKeys, adjustedPegs: adjustedPegs };
+};
+
+var buildKeyWheel = exports.buildKeyWheel = function buildKeyWheel(start) {
+  var queue = [start];
+  var visited = [start.notes];
+  var currentNode = void 0,
+      neighbors = void 0,
+      temp = void 0;
+
+  while (visited.length < 36) {
+    currentNode = queue.shift();
+    if (!currentNode) return start;
+    neighbors = generateNeighbors(currentNode, visited);
+    neighbors.data.forEach(function (neighborKey) {
+      temp = new ScaleNode(neighborKey.notes, neighborKey.center);
+      currentNode.addChild(temp);
+      queue.push(temp);
+      visited.push(neighborKey.notes);
+    });
+  }
+  return start;
+};
+
+//////////////////////////////////////////////////////////////////
 
 var isEqual = exports.isEqual = function isEqual(notes1, notes2) {
   if (!notes1 || !notes2) return false;
@@ -1089,47 +1092,53 @@ var isEqual = exports.isEqual = function isEqual(notes1, notes2) {
   return false;
 };
 
-var buildKeyWheel = exports.buildKeyWheel = function buildKeyWheel(start) {
-  var queue = [start];
-  var visited = [start.notes];
-  var currentNode = void 0,
-      neighbs = void 0,
-      temp = void 0,
-      notSeen = void 0;
-  var dirs = ["L", "T", "B", "R"];
-
-  while (visited.length < 36) {
-
-    currentNode = queue.shift();
-    neighbs = neighbors(currentNode);
-    if (isEqual(currentNode.notes, pegsToNotes([1, 3, 4, 6, 7, 9, 11]))) console.log(neighbs);
-    //whats happening is our "4" child is generating 3 children, the first of which is in the 4th position
-    neighbs.forEach(function (neighborKey, i) {
-
-      if (!neighborKey) return;
-      notSeen = true;
-      temp = new ScaleNode(neighborKey);
-      temp.parentDir = dirs[i];
-
-      visited.forEach(function (key) {
-        if (isEqual(key, neighborKey)) notSeen = false;
-      });
-      console.log(notSeen);
-
-      if (notSeen) {
-        // console.log("NOT SEEN", notesToPegs(temp.notes));
-        currentNode.addChild(temp);
-        visited.push(temp.notes);
-        queue.push(temp);
-      } else {
-        // console.log("SEEN", );
-      }
-    });
+var includesKey = exports.includesKey = function includesKey(notesArr, key) {
+  for (var i = 0; i < notesArr.length; i++) {
+    if (isEqual(notesArr[i], key)) return true;
   }
-  // visited.forEach(node => {
-  //   console.log(node);
-  // });
-  return start;
+  return false;
+};
+
+var notesToPegs = exports.notesToPegs = function notesToPegs(notes) {
+  var pegs = [];
+  notes.forEach(function (note, i) {
+    if (note) pegs.push(i);
+  });
+  return pegs;
+};
+
+var pegsToNotes = exports.pegsToNotes = function pegsToNotes(pegs) {
+  var notes = Array.apply(undefined, EMPTY);
+  pegs.forEach(function (peg) {
+    if (peg < 0) peg += 12;
+    if (peg > 11) peg -= 12;
+    notes[peg] = true;
+  });
+  return notes;
+};
+
+var isSameType = exports.isSameType = function isSameType(notes1, notes2) {
+  var temp = notes2;
+  for (var i = 0; i < notes2.length; i++) {
+    if (isEqual(notes1, temp)) {
+      return true;
+    } else {
+      temp = rotateNotes(temp);
+    }
+  }
+  return false;
+};
+
+var rotateNotes = exports.rotateNotes = function rotateNotes(notes) {
+  var newNotes = [];
+  for (var i = 0; i < notes.length; i++) {
+    if (i === notes.length - 1) {
+      newNotes.push(notes[0]);
+    } else {
+      newNotes.push(notes[i + 1]);
+    }
+  }
+  return newNotes;
 };
 
 var getCenter = exports.getCenter = function getCenter(center, d, dir) {
@@ -1142,29 +1151,24 @@ var getCenter = exports.getCenter = function getCenter(center, d, dir) {
   return result[dir];
 };
 
+//
+// export const copy = arr => {
+//   const result = [];
+//   for (let i = 0; i < arr.length; i++) {
+//     result.push(arr[i]);
+//   }
+//   return result;
+// };
+
 // let node = new ScaleNode();
 
 // const test1 = () => {
-//   const scaleNode = new ScaleNode();
-//   let notes = scaleNode.notes;
-//   notes = tweek(notes, 3)
-//   notes = tweek(notes, 2)
-//   notes = tweek(notes, 7)
-//   notes = tweek(notes, 1)
-//   console.log(notesToPegs(notes));
+//   let arr = pegsToNotes([0,2,4,6,7,9,11]);
+//   console.log(isSameType(arr, CMAJOR));
 // };
-
-// const test2 = () => {
-//   const scaleNode = new ScaleNode();
-//   const scaleNode2 = new ScaleNode(1);
-//   scaleNode.addChild(scaleNode2);
-//   scaleNode.removeChild(scaleNode2);
-//   console.log(scaleNode.children.length === 0);
-// };
-
+//
 // console.log("RUNNNING TESTS");
 // test1();
-// test2();
 
 /***/ }),
 /* 15 */
@@ -1207,7 +1211,6 @@ var Root = function (_React$Component) {
 
     _this.state = {
       start: new _util.ScaleNode()
-      // notes: CMAJOR
     };
     return _this;
   }
@@ -1216,37 +1219,16 @@ var Root = function (_React$Component) {
     key: 'componentWillMount',
     value: function componentWillMount() {
       var start = (0, _util.buildKeyWheel)(this.state.start);
-      start.children.slice(1).forEach(function (child) {
-        child.children.forEach(function (subChild) {
-          subChild.children = [];
-        });
-      });
-      // start.children[0].children.slice(1).forEach(subChild => {
-      //   subChild.children = [];
-      // })
-      // start.children[0].children[0].children.slice(1).forEach(subChild => {
-      //   subChild.children = [];
-      // })
-      console.log(start);
     }
-
-    // renderChildren() {
-    //   const ScaleComponents = [];
-    //   let currentNode = this.state.start;
-    //   let center
-    //   ScaleComponents.push(<Scale notes={this.state.notes} center={}/>)
-    //   while (ScaleComponents.length < 36) {
-    //
-    //   }
-    // }
-
   }, {
     key: 'render',
     value: function render() {
+      var start = this.state.start;
+
       return _react2.default.createElement(
         'div',
         null,
-        _react2.default.createElement(_scale2.default, { start: this.state.start, center: { x: 500, y: 400 }, num: 1 })
+        _react2.default.createElement(_scale2.default, { start: start, center: start.center, num: 1 })
       );
     }
   }]);
@@ -18578,8 +18560,6 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 
-var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
-
 var _react = __webpack_require__(2);
 
 var _react2 = _interopRequireDefault(_react);
@@ -18588,78 +18568,97 @@ var _util = __webpack_require__(14);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
-
-function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
-
 //make functional component
-var Scale = function (_React$Component) {
-  _inherits(Scale, _React$Component);
 
-  function Scale() {
-    _classCallCheck(this, Scale);
+var Scale = function Scale(_ref) {
+  var start = _ref.start,
+      center = _ref.center,
+      num = _ref.num;
 
-    return _possibleConstructorReturn(this, (Scale.__proto__ || Object.getPrototypeOf(Scale)).apply(this, arguments));
-  }
-
-  _createClass(Scale, [{
-    key: 'render',
-    value: function render() {
-      var _this2 = this;
-
-      var center = this.props.center;
-
-      var noteRadius = 14;
-      var scaleRadius = 36;
+  var noteRadius = 14;
+  var scaleRadius = 36;
+  return _react2.default.createElement(
+    'div',
+    null,
+    start.notes.map(function (note, i) {
       return _react2.default.createElement(
         'div',
-        null,
-        this.props.start.notes.map(function (note, i) {
-          return _react2.default.createElement(
-            'div',
-            { key: i,
-              style: {
-                position: "absolute",
-                width: noteRadius,
-                height: noteRadius,
-                borderRadius: noteRadius,
-                backgroundColor: note ? "#AAF" : "white",
-                border: "1px solid black",
-                fontSize: "0.5em",
-                textAlign: "center",
-                top: center.y - scaleRadius * Math.cos(Math.PI * i / 6),
-                left: center.x + scaleRadius * Math.sin(Math.PI * i / 6)
-              } },
-            _react2.default.createElement(
-              'span',
-              null,
-              i
-            )
-          );
-        }),
+        { key: i,
+          style: {
+            position: "absolute",
+            width: noteRadius,
+            height: noteRadius,
+            borderRadius: noteRadius,
+            backgroundColor: note ? "#AAF" : "white",
+            border: "1px solid black",
+            fontSize: "0.5em",
+            textAlign: "center",
+            top: center.y - scaleRadius * Math.cos(Math.PI * i / 6),
+            left: center.x + scaleRadius * Math.sin(Math.PI * i / 6)
+          } },
         _react2.default.createElement(
-          'div',
-          { style: {
-              position: "absolute",
-              top: center.y,
-              left: center.x
-            } },
-          this.props.num
-        ),
-        this.props.start.children.map(function (node, i) {
-          var dir = node.parentDir;
-          return _react2.default.createElement(Scale, { key: i, start: node, center: (0, _util.getCenter)(center, 100, dir), num: _this2.props.num + 1 });
-        })
+          'span',
+          null,
+          i
+        )
       );
-    }
-  }]);
-
-  return Scale;
-}(_react2.default.Component);
+    }),
+    _react2.default.createElement(
+      'div',
+      { style: {
+          position: "absolute",
+          top: center.y,
+          left: center.x
+        } },
+      num
+    ),
+    start.children.map(function (node, i) {
+      return _react2.default.createElement(Scale, { key: i, start: node, center: node.center, num: num + 1 });
+    })
+  );
+};
 
 exports.default = Scale;
+
+//
+// class Scale extends React.Component {
+//   render() {
+//     const center = this.props.center;
+//     const noteRadius = 14;
+//     const scaleRadius = 36;
+//     return (
+//       <div>
+//         {this.props.start.notes.map((note, i) => {
+//           return (
+//             <div key={i}
+//               style={{
+//               position: "absolute",
+//               width: noteRadius,
+//               height: noteRadius,
+//               borderRadius: noteRadius,
+//               backgroundColor: note ? "#AAF": "white",
+//               border: "1px solid black",
+//               fontSize: "0.5em",
+//               textAlign: "center",
+//               top: center.y - scaleRadius * Math.cos(Math.PI * i / 6),
+//               left: center.x + scaleRadius * Math.sin(Math.PI * i / 6)
+//             }}><span>{i}</span></div>
+//           )
+//         })}
+//         <div style={{
+//           position: "absolute",
+//           top: center.y,
+//           left: center.x
+//         }}>{this.props.num}</div>
+//         {this.props.start.children.map((node, i) => {
+//           return (
+//             <Scale key={i} start={node} center={node.center} num={this.props.num + 1}/>
+//           );
+//         })}
+//       </div>
+//     )
+//   }
+// }
 
 /***/ }),
 /* 29 */

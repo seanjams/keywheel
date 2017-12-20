@@ -8,41 +8,18 @@ class Root extends React.Component {
     super(props);
     this.state = {
       start: new ScaleNode(),
-      // notes: CMAJOR
     };
   }
 
   componentWillMount() {
     const start = buildKeyWheel(this.state.start);
-    start.children.slice(1).forEach(child => {
-      child.children.forEach(subChild => {
-        subChild.children = [];
-      })
-
-    });
-    // start.children[0].children.slice(1).forEach(subChild => {
-    //   subChild.children = [];
-    // })
-    // start.children[0].children[0].children.slice(1).forEach(subChild => {
-    //   subChild.children = [];
-    // })
-    console.log(start);
   }
 
-  // renderChildren() {
-  //   const ScaleComponents = [];
-  //   let currentNode = this.state.start;
-  //   let center
-  //   ScaleComponents.push(<Scale notes={this.state.notes} center={}/>)
-  //   while (ScaleComponents.length < 36) {
-  //
-  //   }
-  // }
-
   render() {
+    const { start } = this.state;
     return (
       <div>
-        <Scale start={this.state.start} center={{ x: 500, y: 400}} num={1}/>
+        <Scale start={start} center={start.center} num={1}/>
       </div>
     );
   }

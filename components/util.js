@@ -1,124 +1,115 @@
-export const CMAJOR = [true, false, true, false, true, true, false, true, false, true, false, true];
 import { uniq } from 'lodash';
-
+const CMAJOR = [true, false, true, false, true, true, false, true, false, true, false, true];
+const EMPTY = [false, false, false, false, false, false, false, false, false, false, false, false];
+const DIRS = ["L", "T", "B", "R"];
 
 export class ScaleNode {
-  constructor(notes = CMAJOR, root = 0) {
+  constructor(notes = CMAJOR, center = { x:500, y:400 }) {
     //consider rendering root different color
-    this.root = root;
+    // this.root = root;
     this.notes = notes;
+    this.center = center;
     this.parent = null;
-    this.parentDir = null;
+    this.parentCenter = null;
     this.children = [];
   }
 
   addChild(node) {
     node.parent = this;
+    node.parentCenter = this.center;
     this.children.push(node);
   }
 
   removeChild(node) {
     node.parent = null;
+    node.parentCenter = null;
     const idx = this.children.indexOf(node);
     this.children.splice(idx, 1);
   }
 }
 
-export const notesToPegs = (notes) => {
-  const pegs = [];
-  notes.forEach((note, i) => {
-    if (note) pegs.push(i)
-  });
-  return pegs;
-};
-
-export const pegsToNotes = (pegs) => {
-  const notes = Array(false, false, false, false, false, false, false, false, false, false, false, false);
-  pegs.forEach(peg => {
-    if (peg < 0) peg += 12;
-    if (peg > 11) peg -= 12;
-    notes[peg] = true;
-  });
-  return notes;
-};
-
-
-
-export const tweek = (notes, pegNum) => {
+export const tweek = (notes, idx) => {
   const pegs = notesToPegs(notes);
-  const idx = pegNum - 1;
-  if (pegNum === 1) {
+  let temp = pegs[idx];
+  let tweekStatus = 0;
+
+  if (idx === 0) {
     pegs[idx] = pegs[1] - pegs[0] + pegs[6] - 12;
-  } else if (pegNum === 7){
+  } else if (idx === 6){
     pegs[idx] = 12 + pegs[0] - pegs[6] + pegs[5];
   } else {
     pegs[idx] = pegs[idx + 1] - pegs[idx] + pegs[idx - 1];
   }
-  // console.log(pegs);
-  return pegsToNotes(pegs);
-};
 
-
-export const neighbors = node => {
-  const neighborKeys = [], result = [];
-  const dirs = ["R", "B", "T", "L"];
-  const { parentDir, notes } = node;
-  const parentNotes = node.parent ? node.parent.notes : null;
-  let temp;
-
-  notesToPegs(notes).forEach((peg, i) => {
-    temp = tweek(notes, i + 1);
-    if (!isEqual(notes, temp) && !isEqual(parentNotes, temp)) neighborKeys.push(temp);
-  });
-
-  if (neighborKeys.length === 1) {
-
-    switch (parentDir) {
-      case "B":
-        return [neighborKeys[0], null, null, null];
-      case "R":
-        return [null, neighborKeys[0], null, null];
-      case "L":
-        return [null, null, neighborKeys[0], null];
-      case "T":
-        return [null, null, null, neighborKeys[0]];
-    }
-
-    // switch(parentDir) {
-    // case "L":
-    //   result.push(null);
-    //   result.push(null);
-    //   break;
-    // case "T":
-    //
-    //     break;
-    // case "B":
-    //
-    //     break;
-    // case "R":
-    //
-    //     break;
-    //
-    // }
-  } else {
-    dirs.forEach(dir => {
-      if (dir === parentDir) {
-        result.push(null);
-      } else {
-        result.push(neighborKeys.shift() || null);
-      }
-    });
-    // if(isEqual(notes, pegsToNotes([1,3,4,5,7,9,11]))) console.log(neighborKeys);
-    return result;
+  if (temp > pegs[idx]) {
+    tweekStatus--;
+  } else if (temp < pegs[idx]) {
+    tweekStatus++
   }
 
+  return { notes: pegsToNotes(pegs), tweekStatus };
+};
 
+export const generateNeighbors = (node, visited) => {
+  const neighborKeys = [], adjustedPegs = [], result = [];
+  const dirs = ["L", "T", "B", "R"];
+  const { notes, parentCenter, center } = node;
+  const parentNotes = node.parent ? node.parent.notes : null;
+  let temp, parentTweekStatus;
 
-  // console.log(node.notes, result);
-  return result;
+  for (var i = 0; i < notesToPegs(notes).length; i++) {
+    temp = tweek(notes, i);
+    if (!isEqual(notes, temp.notes)) {
+      if (isEqual(parentNotes, temp.notes)) {
+        parentTweekStatus = temp.tweekStatus;
+      } else if (!includesKey(visited, temp.notes)) {
+        neighborKeys.push(temp);
+      }
+      adjustedPegs.push(i + 1);
+    };
+  }
+
+  if (!parentNotes) {
+    neighborKeys.forEach((newKey, i) => {
+      newKey.center = getCenter(center, 80, DIRS[i]);
+    })
+  } else {
+    const deltaX = 2 * center.x - parentCenter.x;
+    const deltaY = 2 * center.y - parentCenter.y;
+    neighborKeys.forEach(newKey => {
+      if (isSameType(parentNotes, newKey.notes) && !isEqual(parentNotes, newKey.notes)) {
+        newKey.center = { x: deltaX, y: parentCenter.y };
+      } else if (newKey.tweekStatus === parentTweekStatus) {
+        newKey.center = { x: parentCenter.x, y: deltaY };
+      } else {
+        newKey.center = { x: deltaX, y: deltaY };
+      }
+    });
+  }
+  return { data: neighborKeys, adjustedPegs };
+};
+
+export const buildKeyWheel = (start) => {
+  const queue = [start];
+  const visited = [start.notes];
+  let currentNode, neighbors, temp;
+
+  while (visited.length < 36) {
+    currentNode = queue.shift();
+    if (!currentNode) return start;
+    neighbors = generateNeighbors(currentNode, visited);
+    neighbors.data.forEach(neighborKey => {
+      temp = new ScaleNode(neighborKey.notes, neighborKey.center);
+      currentNode.addChild(temp);
+      queue.push(temp);
+      visited.push(neighborKey.notes);
+    });
+  }
+  return start;
 };
 
 
+//////////////////////////////////////////////////////////////////
 
 export const isEqual = (notes1, notes2) => {
   if (!notes1 || !notes2) return false;
@@ -131,47 +122,53 @@ export const isEqual = (notes1, notes2) => {
   return false;
 };
 
-
-
-export const buildKeyWheel = (start) => {
-  const queue = [start];
-  const visited = [start.notes];
-  let currentNode, neighbs, temp, notSeen;
-  const dirs = ["L", "T", "B", "R"];
-
-  while (visited.length < 36) {
-
-    currentNode = queue.shift();
-    neighbs = neighbors(currentNode);
-    if (isEqual(currentNode.notes, pegsToNotes([1,3,4,6,7,9,11]))) console.log(neighbs);
-    //whats happening is our "4" child is generating 3 children, the first of which is in the 4th position
-    neighbs.forEach((neighborKey, i) => {
-
-      if (!neighborKey) return;
-      notSeen = true;
-      temp = new ScaleNode(neighborKey);
-      temp.parentDir = dirs[i];
-
-      visited.forEach(key => {
-        if (isEqual(key, neighborKey)) notSeen = false;
-
-      })
-      console.log(notSeen);
-
-      if (notSeen) {
-        // console.log("NOT SEEN", notesToPegs(temp.notes));
-        currentNode.addChild(temp);
-        visited.push(temp.notes);
-        queue.push(temp);
-      } else {
-        // console.log("SEEN", );
-      }
-    });
+export const includesKey = (notesArr, key) => {
+  for (var i = 0; i < notesArr.length; i++) {
+    if (isEqual(notesArr[i], key)) return true;
   }
-  // visited.forEach(node => {
-  //   console.log(node);
-  // });
-  return start;
+  return false;
+};
+
+export const notesToPegs = (notes) => {
+  const pegs = [];
+  notes.forEach((note, i) => {
+    if (note) pegs.push(i)
+  });
+  return pegs;
+};
+
+export const pegsToNotes = (pegs) => {
+  const notes = Array(...EMPTY);
+  pegs.forEach(peg => {
+    if (peg < 0) peg += 12;
+    if (peg > 11) peg -= 12;
+    notes[peg] = true;
+  });
+  return notes;
+};
+
+export const isSameType = (notes1, notes2) => {
+  let temp = notes2;
+  for (let i = 0; i < notes2.length; i++) {
+    if (isEqual(notes1, temp)) {
+      return true;
+    } else {
+      temp = rotateNotes(temp);
+    }
+  }
+  return false;
+};
+
+export const rotateNotes = notes => {
+  const newNotes = [];
+  for (let i = 0; i < notes.length; i++) {
+    if (i === notes.length - 1) {
+      newNotes.push(notes[0]);
+    } else {
+      newNotes.push(notes[i+1]);
+    }
+  }
+  return newNotes;
 };
 
 export const getCenter = (center, d, dir) => {
@@ -185,26 +182,21 @@ export const getCenter = (center, d, dir) => {
 };
 
 
+//
+// export const copy = arr => {
+//   const result = [];
+//   for (let i = 0; i < arr.length; i++) {
+//     result.push(arr[i]);
+//   }
+//   return result;
+// };
+
 // let node = new ScaleNode();
 
 // const test1 = () => {
-//   const scaleNode = new ScaleNode();
-//   let notes = scaleNode.notes;
-//   notes = tweek(notes, 3)
-//   notes = tweek(notes, 2)
-//   notes = tweek(notes, 7)
-//   notes = tweek(notes, 1)
-//   console.log(notesToPegs(notes));
+//   let arr = pegsToNotes([0,2,4,6,7,9,11]);
+//   console.log(isSameType(arr, CMAJOR));
 // };
-
-// const test2 = () => {
-//   const scaleNode = new ScaleNode();
-//   const scaleNode2 = new ScaleNode(1);
-//   scaleNode.addChild(scaleNode2);
-//   scaleNode.removeChild(scaleNode2);
-//   console.log(scaleNode.children.length === 0);
-// };
-
+//
 // console.log("RUNNNING TESTS");
 // test1();
-// test2();
