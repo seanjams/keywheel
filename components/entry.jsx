@@ -1,25 +1,44 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
 import Scale from './scale';
-import { ScaleNode, buildKeyWheel, pegsToNotes } from './util';
+import Input from './input';
+import { ScaleNode, buildKeyWheel, pegsToNotes, EMPTY } from './util';
 
 class Root extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      start: new ScaleNode(pegsToNotes([1,3,5,7,9,10,11]))
+      scales: buildKeyWheel(new ScaleNode(pegsToNotes([0,2,4,5,7,9,11]))),
+      selectedNotes: []
     };
+    this.handleClick = this.handleClick.bind(this);
   }
 
-  componentWillMount() {
-    const start = buildKeyWheel(this.state.start);
+  handleClick(i) {
+    const selectedNotes = [...this.state.selectedNotes];
+    if (selectedNotes.includes(i)) {
+      selectedNotes.splice(selectedNotes.indexOf(i), 1);
+    } else {
+      selectedNotes.push(i);
+    }
+    this.setState({ selectedNotes });
   }
 
   render() {
-    const { start } = this.state;
+    const { selectedNotes, scales } = this.state;
     return (
       <div>
-        <Scale start={start} center={start.center} num={1}/>
+        <Input handleClick={this.handleClick} />
+        {scales.map((node, i) => {
+          let isMatch = true;
+          selectedNotes.forEach(i => {
+            if (!node.notes[i]) isMatch = false;
+          });
+          let result = isMatch ? selectedNotes: [];
+          return (
+            <Scale key={i} node={node} selectedNotes={result} />
+          )
+        })}
       </div>
     );
   }

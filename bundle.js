@@ -943,7 +943,7 @@ module.exports = focusNode;
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.getCenter = exports.rotate = exports.isSameType = exports.pegsToNotes = exports.notesToPegs = exports.includesKey = exports.isEqual = exports.buildKeyWheel = exports.generateNeighbors = exports.tweek = exports.ScaleNode = undefined;
+exports.getCenter = exports.rotate = exports.isSameType = exports.pegsToNotes = exports.notesToPegs = exports.includesKey = exports.isEqual = exports.buildKeyWheel = exports.generateNeighbors = exports.tweek = exports.ScaleNode = exports.DIRS = exports.EMPTY = exports.CMAJOR = undefined;
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
@@ -951,19 +951,20 @@ var _lodash = __webpack_require__(29);
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-var CMAJOR = [true, false, true, false, true, true, false, true, false, true, false, true];
-var EMPTY = [false, false, false, false, false, false, false, false, false, false, false, false];
-var DIRS = ["L", "T", "B", "R"];
+var CMAJOR = exports.CMAJOR = [true, false, true, false, true, true, false, true, false, true, false, true];
+var EMPTY = exports.EMPTY = [false, false, false, false, false, false, false, false, false, false, false, false];
+var DIRS = exports.DIRS = ["L", "T", "B", "R"];
 
 var ScaleNode = exports.ScaleNode = function () {
   function ScaleNode() {
     var notes = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : CMAJOR;
-    var center = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : { x: 700, y: 400 };
+    var center = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : { x: 800, y: 400 };
 
     _classCallCheck(this, ScaleNode);
 
     //consider rendering root different color
     // this.root = root;
+    this.rank = 0;
     this.notes = notes;
     this.center = center;
     this.parent = null;
@@ -1024,7 +1025,7 @@ var generateNeighbors = exports.generateNeighbors = function generateNeighbors(n
   var temp = void 0,
       parentTweekStatus = void 0;
 
-  for (var i = 0; i < notesToPegs(notes).length; i++) {
+  for (var i = 0; i < 7; i++) {
     temp = tweek(notes, i);
     if (!isEqual(notes, temp.notes)) {
       if (isEqual(parentNotes, temp.notes)) {
@@ -1061,23 +1062,26 @@ var generateNeighbors = exports.generateNeighbors = function generateNeighbors(n
 
 var buildKeyWheel = exports.buildKeyWheel = function buildKeyWheel(start) {
   var queue = [start];
+  var result = [start];
   var visited = [start.notes];
   var currentNode = void 0,
       neighbors = void 0,
-      temp = void 0;
+      newNode = void 0;
 
   while (visited.length < 36) {
     currentNode = queue.shift();
     if (!currentNode) return start;
     neighbors = generateNeighbors(currentNode, visited);
     neighbors.data.forEach(function (neighborKey) {
-      temp = new ScaleNode(neighborKey.notes, neighborKey.center);
-      currentNode.addChild(temp);
-      queue.push(temp);
+      newNode = new ScaleNode(neighborKey.notes, neighborKey.center);
+      newNode.rank = currentNode.rank + 1;
+      currentNode.addChild(newNode);
+      queue.push(newNode);
+      result.push(newNode);
       visited.push(neighborKey.notes);
     });
   }
-  return start;
+  return result;
 };
 
 //////////////////////////////////////////////////////////////////
@@ -1142,14 +1146,14 @@ var rotate = exports.rotate = function rotate(arr) {
   return result;
 };
 
-var getCenter = exports.getCenter = function getCenter(center, d, dir) {
+var getCenter = exports.getCenter = function getCenter(center, d, parentDirection) {
   var result = {
     "L": { x: center.x + d, y: center.y + d },
     "B": { x: center.x + d, y: center.y - d },
     "T": { x: center.x - d, y: center.y + d },
     "R": { x: center.x - d, y: center.y - d }
   };
-  return result[dir];
+  return result[parentDirection];
 };
 
 //
@@ -1192,9 +1196,15 @@ var _scale = __webpack_require__(28);
 
 var _scale2 = _interopRequireDefault(_scale);
 
+var _input = __webpack_require__(32);
+
+var _input2 = _interopRequireDefault(_input);
+
 var _util = __webpack_require__(14);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } }
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
@@ -1211,25 +1221,43 @@ var Root = function (_React$Component) {
     var _this = _possibleConstructorReturn(this, (Root.__proto__ || Object.getPrototypeOf(Root)).call(this, props));
 
     _this.state = {
-      start: new _util.ScaleNode((0, _util.pegsToNotes)([1, 3, 5, 7, 9, 10, 11]))
+      scales: (0, _util.buildKeyWheel)(new _util.ScaleNode((0, _util.pegsToNotes)([0, 2, 4, 5, 7, 9, 11]))),
+      selectedNotes: []
     };
+    _this.handleClick = _this.handleClick.bind(_this);
     return _this;
   }
 
   _createClass(Root, [{
-    key: 'componentWillMount',
-    value: function componentWillMount() {
-      var start = (0, _util.buildKeyWheel)(this.state.start);
+    key: 'handleClick',
+    value: function handleClick(i) {
+      var selectedNotes = [].concat(_toConsumableArray(this.state.selectedNotes));
+      if (selectedNotes.includes(i)) {
+        selectedNotes.splice(selectedNotes.indexOf(i), 1);
+      } else {
+        selectedNotes.push(i);
+      }
+      this.setState({ selectedNotes: selectedNotes });
     }
   }, {
     key: 'render',
     value: function render() {
-      var start = this.state.start;
+      var _state = this.state,
+          selectedNotes = _state.selectedNotes,
+          scales = _state.scales;
 
       return _react2.default.createElement(
         'div',
         null,
-        _react2.default.createElement(_scale2.default, { start: start, center: start.center, num: 1 })
+        _react2.default.createElement(_input2.default, { handleClick: this.handleClick }),
+        scales.map(function (node, i) {
+          var isMatch = true;
+          selectedNotes.forEach(function (i) {
+            if (!node.notes[i]) isMatch = false;
+          });
+          var result = isMatch ? selectedNotes : [];
+          return _react2.default.createElement(_scale2.default, { key: i, node: node, selectedNotes: result });
+        })
       );
     }
   }]);
@@ -18561,6 +18589,8 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
 var _react = __webpack_require__(2);
 
 var _react2 = _interopRequireDefault(_react);
@@ -18569,53 +18599,85 @@ var _util = __webpack_require__(14);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-var Scale = function Scale(_ref) {
-  var start = _ref.start,
-      center = _ref.center,
-      num = _ref.num;
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-  var noteRadius = 14;
-  var scaleRadius = 36;
-  return _react2.default.createElement(
-    'div',
-    null,
-    start.notes.map(function (note, i) {
+function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
+var Scale = function (_React$Component) {
+  _inherits(Scale, _React$Component);
+
+  function Scale() {
+    _classCallCheck(this, Scale);
+
+    return _possibleConstructorReturn(this, (Scale.__proto__ || Object.getPrototypeOf(Scale)).apply(this, arguments));
+  }
+
+  _createClass(Scale, [{
+    key: 'componentWillReceiveProps',
+    value: function componentWillReceiveProps(nextProps) {
+      console.log(nextProps.selectedNotes);
+    }
+  }, {
+    key: 'render',
+    value: function render() {
+      var noteRadius = 14;
+      var scaleRadius = 36;
+      var _props = this.props,
+          node = _props.node,
+          selectedNotes = _props.selectedNotes;
+      var rank = node.rank,
+          notes = node.notes,
+          center = node.center;
+
       return _react2.default.createElement(
         'div',
-        { key: i,
-          style: {
-            position: "absolute",
-            width: noteRadius,
-            height: noteRadius,
-            borderRadius: noteRadius,
-            backgroundColor: note ? "#AAF" : "white",
-            border: "1px solid black",
-            fontSize: "0.5em",
-            textAlign: "center",
-            top: center.y - scaleRadius * Math.cos(Math.PI * i / 6),
-            left: center.x + scaleRadius * Math.sin(Math.PI * i / 6)
-          } },
+        null,
+        notes.map(function (note, i) {
+          var noteColor = void 0;
+          if (selectedNotes.includes(i)) {
+            noteColor = "yellow";
+          } else {
+            noteColor = note ? "#AAF" : "white";
+          }
+          return _react2.default.createElement(
+            'div',
+            { key: i,
+              style: {
+                position: "absolute",
+                width: noteRadius,
+                height: noteRadius,
+                borderRadius: noteRadius,
+                backgroundColor: noteColor,
+                border: "1px solid black",
+                fontSize: "0.5em",
+                textAlign: "center",
+                top: center.y - scaleRadius * Math.cos(Math.PI * i / 6),
+                left: center.x + scaleRadius * Math.sin(Math.PI * i / 6)
+              } },
+            _react2.default.createElement(
+              'span',
+              null,
+              i
+            )
+          );
+        }),
         _react2.default.createElement(
-          'span',
-          null,
-          i
+          'div',
+          { style: {
+              position: "absolute",
+              top: center.y,
+              left: center.x
+            } },
+          rank
         )
       );
-    }),
-    _react2.default.createElement(
-      'div',
-      { style: {
-          position: "absolute",
-          top: center.y,
-          left: center.x
-        } },
-      num
-    ),
-    start.children.map(function (node, i) {
-      return _react2.default.createElement(Scale, { key: i, start: node, center: node.center, num: num + 1 });
-    })
-  );
-};
+    }
+  }]);
+
+  return Scale;
+}(_react2.default.Component);
 
 exports.default = Scale;
 
@@ -35805,6 +35867,105 @@ module.exports = function(module) {
 	return module;
 };
 
+
+/***/ }),
+/* 32 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+var _react = __webpack_require__(2);
+
+var _react2 = _interopRequireDefault(_react);
+
+var _util = __webpack_require__(14);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } }
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
+var Input = function (_React$Component) {
+  _inherits(Input, _React$Component);
+
+  function Input(props) {
+    _classCallCheck(this, Input);
+
+    var _this = _possibleConstructorReturn(this, (Input.__proto__ || Object.getPrototypeOf(Input)).call(this, props));
+
+    _this.state = {
+      notes: Array.apply(undefined, _toConsumableArray(_util.EMPTY))
+    };
+    return _this;
+  }
+
+  _createClass(Input, [{
+    key: 'toggleNote',
+    value: function toggleNote(i) {
+      var notes = [].concat(_toConsumableArray(this.state.notes));
+      notes[i] = !notes[i];
+      this.props.handleClick(i);
+      this.setState({ notes: notes });
+    }
+  }, {
+    key: 'render',
+    value: function render() {
+      var _this2 = this;
+
+      var noteRadius = 30;
+      var scaleRadius = 100;
+      var center = { x: 200, y: 400 };
+      var notes = this.state.notes;
+
+      return _react2.default.createElement(
+        'div',
+        null,
+        notes.map(function (note, i) {
+          return _react2.default.createElement(
+            'div',
+            { key: i,
+              onClick: function onClick(e) {
+                e.preventDefault();
+                _this2.toggleNote(i);
+              },
+              style: {
+                position: "absolute",
+                width: noteRadius,
+                height: noteRadius,
+                borderRadius: noteRadius,
+                backgroundColor: note ? "#88D" : "white",
+                border: "1px solid black",
+                textAlign: "center",
+                top: center.y - scaleRadius * Math.cos(Math.PI * i / 6),
+                left: center.x + scaleRadius * Math.sin(Math.PI * i / 6)
+              } },
+            _react2.default.createElement(
+              'span',
+              null,
+              i
+            )
+          );
+        })
+      );
+    }
+  }]);
+
+  return Input;
+}(_react2.default.Component);
+
+exports.default = Input;
 
 /***/ })
 /******/ ]);

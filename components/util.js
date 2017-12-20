@@ -1,12 +1,39 @@
-import { uniq } from 'lodash';
-const CMAJOR = [true, false, true, false, true, true, false, true, false, true, false, true];
-const EMPTY = [false, false, false, false, false, false, false, false, false, false, false, false];
-const DIRS = ["L", "T", "B", "R"];
+import {uniq} from 'lodash';
+export const CMAJOR = [
+  true,
+  false,
+  true,
+  false,
+  true,
+  true,
+  false,
+  true,
+  false,
+  true,
+  false,
+  true
+];
+export const EMPTY = [
+  false,
+  false,
+  false,
+  false,
+  false,
+  false,
+  false,
+  false,
+  false,
+  false,
+  false,
+  false
+];
+export const DIRS = ["L", "T", "B", "R"];
 
 export class ScaleNode {
-  constructor(notes = CMAJOR, center = { x:700, y:400 }) {
+  constructor(notes = CMAJOR, center = { x:800, y:400 }) {
     //consider rendering root different color
     // this.root = root;
+    this.rank = 0;
     this.notes = notes;
     this.center = center;
     this.parent = null;
@@ -57,7 +84,7 @@ export const generateNeighbors = (node, visited) => {
   let neighborKeys = [];
   let temp, parentTweekStatus;
 
-  for (var i = 0; i < notesToPegs(notes).length; i++) {
+  for (var i = 0; i < 7; i++) {
     temp = tweek(notes, i);
     if (!isEqual(notes, temp.notes)) {
       if (isEqual(parentNotes, temp.notes)) {
@@ -94,23 +121,25 @@ export const generateNeighbors = (node, visited) => {
 
 export const buildKeyWheel = (start) => {
   const queue = [start];
+  const result = [start];
   const visited = [start.notes];
-  let currentNode, neighbors, temp;
+  let currentNode, neighbors, newNode;
 
   while (visited.length < 36) {
     currentNode = queue.shift();
     if (!currentNode) return start;
     neighbors = generateNeighbors(currentNode, visited);
     neighbors.data.forEach(neighborKey => {
-      temp = new ScaleNode(neighborKey.notes, neighborKey.center);
-      currentNode.addChild(temp);
-      queue.push(temp);
+      newNode = new ScaleNode(neighborKey.notes, neighborKey.center);
+      newNode.rank = currentNode.rank + 1;
+      currentNode.addChild(newNode);
+      queue.push(newNode);
+      result.push(newNode);
       visited.push(neighborKey.notes);
     });
   }
-  return start;
+  return result;
 };
-
 
 //////////////////////////////////////////////////////////////////
 
@@ -174,14 +203,14 @@ export const rotate = arr => {
   return result;
 };
 
-export const getCenter = (center, d, dir) => {
+export const getCenter = (center, d, parentDirection) => {
   const result = {
     "L": { x: center.x + d, y: center.y + d },
     "B": { x: center.x + d, y: center.y - d },
     "T": { x: center.x - d, y: center.y + d },
     "R": { x: center.x - d, y: center.y - d }
   };
-  return result[dir];
+  return result[parentDirection];
 };
 
 
