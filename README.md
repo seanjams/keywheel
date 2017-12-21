@@ -12,7 +12,7 @@
 
 ![Ex4](./assets/example4.png)
 
-### tl:dr
+## TL:DR
 
 **BUT SEANJAMS, I'VE NEVER PLAYED MUSIC BEFORE!!!**
 
@@ -23,11 +23,11 @@ Fear not, jive turkey! The vast majority of music is built on the 12-tone system
 ![CMajor](./assets/Cmajor.png)
 
 
-and is defined by the specific ring of intervals (2,2,1,2,2,2,1) between notes.
+and is defined by the specific ring of intervals (2,2,1,2,2,2,1) between notes. As ring implies, we can rotate this scale in any way and it stays Major. All that changes is the **root**.
 
 **But surely we're not that boring, we use others right???**
 
-Of course! After doing some math, there are 38 unique choices of 7 note scales on a clock, where each choice counts for all 12 rotations of that scale. Blah Blah...Group Theory stuff...Woah **there's only 4 to 8 really interesting choices of the 38!** (ping me if your curious)
+Of course! After doing some math, there are 38 unique choices of 7 note scales on a clock (counting for all rotations), and blah blah...group theory stuff...Woah **there's only 4 to 8 really interesting choices** of the 38! (ping me if your curious)
 
 ### Cool Scales
 
@@ -41,9 +41,9 @@ Of course! After doing some math, there are 38 unique choices of 7 note scales o
 |:---:|:---:|:---:|:---:|
 | ![alt text](./assets/harmajor.png)    | ![alt text](./assets/harminor.png) |   ![alt text](./assets/easternMaj.png)     | ![alt text](./assets/easternMin.png)  |
 
-These all have the commonality that they are spaced out...there are not clumps of three or more notes on the clock, and no gaps with an interval of more than 3 clock steps. They happen to contain a lot of cool and essential symmetric properties, which adds to their sonic value as choices of scales.
+These all have the commonality that they are spaced out, there are no clumps of more than three notes on the clock, and no gaps with an interval of more than 3 clock steps. They happen to contain a lot of cool and essential symmetric properties, which adds to their sonic value as choices of scales.
 
-## OK, so what is it?
+## OK, so what is this thing?
 
 The Key Wheel is a network of 7 note scales. The choices of the notes on the clock are shown at each vertex, and they are connected to scales on their diagonals, which only differ by one pitch moved one clock step up or down. Some simple rules, discovered during my mathematical research at UC Davis, are baked into which notes are able to be adjusted, and the network yielded describes sonic distance of all Diatonic (Major, Ionian), Melodic Minor (Altered), and Wholetone (Neapolitan) scales.
 
