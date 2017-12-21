@@ -3,6 +3,12 @@ body {
   font-family: 'Helvetica';
 }
 
-.input-note:hover {
-  background: #ccc;
+body {
+  text-align: right;
+}
+
+a {
+  margin-right: 30px;
+  color: blue;
+  text-decoration: underline;
 }
