@@ -1,5 +1,6 @@
 import {uniq} from 'lodash';
-export const CMAJOR = [
+export const DIRS = ["TL", "TR", "BL", "BR"],
+CMAJOR = [
   true,
   false,
   true,
@@ -12,8 +13,8 @@ export const CMAJOR = [
   true,
   false,
   true
-];
-export const EMPTY = [
+],
+EMPTY = [
   false,
   false,
   false,
@@ -26,8 +27,8 @@ export const EMPTY = [
   false,
   false,
   false
-];
-const NOTENAMES = [
+],
+NOTENAMES = [
   "C",
   "Db",
   "D",
@@ -40,13 +41,10 @@ const NOTENAMES = [
   "A",
   "Bb",
   "B"
-];
-
-export const DIRS = ["L", "T", "B", "R"];
-
-const MAJOR = [2,2,1,2,2,2,1];
-const MELMINOR = [2,1,2,2,2,2,1];
-const NEAPOLITAN = [1,2,2,2,2,2,1];
+],
+MAJOR = [2,2,1,2,2,2,1],
+MELMINOR = [2,1,2,2,2,2,1],
+NEAPOLITAN = [1,2,2,2,2,2,1];
 
 export class ScaleNode {
   constructor(notes = CMAJOR, center = { x: 800, y: 400 }) {
@@ -61,21 +59,21 @@ export class ScaleNode {
   addChild(node) {
     node.parent = this;
     node.parentCenter = this.center;
+    node.rank = this.rank + 1;
     this.children.push(node);
   }
 
   removeChild(node) {
     node.parent = null;
     node.parentCenter = null;
-    const idx = this.children.indexOf(node);
-    this.children.splice(idx, 1);
+    node.rank = 0;
+    this.children.splice(this.children.indexOf(node), 1);
   }
 }
 
 export const tweek = (notes, idx) => {
   const pegs = notesToPegs(notes);
-  let temp = pegs[idx];
-  let tweekStatus = 0;
+  let temp = pegs[idx], tweekStatus = 0;
 
   if (idx === 0) {
     pegs[idx] = pegs[1] - pegs[0] + pegs[6] - 12;
@@ -95,11 +93,15 @@ export const tweek = (notes, idx) => {
 };
 
 export const generateNeighbors = (node, visited) => {
-  const adjustedPegs = [];
-  const { notes, parentCenter, center } = node;
-  const parentNotes = node.parent ? node.parent.notes : null;
-  let neighborKeys = [];
-  let temp, parentTweekStatus;
+  const { notes, parentCenter, center } = node,
+        parentNotes = node.parent ? node.parent.notes : null,
+        adjustedPegs = [];
+  let neighborKeys = [], temp, parentTweekStatus;
+
+//Check if visited notes contain the tweeked notes
+//If so, check if the center we want to put it at is also occupied, this will tell us not to include this neighbor
+
+
 
   for (var i = 0; i < 7; i++) {
     temp = tweek(notes, i);
@@ -121,10 +123,10 @@ export const generateNeighbors = (node, visited) => {
       newKey.center = getCenter(center, DIRS[i]);
     })
   } else {
-    const deltaX = 2 * center.x - parentCenter.x;
-    const deltaY = 2 * center.y - parentCenter.y;
+    const deltaX = 2 * center.x - parentCenter.x,
+          deltaY = 2 * center.y - parentCenter.y;
     neighborKeys.forEach(newKey => {
-      if (isSameType(parentNotes, newKey.notes) && !isEqual(parentNotes, newKey.notes)) {
+      if (isSameType(parentNotes, newKey.notes)) {
         newKey.center = { x: deltaX, y: parentCenter.y };
       } else if (newKey.tweekStatus === parentTweekStatus) {
         newKey.center = { x: parentCenter.x, y: deltaY };
@@ -137,9 +139,8 @@ export const generateNeighbors = (node, visited) => {
 };
 
 export const buildKeyWheel = start => {
-  const queue = [start];
-  const result = [start];
-  const visited = [start.notes];
+  const queue = [start],
+        visited = [start];
   let currentNode, neighbors, newNode;
 
   while (visited.length < 36) {
@@ -147,21 +148,20 @@ export const buildKeyWheel = start => {
     if (!currentNode) return start;
     neighbors = generateNeighbors(currentNode, visited);
     neighbors.data.forEach(neighborKey => {
+      if (!neighborKey) return;
       newNode = new ScaleNode(neighborKey.notes, neighborKey.center);
-      newNode.rank = currentNode.rank + 1;
       currentNode.addChild(newNode);
       queue.push(newNode);
-      result.push(newNode);
-      visited.push(neighborKey.notes);
+      visited.push(newNode);
     });
   }
-  return result;
+  return visited;
 };
 
 export const keyReader = notes => {
   const pegs = notesToPegs(notes);
-  let intervals = [];
-  let root = pegs[0];
+  let intervals = [], rootIdx = pegs[0],
+      isMajorMatch, isMinorMatch, isNeaMatch;
 
   for (let i = 0; i < pegs.length; i++) {
     if (i === pegs.length - 1) {
@@ -172,27 +172,30 @@ export const keyReader = notes => {
   }
 
   for (let i = 0; i < 7; i++) {
-    let isMajorMatch = true;
-    let isMinorMatch = true;
-    let isNeaMatch = true;
+    isMajorMatch = true;
+    isMinorMatch = true;
+    isNeaMatch = true;
     for (let j = 0; j < intervals.length; j++) {
       if (intervals[j] !== MAJOR[j]) isMajorMatch = false;
       if (intervals[j] !== MELMINOR[j]) isMinorMatch = false;
       if (intervals[j] !== NEAPOLITAN[j]) isNeaMatch = false;
     }
     if (isMajorMatch) {
-      return `${NOTENAMES[root]} Maj`;
+      return `${NOTENAMES[rootIdx]} Maj`;
     } else if (isMinorMatch) {
-      return `${NOTENAMES[root]} mel`;
+      return `${NOTENAMES[rootIdx]} mel`;
     } else if (isNeaMatch) {
-      return `${NOTENAMES[root]} neo`;
+      return `${NOTENAMES[rootIdx]} neo`;
     }
-    root += intervals[0];
+    rootIdx += intervals[0];
     intervals = rotate(intervals);
   }
   return null
 };
 
+
+
+//private helper methods
 //////////////////////////////////////////////////////////////////
 
 export const isEqual = (notes1, notes2) => {
@@ -206,14 +209,25 @@ export const isEqual = (notes1, notes2) => {
   return false;
 };
 
-export const includesKey = (notesArr, key) => {
-  for (var i = 0; i < notesArr.length; i++) {
-    if (isEqual(notesArr[i], key)) return true;
+export const includesKey = (nodes, notes) => {
+  let notesArr = nodes.map(node => node.notes);
+  for (let i = 0; i < notesArr.length; i++) {
+    if (isEqual(notesArr[i], notes)) return true;
   }
   return false;
 };
 
-export const notesToPegs = (notes) => {
+// export const includesCenter = (nodes, center) => {
+//   let centersArr = nodes.map(node => node.center);
+//   for (let i = 0; i < centersArr.length; i++) {
+//     if (centersArr[i].x === center.x && centersArr[i].y === center.y) {
+//       return true;
+//     }
+//   }
+//   return false;
+// };
+
+export const notesToPegs = notes => {
   const pegs = [];
   notes.forEach((note, i) => {
     if (note) pegs.push(i)
@@ -221,7 +235,7 @@ export const notesToPegs = (notes) => {
   return pegs;
 };
 
-export const pegsToNotes = (pegs) => {
+export const pegsToNotes = pegs => {
   const notes = Array(...EMPTY);
   pegs.forEach(peg => {
     if (peg < 0) peg += 12;
@@ -255,12 +269,12 @@ export const rotate = arr => {
   return result;
 };
 
-export const getCenter = (center, parentDirection, d = 80) => {
+export const getCenter = (center, parentDirection, d = 90) => {
   const result = {
-    "L": { x: center.x + d, y: center.y + d },
-    "B": { x: center.x + d, y: center.y - d },
-    "T": { x: center.x - d, y: center.y + d },
-    "R": { x: center.x - d, y: center.y - d }
+    "TL": { x: center.x + d, y: center.y + d },
+    "BL": { x: center.x + d, y: center.y - d },
+    "TR": { x: center.x - d, y: center.y + d },
+    "BR": { x: center.x - d, y: center.y - d }
   };
   return result[parentDirection];
 };

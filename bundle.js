@@ -943,7 +943,7 @@ module.exports = focusNode;
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.getCenter = exports.rotate = exports.isSameType = exports.pegsToNotes = exports.notesToPegs = exports.includesKey = exports.isEqual = exports.keyReader = exports.buildKeyWheel = exports.generateNeighbors = exports.tweek = exports.ScaleNode = exports.DIRS = exports.EMPTY = exports.CMAJOR = undefined;
+exports.getCenter = exports.rotate = exports.isSameType = exports.pegsToNotes = exports.notesToPegs = exports.includesKey = exports.isEqual = exports.keyReader = exports.buildKeyWheel = exports.generateNeighbors = exports.tweek = exports.ScaleNode = exports.NEAPOLITAN = exports.MELMINOR = exports.MAJOR = exports.NOTENAMES = exports.EMPTY = exports.CMAJOR = exports.DIRS = undefined;
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
@@ -951,15 +951,13 @@ var _lodash = __webpack_require__(30);
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-var CMAJOR = exports.CMAJOR = [true, false, true, false, true, true, false, true, false, true, false, true];
-var EMPTY = exports.EMPTY = [false, false, false, false, false, false, false, false, false, false, false, false];
-var NOTENAMES = ["C", "Db", "D", "Eb", "E", "F", "Gb", "G", "Ab", "A", "Bb", "B"];
-
-var DIRS = exports.DIRS = ["L", "T", "B", "R"];
-
-var MAJOR = [2, 2, 1, 2, 2, 2, 1];
-var MELMINOR = [2, 1, 2, 2, 2, 2, 1];
-var NEAPOLITAN = [1, 2, 2, 2, 2, 2, 1];
+var DIRS = exports.DIRS = ["TL", "TR", "BL", "BR"],
+    CMAJOR = exports.CMAJOR = [true, false, true, false, true, true, false, true, false, true, false, true],
+    EMPTY = exports.EMPTY = [false, false, false, false, false, false, false, false, false, false, false, false],
+    NOTENAMES = exports.NOTENAMES = ["C", "Db", "D", "Eb", "E", "F", "Gb", "G", "Ab", "A", "Bb", "B"],
+    MAJOR = exports.MAJOR = [2, 2, 1, 2, 2, 2, 1],
+    MELMINOR = exports.MELMINOR = [2, 1, 2, 2, 2, 2, 1],
+    NEAPOLITAN = exports.NEAPOLITAN = [1, 2, 2, 2, 2, 2, 1];
 
 var ScaleNode = exports.ScaleNode = function () {
   function ScaleNode() {
@@ -981,6 +979,7 @@ var ScaleNode = exports.ScaleNode = function () {
     value: function addChild(node) {
       node.parent = this;
       node.parentCenter = this.center;
+      node.rank = this.rank + 1;
       this.children.push(node);
     }
   }, {
@@ -988,8 +987,8 @@ var ScaleNode = exports.ScaleNode = function () {
     value: function removeChild(node) {
       node.parent = null;
       node.parentCenter = null;
-      var idx = this.children.indexOf(node);
-      this.children.splice(idx, 1);
+      node.rank = 0;
+      this.children.splice(this.children.indexOf(node), 1);
     }
   }]);
 
@@ -998,8 +997,8 @@ var ScaleNode = exports.ScaleNode = function () {
 
 var tweek = exports.tweek = function tweek(notes, idx) {
   var pegs = notesToPegs(notes);
-  var temp = pegs[idx];
-  var tweekStatus = 0;
+  var temp = pegs[idx],
+      tweekStatus = 0;
 
   if (idx === 0) {
     pegs[idx] = pegs[1] - pegs[0] + pegs[6] - 12;
@@ -1019,15 +1018,19 @@ var tweek = exports.tweek = function tweek(notes, idx) {
 };
 
 var generateNeighbors = exports.generateNeighbors = function generateNeighbors(node, visited) {
-  var adjustedPegs = [];
   var notes = node.notes,
       parentCenter = node.parentCenter,
-      center = node.center;
+      center = node.center,
+      parentNotes = node.parent ? node.parent.notes : null,
+      adjustedPegs = [];
 
-  var parentNotes = node.parent ? node.parent.notes : null;
-  var neighborKeys = [];
-  var temp = void 0,
+  var neighborKeys = [],
+      temp = void 0,
       parentTweekStatus = void 0;
+
+  //Check if visited notes contain the tweeked notes
+  //If so, check if the center we want to put it at is also occupied, this will tell us not to include this neighbor
+
 
   for (var i = 0; i < 7; i++) {
     temp = tweek(notes, i);
@@ -1049,10 +1052,10 @@ var generateNeighbors = exports.generateNeighbors = function generateNeighbors(n
       newKey.center = getCenter(center, DIRS[i]);
     });
   } else {
-    var deltaX = 2 * center.x - parentCenter.x;
-    var deltaY = 2 * center.y - parentCenter.y;
+    var deltaX = 2 * center.x - parentCenter.x,
+        deltaY = 2 * center.y - parentCenter.y;
     neighborKeys.forEach(function (newKey) {
-      if (isSameType(parentNotes, newKey.notes) && !isEqual(parentNotes, newKey.notes)) {
+      if (isSameType(parentNotes, newKey.notes)) {
         newKey.center = { x: deltaX, y: parentCenter.y };
       } else if (newKey.tweekStatus === parentTweekStatus) {
         newKey.center = { x: parentCenter.x, y: deltaY };
@@ -1065,9 +1068,8 @@ var generateNeighbors = exports.generateNeighbors = function generateNeighbors(n
 };
 
 var buildKeyWheel = exports.buildKeyWheel = function buildKeyWheel(start) {
-  var queue = [start];
-  var result = [start];
-  var visited = [start.notes];
+  var queue = [start],
+      visited = [start];
   var currentNode = void 0,
       neighbors = void 0,
       newNode = void 0;
@@ -1077,21 +1079,23 @@ var buildKeyWheel = exports.buildKeyWheel = function buildKeyWheel(start) {
     if (!currentNode) return start;
     neighbors = generateNeighbors(currentNode, visited);
     neighbors.data.forEach(function (neighborKey) {
+      if (!neighborKey) return;
       newNode = new ScaleNode(neighborKey.notes, neighborKey.center);
-      newNode.rank = currentNode.rank + 1;
       currentNode.addChild(newNode);
       queue.push(newNode);
-      result.push(newNode);
-      visited.push(neighborKey.notes);
+      visited.push(newNode);
     });
   }
-  return result;
+  return visited;
 };
 
 var keyReader = exports.keyReader = function keyReader(notes) {
   var pegs = notesToPegs(notes);
-  var intervals = [];
-  var root = pegs[0];
+  var intervals = [],
+      rootIdx = pegs[0],
+      isMajorMatch = void 0,
+      isMinorMatch = void 0,
+      isNeaMatch = void 0;
 
   for (var i = 0; i < pegs.length; i++) {
     if (i === pegs.length - 1) {
@@ -1102,27 +1106,28 @@ var keyReader = exports.keyReader = function keyReader(notes) {
   }
 
   for (var _i = 0; _i < 7; _i++) {
-    var isMajorMatch = true;
-    var isMinorMatch = true;
-    var isNeaMatch = true;
+    isMajorMatch = true;
+    isMinorMatch = true;
+    isNeaMatch = true;
     for (var j = 0; j < intervals.length; j++) {
       if (intervals[j] !== MAJOR[j]) isMajorMatch = false;
       if (intervals[j] !== MELMINOR[j]) isMinorMatch = false;
       if (intervals[j] !== NEAPOLITAN[j]) isNeaMatch = false;
     }
     if (isMajorMatch) {
-      return NOTENAMES[root] + " Maj";
+      return NOTENAMES[rootIdx] + " Maj";
     } else if (isMinorMatch) {
-      return NOTENAMES[root] + " mel";
+      return NOTENAMES[rootIdx] + " mel";
     } else if (isNeaMatch) {
-      return NOTENAMES[root] + " neo";
+      return NOTENAMES[rootIdx] + " neo";
     }
-    root += intervals[0];
+    rootIdx += intervals[0];
     intervals = rotate(intervals);
   }
   return null;
 };
 
+//private helper methods
 //////////////////////////////////////////////////////////////////
 
 var isEqual = exports.isEqual = function isEqual(notes1, notes2) {
@@ -1136,12 +1141,25 @@ var isEqual = exports.isEqual = function isEqual(notes1, notes2) {
   return false;
 };
 
-var includesKey = exports.includesKey = function includesKey(notesArr, key) {
+var includesKey = exports.includesKey = function includesKey(nodes, notes) {
+  var notesArr = nodes.map(function (node) {
+    return node.notes;
+  });
   for (var i = 0; i < notesArr.length; i++) {
-    if (isEqual(notesArr[i], key)) return true;
+    if (isEqual(notesArr[i], notes)) return true;
   }
   return false;
 };
+
+// export const includesCenter = (nodes, center) => {
+//   let centersArr = nodes.map(node => node.center);
+//   for (let i = 0; i < centersArr.length; i++) {
+//     if (centersArr[i].x === center.x && centersArr[i].y === center.y) {
+//       return true;
+//     }
+//   }
+//   return false;
+// };
 
 var notesToPegs = exports.notesToPegs = function notesToPegs(notes) {
   var pegs = [];
@@ -1186,13 +1204,13 @@ var rotate = exports.rotate = function rotate(arr) {
 };
 
 var getCenter = exports.getCenter = function getCenter(center, parentDirection) {
-  var d = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : 80;
+  var d = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : 90;
 
   var result = {
-    "L": { x: center.x + d, y: center.y + d },
-    "B": { x: center.x + d, y: center.y - d },
-    "T": { x: center.x - d, y: center.y + d },
-    "R": { x: center.x - d, y: center.y - d }
+    "TL": { x: center.x + d, y: center.y + d },
+    "BL": { x: center.x + d, y: center.y - d },
+    "TR": { x: center.x - d, y: center.y + d },
+    "BR": { x: center.x - d, y: center.y - d }
   };
   return result[parentDirection];
 };
