@@ -45,12 +45,16 @@ These all have the commonality that they are spaced out, there are no clumps of 
 
 ## OK, so what is this thing?
 
-The Key Wheel is a network of 7 note scales. The choices of the notes on the clock are shown at each vertex, and they are connected to scales on their diagonals, which only differ by one pitch moved one clock step up or down. Some simple rules, discovered during my mathematical research at UC Davis, are baked into which notes are able to be adjusted, and the network yielded describes sonic distance of all Diatonic (Major, Ionian), Melodic Minor (Altered), and Wholetone (Neapolitan) scales.
+The Key Wheel is a network of 7 note scales. The choices of the notes on the clock are shown at each vertex, and they are connected to scales on their diagonals, which only differ by one pitch moved one clock step up or down. Some simple rules, discovered during my mathematical research at UC Davis, are baked into which notes are able to be adjusted, and the network yielded provides a visual understanding of sonic "distance" between all Diatonic (Major, Ionian), Melodic Minor (Altered), and Wholetone (Neapolitan) scales.
 
 This tool can be used by musicians in a variety of ways:
 
 1. Like the Circle of Fifths? Who doesn't! You may notice it embedded in the central scales horizontally, traveling from Major key to Major Key. This clearly isn't the only way to get around! There are plenty of other cycles that make just as much sense in this perspective, and are worthy of experimentation.
 
-2. Jamming with your friends or writing a song? What chord should I go to next. Plug in the notes you currently have and let the Key Wheel give you suggestions.
+2. Jamming with your friends or writing a song? What chord should I go to next? Plug in the notes you currently have and let the Key Wheel give you suggestions.
 
 3. The Key Wheel introduces a concept of distance between certain scale choices, and therefore sound. Musicians that write music that changes keys can use it to traverse the scales in clever ways towards a desired "far away" place.
+
+### Future Features...
+
+- Currently working on extending the Key Wheel to involve the other Cool Scales and Honorary Choices. So far I've discovered a new set of rules that adds Harmonic Major and Harmonic Minor to the picture, but requires a 3 dimensional rendering.
