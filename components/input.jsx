@@ -6,7 +6,7 @@ class Input extends React.Component {
     super(props);
     this.state = {
       notes: Array(...EMPTY)
-    }
+    };
   }
 
   toggleNote(i) {
@@ -26,10 +26,7 @@ class Input extends React.Component {
         {notes.map((note, i) => {
           return (
             <div key={i}
-              onClick={e => {
-                e.preventDefault();
-                this.toggleNote(i);
-              }}
+              onClick={() => this.toggleNote(i)}
               className="input-note"
               style={{
               position: "absolute",

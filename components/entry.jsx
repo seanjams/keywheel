@@ -10,23 +10,23 @@ class Root extends React.Component {
     const start = new ScaleNode(pegsToNotes([0,2,4,5,7,9,11]), { x: 720, y: 350 });
     this.state = {
       scales: buildKeyWheel(start),
-      selectedNotes: []
+      selected: []
     };
     this.handleClick = this.handleClick.bind(this);
   }
 
   handleClick(i) {
-    const selectedNotes = [...this.state.selectedNotes];
-    if (selectedNotes.includes(i)) {
-      selectedNotes.splice(selectedNotes.indexOf(i), 1);
+    const selected = [...this.state.selected];
+    if (selected.includes(i)) {
+      selected.splice(selected.indexOf(i), 1);
     } else {
-      selectedNotes.push(i);
+      selected.push(i);
     }
-    this.setState({ selectedNotes });
+    this.setState({ selected });
   }
 
   render() {
-    const { selectedNotes, scales } = this.state;
+    const { selected, scales } = this.state;
     return (
       <div>
         <Input handleClick={this.handleClick} />
@@ -35,12 +35,12 @@ class Root extends React.Component {
         }}>
           {scales.map((node, i) => {
             let isMatch = true;
-            selectedNotes.forEach(i => {
+            selected.forEach(i => {
               if (!node.notes[i]) isMatch = false;
             });
-            let result = isMatch ? selectedNotes: [];
+            let selectedNotes = isMatch ? selected: [];
             return (
-              <Scale key={i} node={node} selectedNotes={result} handleClick={this.handleClick}/>
+              <Scale key={i} node={node} selectedNotes={selectedNotes} handleClick={this.handleClick}/>
             )
           })}
         </div>
