@@ -18,16 +18,16 @@ class Input extends React.Component {
   }
 
   componentDidMount() {
-    // this.updateCanvas();
+    this.updateCanvas();
   }
 
   componentDidUpdate() {
-    // this.updateCanvas();
+    this.updateCanvas();
   }
 
   updateCanvas() {
     const ctx = this.refs.canvas.getContext('2d');
-    const center = { x: 120, y: 300 }
+    const center = { x: 80, y: 80 }
     const pegs = notesToPegs(this.state.notes);
     const start = {
       x: center.x + 80 * Math.sin(Math.PI * pegs[0] / 6),
@@ -79,7 +79,11 @@ class Input extends React.Component {
             }}>{i}</span></div>
           )
         })}
-        <canvas id="c" ref="canvas" width="200px" height="200px" />
+        <canvas id="c" ref="canvas" width="200" height="200" style={{
+          position: "absolute",
+          top: center.y - scaleRadius + noteRadius / 2,
+          left: center.x - scaleRadius + noteRadius / 2
+        }}/>
       </div>
     )
   }

@@ -1335,30 +1335,6 @@ var Root = function (_React$Component) {
 document.addEventListener('DOMContentLoaded', function () {
   var root = document.getElementById('root');
   _reactDom2.default.render(_react2.default.createElement(Root, null), root);
-
-  // const ctx = this.refs.canvas.getContext('2d');
-  var ctx = document.getElementById("c").getContext('2d');
-  var center = { x: 120, y: 300 };
-  var pegs = (0, _util.notesToPegs)(_util.CMAJOR);
-  var start = {
-    x: center.x + 80 * Math.sin(Math.PI * pegs[0] / 6),
-    y: center.y - 80 * Math.cos(Math.PI * pegs[0] / 6)
-  };
-  ctx.clearRect(center.x - 100, center.y - 100, 200, 200);
-  // ctx.strokeStyle = 'blue';
-  ctx.beginPath();
-  ctx.moveTo(start.x, start.y);
-  pegs.forEach(function (peg, i) {
-    if (i === 0) return;
-    var newPos = {
-      x: center.x + 80 * Math.sin(Math.PI * peg / 6),
-      y: center.y - 80 * Math.cos(Math.PI * peg / 6)
-    };
-    var x = ctx.lineTo(newPos.x, newPos.y);
-  });
-  ctx.closePath(); // draws last line of the triangle
-  ctx.stroke();
-  console.log("SHOULDVE DONE SOMETHING");
 });
 
 /***/ }),
@@ -36000,18 +35976,18 @@ var Input = function (_React$Component) {
   }, {
     key: 'componentDidMount',
     value: function componentDidMount() {
-      // this.updateCanvas();
+      this.updateCanvas();
     }
   }, {
     key: 'componentDidUpdate',
     value: function componentDidUpdate() {
-      // this.updateCanvas();
+      this.updateCanvas();
     }
   }, {
     key: 'updateCanvas',
     value: function updateCanvas() {
       var ctx = this.refs.canvas.getContext('2d');
-      var center = { x: 120, y: 300 };
+      var center = { x: 80, y: 80 };
       var pegs = (0, _util.notesToPegs)(this.state.notes);
       var start = {
         x: center.x + 80 * Math.sin(Math.PI * pegs[0] / 6),
@@ -36076,7 +36052,11 @@ var Input = function (_React$Component) {
             )
           );
         }),
-        _react2.default.createElement('canvas', { id: 'c', ref: 'canvas', width: '200px', height: '200px' })
+        _react2.default.createElement('canvas', { id: 'c', ref: 'canvas', width: '200', height: '200', style: {
+            position: "absolute",
+            top: center.y - scaleRadius + noteRadius / 2,
+            left: center.x - scaleRadius + noteRadius / 2
+          } })
       );
     }
   }]);
