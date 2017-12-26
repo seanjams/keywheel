@@ -2,7 +2,7 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import Scale from './scale';
 import Input from './input';
-import { ScaleNode, buildKeyWheel, pegsToNotes, EMPTY } from './util';
+import { ScaleNode, buildKeyWheel, pegsToNotes, notesToPegs, CMAJOR, EMPTY } from './util';
 
 class Root extends React.Component {
   constructor(props) {
@@ -52,4 +52,28 @@ class Root extends React.Component {
 document.addEventListener('DOMContentLoaded', () => {
   const root = document.getElementById('root');
   ReactDOM.render(<Root />, root);
+
+  // const ctx = this.refs.canvas.getContext('2d');
+  const ctx = document.getElementById("c").getContext('2d');
+  const center = { x: 120, y: 300 };
+  const pegs = notesToPegs(CMAJOR);
+  const start = {
+    x: center.x + 80 * Math.sin(Math.PI * pegs[0] / 6),
+    y: center.y - 80 * Math.cos(Math.PI * pegs[0] / 6)
+  };
+  ctx.clearRect(center.x - 100, center.y - 100, 200, 200);
+  // ctx.strokeStyle = 'blue';
+  ctx.beginPath();
+  ctx.moveTo(start.x, start.y);
+  pegs.forEach((peg, i) => {
+    if (i === 0) return;
+    const newPos = {
+      x: center.x + 80 * Math.sin(Math.PI * peg / 6),
+      y: center.y - 80 * Math.cos(Math.PI * peg / 6)
+    };
+    let x = ctx.lineTo(newPos.x, newPos.y);
+  })
+  ctx.closePath(); // draws last line of the triangle
+  ctx.stroke();
+  console.log("SHOULDVE DONE SOMETHING");
 });

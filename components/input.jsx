@@ -1,5 +1,6 @@
 import React from 'react';
-import { EMPTY } from './util';
+import Chord from './chord';
+import { EMPTY, notesToPegs } from './util';
 
 class Input extends React.Component {
   constructor(props) {
@@ -16,10 +17,44 @@ class Input extends React.Component {
     this.setState({ notes });
   }
 
+  componentDidMount() {
+    // this.updateCanvas();
+  }
+
+  componentDidUpdate() {
+    // this.updateCanvas();
+  }
+
+  updateCanvas() {
+    const ctx = this.refs.canvas.getContext('2d');
+    const center = { x: 120, y: 300 }
+    const pegs = notesToPegs(this.state.notes);
+    const start = {
+      x: center.x + 80 * Math.sin(Math.PI * pegs[0] / 6),
+      y: center.y - 80 * Math.cos(Math.PI * pegs[0] / 6)
+    };
+    ctx.clearRect(center.x - 100, center.y - 100, 200, 200);
+    ctx.strokeStyle = 'blue';
+    ctx.beginPath();
+    ctx.moveTo(start.x, start.y);
+    pegs.forEach((peg, i) => {
+      if (i === 0) return;
+      const newPos = {
+        x: center.x + 80 * Math.sin(Math.PI * peg / 6),
+        y: center.y - 80 * Math.cos(Math.PI * peg / 6)
+      };
+      let x = ctx.lineTo(newPos.x, newPos.y);
+      console.log(ctx);
+    })
+    ctx.closePath(); // draws last line of the triangle
+    ctx.stroke();
+    console.log("SHOULDVE DONE SOMETHING");
+  }
+
   render() {
     const noteRadius = 30;
     const scaleRadius = 80;
-    const center = { x: 120, y: 300 }
+    const center = { x: 120, y: 300 };
     const { notes } = this.state;
     return (
       <div>
@@ -44,6 +79,7 @@ class Input extends React.Component {
             }}>{i}</span></div>
           )
         })}
+        <canvas id="c" ref="canvas" width="200px" height="200px" />
       </div>
     )
   }
