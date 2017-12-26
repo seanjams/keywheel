@@ -1,12 +1,12 @@
 import React from 'react';
 import Chord from './chord';
-import { EMPTY, notesToPegs } from './util';
+import { EMPTY, notesToPegs, chordColor } from './util';
 
 class Input extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      notes: Array(...EMPTY)
+      notes: [...EMPTY]
     };
   }
 
@@ -27,28 +27,29 @@ class Input extends React.Component {
 
   updateCanvas() {
     const ctx = this.refs.canvas.getContext('2d');
-    const center = { x: 80, y: 80 }
+    const radius = 80;
     const pegs = notesToPegs(this.state.notes);
     const start = {
-      x: center.x + 80 * Math.sin(Math.PI * pegs[0] / 6),
-      y: center.y - 80 * Math.cos(Math.PI * pegs[0] / 6)
+      x: radius * (1 + Math.sin(Math.PI * pegs[0] / 6)),
+      y: radius * (1 - Math.cos(Math.PI * pegs[0] / 6))
     };
-    ctx.clearRect(center.x - 100, center.y - 100, 200, 200);
+    ctx.clearRect(0, 0, 200, 200);
     ctx.strokeStyle = 'blue';
+    ctx.fillStyle = chordColor(this.state.notes);
+    //draw chord
     ctx.beginPath();
     ctx.moveTo(start.x, start.y);
     pegs.forEach((peg, i) => {
       if (i === 0) return;
       const newPos = {
-        x: center.x + 80 * Math.sin(Math.PI * peg / 6),
-        y: center.y - 80 * Math.cos(Math.PI * peg / 6)
+        x: radius * (1 + Math.sin(Math.PI * peg / 6)),
+        y: radius * (1 - Math.cos(Math.PI * peg / 6))
       };
       let x = ctx.lineTo(newPos.x, newPos.y);
-      console.log(ctx);
     })
-    ctx.closePath(); // draws last line of the triangle
+    ctx.closePath();
     ctx.stroke();
-    console.log("SHOULDVE DONE SOMETHING");
+    ctx.fill();
   }
 
   render() {
@@ -68,7 +69,7 @@ class Input extends React.Component {
               width: noteRadius,
               height: noteRadius,
               borderRadius: noteRadius,
-              backgroundColor: note ? "yellow": "#eee",
+              backgroundColor: note ? "yellow": "transparent",
               border: "1px solid black",
               textAlign: "center",
               top: center.y - scaleRadius * Math.cos(Math.PI * i / 6),
@@ -79,7 +80,10 @@ class Input extends React.Component {
             }}>{i}</span></div>
           )
         })}
-        <canvas id="c" ref="canvas" width="200" height="200" style={{
+        <canvas ref="canvas"
+          width={2 * scaleRadius}
+          height={2 * scaleRadius}
+          style={{
           position: "absolute",
           top: center.y - scaleRadius + noteRadius / 2,
           left: center.x - scaleRadius + noteRadius / 2

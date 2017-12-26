@@ -279,6 +279,33 @@ export const getCenter = (center, parentDirection, d = 90) => {
   return result[parentDirection];
 };
 
+export const chordColor = notes => {
+  const chords = Object.keys(samples);
+  for (var i = 0; i < chords.length; i++) {
+    if (isSameType(notes, pegsToNotes(samples[chords[i]]))) {
+      return chordColors[chords[i]];
+    }
+  }
+  return "transparent";
+};
+
+const samples = {
+  majorTriad: [0,4,7],
+  minorTriad: [0,3,7],
+  major7: [0,4,7,11],
+  minor7: [0,3,7,10],
+  dominant: [0,4,7,10],
+  diminished: [0,3,6,10]
+};
+
+const chordColors = {
+  majorTriad: 'rgba(0,0,255,0.5)',
+  minorTriad: 'rgba(255,0,0,0.5)',
+  major7: 'rgba(0,255,255,0.5)',
+  minor7: 'rgba(255,255,0,0.5)',
+  dominant: 'rgba(255,0,255,0.5)',
+  diminished: 'rgba(0,255,0,0.5)'
+};
 
 //
 // export const copy = arr => {

@@ -10,23 +10,20 @@ class Root extends React.Component {
     const start = new ScaleNode(pegsToNotes([0,2,4,5,7,9,11]), { x: 720, y: 350 });
     this.state = {
       scales: buildKeyWheel(start),
-      selected: []
+      selected: [...EMPTY]
     };
     this.handleClick = this.handleClick.bind(this);
   }
 
   handleClick(i) {
     const selected = [...this.state.selected];
-    if (selected.includes(i)) {
-      selected.splice(selected.indexOf(i), 1);
-    } else {
-      selected.push(i);
-    }
+    selected[i] = !selected[i];
     this.setState({ selected });
   }
 
   render() {
     const { selected, scales } = this.state;
+    const pegs = notesToPegs(selected);
     return (
       <div>
         <Input handleClick={this.handleClick} />
@@ -35,7 +32,7 @@ class Root extends React.Component {
         }}>
           {scales.map((node, i) => {
             let isMatch = true;
-            selected.forEach(i => {
+            pegs.forEach(i => {
               if (!node.notes[i]) isMatch = false;
             });
             let selectedNotes = isMatch ? selected: [];
