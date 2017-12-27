@@ -1,6 +1,6 @@
 import React from 'react';
 import Chord from './chord';
-import { EMPTY, notesToPegs, chordColor } from './util';
+import { NOTE_NAMES, EMPTY, notesToPegs, chordReader } from './util';
 
 class Input extends React.Component {
   constructor(props) {
@@ -33,9 +33,9 @@ class Input extends React.Component {
       x: radius * (1 + Math.sin(Math.PI * pegs[0] / 6)),
       y: radius * (1 - Math.cos(Math.PI * pegs[0] / 6))
     };
-    ctx.clearRect(0, 0, 200, 200);
+    ctx.clearRect(0, 0, 2 * radius, 2 * radius);
     ctx.strokeStyle = 'blue';
-    ctx.fillStyle = chordColor(this.state.notes);
+    ctx.fillStyle = chordReader(this.state.notes).color;
     //draw chord
     ctx.beginPath();
     ctx.moveTo(start.x, start.y);
@@ -77,7 +77,7 @@ class Input extends React.Component {
             }}><span style={{
               position: "relative",
               top: "0.4em"
-            }}>{i}</span></div>
+            }}>{ NOTE_NAMES[i] }</span></div>
           )
         })}
         <canvas ref="canvas"

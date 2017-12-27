@@ -637,21 +637,39 @@ module.exports = checkPropTypes;
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.chordColor = exports.getCenter = exports.rotate = exports.isSameType = exports.pegsToNotes = exports.notesToPegs = exports.includesKey = exports.isEqual = exports.keyReader = exports.buildKeyWheel = exports.generateNeighbors = exports.tweek = exports.ScaleNode = exports.NEAPOLITAN = exports.MELMINOR = exports.MAJOR = exports.NOTENAMES = exports.EMPTY = exports.CMAJOR = exports.DIRS = undefined;
+exports.chordReader = exports.getCenter = exports.rotate = exports.isSameType = exports.pegsToNotes = exports.notesToPegs = exports.includesKey = exports.isEqual = exports.keyReader = exports.buildKeyWheel = exports.generateNeighbors = exports.tweek = exports.ScaleNode = exports.CHORD_COLOR = exports.SHAPE = exports.NEAPOLITAN = exports.MELMINOR = exports.MAJOR = exports.NOTE_NAMES = exports.EMPTY = exports.CMAJOR = exports.DIRS = undefined;
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
 var _lodash = __webpack_require__(29);
+
+function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } }
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 var DIRS = exports.DIRS = ["TL", "TR", "BL", "BR"],
     CMAJOR = exports.CMAJOR = [true, false, true, false, true, true, false, true, false, true, false, true],
     EMPTY = exports.EMPTY = [false, false, false, false, false, false, false, false, false, false, false, false],
-    NOTENAMES = exports.NOTENAMES = ["C", "Db", "D", "Eb", "E", "F", "Gb", "G", "Ab", "A", "Bb", "B"],
+    NOTE_NAMES = exports.NOTE_NAMES = ["C", "Db", "D", "Eb", "E", "F", "Gb", "G", "Ab", "A", "Bb", "B"],
     MAJOR = exports.MAJOR = [2, 2, 1, 2, 2, 2, 1],
     MELMINOR = exports.MELMINOR = [2, 1, 2, 2, 2, 2, 1],
-    NEAPOLITAN = exports.NEAPOLITAN = [1, 2, 2, 2, 2, 2, 1];
+    NEAPOLITAN = exports.NEAPOLITAN = [1, 2, 2, 2, 2, 2, 1],
+    SHAPE = exports.SHAPE = {
+  majorTriad: [0, 4, 7],
+  minorTriad: [0, 3, 7],
+  major7: [0, 4, 7, 11],
+  minor7: [0, 3, 7, 10],
+  dominant: [0, 4, 7, 10],
+  diminished: [0, 3, 6, 10]
+},
+    CHORD_COLOR = exports.CHORD_COLOR = {
+  majorTriad: 'rgba(0,0,255,0.5)',
+  minorTriad: 'rgba(255,0,0,0.5)',
+  major7: 'rgba(0,255,255,0.5)',
+  minor7: 'rgba(255,255,0,0.5)',
+  dominant: 'rgba(255,0,255,0.5)',
+  diminished: 'rgba(0,255,0,0.5)'
+};
 
 var ScaleNode = exports.ScaleNode = function () {
   function ScaleNode() {
@@ -785,8 +803,8 @@ var buildKeyWheel = exports.buildKeyWheel = function buildKeyWheel(start) {
 
 var keyReader = exports.keyReader = function keyReader(notes) {
   var pegs = notesToPegs(notes);
+  var result = { name: null, rootIdx: pegs[0] };
   var intervals = [],
-      rootIdx = pegs[0],
       isMajorMatch = void 0,
       isMinorMatch = void 0,
       isNeaMatch = void 0;
@@ -809,13 +827,17 @@ var keyReader = exports.keyReader = function keyReader(notes) {
       if (intervals[j] !== NEAPOLITAN[j]) isNeaMatch = false;
     }
     if (isMajorMatch) {
-      return NOTENAMES[rootIdx] + " Maj";
+      result.name = NOTE_NAMES[result.rootIdx] + " Maj";
+      return result;
     } else if (isMinorMatch) {
-      return NOTENAMES[rootIdx] + " mel";
+      result.name = NOTE_NAMES[result.rootIdx] + " mel";
+      return result;
     } else if (isNeaMatch) {
-      return NOTENAMES[rootIdx] + " neo";
+      result.name = NOTE_NAMES[result.rootIdx] + " neo";
+      return result;
     }
-    rootIdx += intervals[0];
+
+    result.rootIdx += intervals[0];
     intervals = rotate(intervals);
   }
   return null;
@@ -900,41 +922,34 @@ var rotate = exports.rotate = function rotate(arr) {
 var getCenter = exports.getCenter = function getCenter(center, parentDirection) {
   var d = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : 90;
 
-  var result = {
+  var deltas = {
     "TL": { x: center.x + d, y: center.y + d },
     "BL": { x: center.x + d, y: center.y - d },
     "TR": { x: center.x - d, y: center.y + d },
     "BR": { x: center.x - d, y: center.y - d }
   };
-  return result[parentDirection];
+  return deltas[parentDirection];
 };
 
-var chordColor = exports.chordColor = function chordColor(notes) {
-  var chords = Object.keys(samples);
+var chordReader = exports.chordReader = function chordReader(notes) {
+  var chords = Object.keys(SHAPE);
+  var result = { color: "transparent", rootIdx: 0 };
+  var chordShape = void 0;
   for (var i = 0; i < chords.length; i++) {
-    if (isSameType(notes, pegsToNotes(samples[chords[i]]))) {
-      return chordColors[chords[i]];
+    chordShape = pegsToNotes(SHAPE[chords[i]]);
+    if (isSameType(notes, chordShape)) {
+      result.color = CHORD_COLOR[chords[i]];
+      var rootIdx = 0,
+          temp = [].concat(_toConsumableArray(notes));
+      while (!isEqual(temp, chordShape)) {
+        temp = rotate(temp);
+        result.rootIdx += 1;
+      }
+      break;
     }
   }
-  return "transparent";
-};
-
-var samples = {
-  majorTriad: [0, 4, 7],
-  minorTriad: [0, 3, 7],
-  major7: [0, 4, 7, 11],
-  minor7: [0, 3, 7, 10],
-  dominant: [0, 4, 7, 10],
-  diminished: [0, 3, 6, 10]
-};
-
-var chordColors = {
-  majorTriad: 'rgba(0,0,255,0.5)',
-  minorTriad: 'rgba(255,0,0,0.5)',
-  major7: 'rgba(0,255,255,0.5)',
-  minor7: 'rgba(255,255,0,0.5)',
-  dominant: 'rgba(255,0,255,0.5)',
-  diminished: 'rgba(0,255,0,0.5)'
+  if (result.color === "transparent") result.rootIdx = -1;
+  return result;
 };
 
 //
@@ -18728,9 +18743,9 @@ var Scale = function (_React$Component) {
         x: radius * (1 + Math.sin(Math.PI * pegs[0] / 6)),
         y: radius * (1 - Math.cos(Math.PI * pegs[0] / 6))
       };
-      ctx.clearRect(0, 0, 200, 200);
-      ctx.strokeStyle = 'blue';
-      ctx.fillStyle = (0, _util.chordColor)(selectedNotes);
+      ctx.clearRect(0, 0, 2 * radius, 2 * radius);
+      ctx.strokeStyle = 'green';
+      ctx.fillStyle = (0, _util.chordReader)(selectedNotes).color;
       //draw chord
       ctx.beginPath();
       ctx.moveTo(start.x, start.y);
@@ -18749,24 +18764,34 @@ var Scale = function (_React$Component) {
   }, {
     key: 'render',
     value: function render() {
-      var noteRadius = 14;
-      var scaleRadius = 36;
+      var noteRadius = 14,
+          scaleRadius = 36;
       var _props = this.props,
           node = _props.node,
-          selectedNotes = _props.selectedNotes;
+          selectedNotes = _props.selectedNotes,
+          rootReferenceEnabled = _props.rootReferenceEnabled;
       var rank = node.rank,
           notes = node.notes,
           center = node.center;
 
-      return _react2.default.createElement(
+      var _keyReader = (0, _util.keyReader)(notes),
+          name = _keyReader.name,
+          rootIdx = _keyReader.rootIdx;
+
+      var chordRootIdx = (0, _util.chordReader)(selectedNotes).rootIdx;
+      var pegs = (0, _util.notesToPegs)(notes);
+      while (pegs[0] !== rootIdx) {
+        pegs = (0, _util.rotate)(pegs);
+      }return _react2.default.createElement(
         'div',
         null,
         notes.map(function (note, i) {
-          var noteColor = void 0;
+          var color = i === chordRootIdx ? "red" : "black";
+          var backgroundColor = void 0;
           if (selectedNotes[i]) {
-            noteColor = "yellow";
+            backgroundColor = "yellow";
           } else {
-            noteColor = note ? "#AAF" : "transparent";
+            backgroundColor = note ? "#AAF" : "transparent";
           }
           return _react2.default.createElement(
             'div',
@@ -18776,8 +18801,9 @@ var Scale = function (_React$Component) {
                 width: noteRadius,
                 height: noteRadius,
                 borderRadius: noteRadius,
-                backgroundColor: noteColor,
-                border: "1px solid black",
+                backgroundColor: backgroundColor,
+                border: '1px solid ' + color,
+                color: color,
                 fontSize: "0.5em",
                 textAlign: "center",
                 top: center.y - scaleRadius * Math.cos(Math.PI * i / 6),
@@ -18789,7 +18815,7 @@ var Scale = function (_React$Component) {
                   position: "relative",
                   top: "0.2em"
                 } },
-              i
+              pegs.includes(i) ? pegs.indexOf(i) + 1 : null
             )
           );
         }),
@@ -18802,7 +18828,7 @@ var Scale = function (_React$Component) {
               fontSize: "12px",
               textAlign: "center"
             } },
-          (0, _util.keyReader)(notes).split(" ").map(function (piece, i) {
+          name.split(" ").map(function (piece, i) {
             return _react2.default.createElement(
               'p',
               { key: i },
@@ -36049,9 +36075,9 @@ var Input = function (_React$Component) {
         x: radius * (1 + Math.sin(Math.PI * pegs[0] / 6)),
         y: radius * (1 - Math.cos(Math.PI * pegs[0] / 6))
       };
-      ctx.clearRect(0, 0, 200, 200);
+      ctx.clearRect(0, 0, 2 * radius, 2 * radius);
       ctx.strokeStyle = 'blue';
-      ctx.fillStyle = (0, _util.chordColor)(this.state.notes);
+      ctx.fillStyle = (0, _util.chordReader)(this.state.notes).color;
       //draw chord
       ctx.beginPath();
       ctx.moveTo(start.x, start.y);
@@ -36105,7 +36131,7 @@ var Input = function (_React$Component) {
                   position: "relative",
                   top: "0.4em"
                 } },
-              i
+              _util.NOTE_NAMES[i]
             )
           );
         }),

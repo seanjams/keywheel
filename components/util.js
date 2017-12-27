@@ -28,7 +28,7 @@ EMPTY = [
   false,
   false
 ],
-NOTENAMES = [
+NOTE_NAMES = [
   "C",
   "Db",
   "D",
@@ -44,7 +44,23 @@ NOTENAMES = [
 ],
 MAJOR = [2,2,1,2,2,2,1],
 MELMINOR = [2,1,2,2,2,2,1],
-NEAPOLITAN = [1,2,2,2,2,2,1];
+NEAPOLITAN = [1,2,2,2,2,2,1],
+SHAPE = {
+  majorTriad: [0,4,7],
+  minorTriad: [0,3,7],
+  major7: [0,4,7,11],
+  minor7: [0,3,7,10],
+  dominant: [0,4,7,10],
+  diminished: [0,3,6,10]
+},
+CHORD_COLOR = {
+  majorTriad: 'rgba(0,0,255,0.5)',
+  minorTriad: 'rgba(255,0,0,0.5)',
+  major7: 'rgba(0,255,255,0.5)',
+  minor7: 'rgba(255,255,0,0.5)',
+  dominant: 'rgba(255,0,255,0.5)',
+  diminished: 'rgba(0,255,0,0.5)'
+};
 
 export class ScaleNode {
   constructor(notes = CMAJOR, center = { x: 800, y: 400 }) {
@@ -160,8 +176,8 @@ export const buildKeyWheel = start => {
 
 export const keyReader = notes => {
   const pegs = notesToPegs(notes);
-  let intervals = [], rootIdx = pegs[0],
-      isMajorMatch, isMinorMatch, isNeaMatch;
+  const result = { name: null, rootIdx: pegs[0] };
+  let intervals = [], isMajorMatch, isMinorMatch, isNeaMatch;
 
   for (let i = 0; i < pegs.length; i++) {
     if (i === pegs.length - 1) {
@@ -181,13 +197,17 @@ export const keyReader = notes => {
       if (intervals[j] !== NEAPOLITAN[j]) isNeaMatch = false;
     }
     if (isMajorMatch) {
-      return `${NOTENAMES[rootIdx]} Maj`;
+      result.name = `${NOTE_NAMES[result.rootIdx]} Maj`;
+      return result;
     } else if (isMinorMatch) {
-      return `${NOTENAMES[rootIdx]} mel`;
+      result.name = `${NOTE_NAMES[result.rootIdx]} mel`;
+      return result;
     } else if (isNeaMatch) {
-      return `${NOTENAMES[rootIdx]} neo`;
+      result.name = `${NOTE_NAMES[result.rootIdx]} neo`;
+      return result;
     }
-    rootIdx += intervals[0];
+
+    result.rootIdx += intervals[0];
     intervals = rotate(intervals);
   }
   return null
@@ -270,41 +290,33 @@ export const rotate = arr => {
 };
 
 export const getCenter = (center, parentDirection, d = 90) => {
-  const result = {
+  const deltas = {
     "TL": { x: center.x + d, y: center.y + d },
     "BL": { x: center.x + d, y: center.y - d },
     "TR": { x: center.x - d, y: center.y + d },
     "BR": { x: center.x - d, y: center.y - d }
   };
-  return result[parentDirection];
+  return deltas[parentDirection];
 };
 
-export const chordColor = notes => {
-  const chords = Object.keys(samples);
+export const chordReader = notes => {
+  const chords = Object.keys(SHAPE);
+  const result = { color: "transparent", rootIdx: 0 };
+  let chordShape;
   for (var i = 0; i < chords.length; i++) {
-    if (isSameType(notes, pegsToNotes(samples[chords[i]]))) {
-      return chordColors[chords[i]];
+    chordShape = pegsToNotes(SHAPE[chords[i]])
+    if (isSameType(notes, chordShape)) {
+      result.color = CHORD_COLOR[chords[i]];
+      let rootIdx = 0, temp = [...notes];
+      while (!isEqual(temp, chordShape)) {
+        temp = rotate(temp);
+        result.rootIdx += 1;
+      }
+      break;
     }
   }
-  return "transparent";
-};
-
-const samples = {
-  majorTriad: [0,4,7],
-  minorTriad: [0,3,7],
-  major7: [0,4,7,11],
-  minor7: [0,3,7,10],
-  dominant: [0,4,7,10],
-  diminished: [0,3,6,10]
-};
-
-const chordColors = {
-  majorTriad: 'rgba(0,0,255,0.5)',
-  minorTriad: 'rgba(255,0,0,0.5)',
-  major7: 'rgba(0,255,255,0.5)',
-  minor7: 'rgba(255,255,0,0.5)',
-  dominant: 'rgba(255,0,255,0.5)',
-  diminished: 'rgba(0,255,0,0.5)'
+  if (result.color === "transparent") result.rootIdx = -1;
+  return result;
 };
 
 //

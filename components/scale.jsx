@@ -1,5 +1,5 @@
 import React from 'react';
-import { keyReader, notesToPegs, chordColor } from './util';
+import { keyReader, notesToPegs, chordReader, rotate } from './util';
 
 class Scale extends React.Component {
 
@@ -20,9 +20,9 @@ class Scale extends React.Component {
       x: radius * (1 + Math.sin(Math.PI * pegs[0] / 6)),
       y: radius * (1 - Math.cos(Math.PI * pegs[0] / 6))
     };
-    ctx.clearRect(0, 0, 200, 200);
-    ctx.strokeStyle = 'blue';
-    ctx.fillStyle = chordColor(selectedNotes);
+    ctx.clearRect(0, 0, 2 * radius, 2 * radius);
+    ctx.strokeStyle = 'green';
+    ctx.fillStyle = chordReader(selectedNotes).color;
     //draw chord
     ctx.beginPath();
     ctx.moveTo(start.x, start.y);
@@ -40,18 +40,23 @@ class Scale extends React.Component {
   }
 
   render() {
-    const noteRadius = 14;
-    const scaleRadius = 36;
-    const { node, selectedNotes } = this.props;
+    const noteRadius = 14, scaleRadius = 36;
+    const { node, selectedNotes, rootReferenceEnabled } = this.props;
     const { rank, notes, center } = node;
+    const { name, rootIdx } = keyReader(notes);
+    const chordRootIdx = chordReader(selectedNotes).rootIdx;
+    let pegs = notesToPegs(notes);
+    while (pegs[0] !== rootIdx) pegs = rotate(pegs);
+
     return (
       <div>
         {notes.map((note, i) => {
-          let noteColor;
+          const color = i === chordRootIdx ? "red": "black";
+          let backgroundColor;
           if (selectedNotes[i]) {
-            noteColor = "yellow";
+            backgroundColor = "yellow";
           } else {
-            noteColor = note ? "#AAF" : "transparent";
+            backgroundColor = note ? "#AAF" : "transparent";
           }
           return (
             <div key={i}
@@ -60,8 +65,9 @@ class Scale extends React.Component {
               width: noteRadius,
               height: noteRadius,
               borderRadius: noteRadius,
-              backgroundColor: noteColor,
-              border: "1px solid black",
+              backgroundColor: backgroundColor,
+              border: `1px solid ${color}`,
+              color: color,
               fontSize: "0.5em",
               textAlign: "center",
               top: center.y - scaleRadius * Math.cos(Math.PI * i / 6),
@@ -69,7 +75,7 @@ class Scale extends React.Component {
             }}><span style={{
               position: "relative",
               top: "0.2em"
-            }}>{i}</span></div>
+            }}>{ pegs.includes(i) ? pegs.indexOf(i) + 1 : null }</span></div>
           )
         })}
         <div style={{
@@ -79,7 +85,7 @@ class Scale extends React.Component {
           fontSize: "12px",
           textAlign: "center"
         }}>
-          {keyReader(notes).split(" ").map((piece, i) => {
+          {name.split(" ").map((piece, i) => {
             return (
               <p key={i}>{piece}</p>
             );
