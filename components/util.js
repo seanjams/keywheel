@@ -1,4 +1,4 @@
-import {uniq} from 'lodash';
+// import {uniq} from 'lodash';
 export const DIRS = ["TL", "TR", "BL", "BR"],
 CMAJOR = [
   true,
@@ -46,20 +46,36 @@ MAJOR = [2,2,1,2,2,2,1],
 MELMINOR = [2,1,2,2,2,2,1],
 NEAPOLITAN = [1,2,2,2,2,2,1],
 SHAPE = {
-  majorTriad: [0,4,7],
-  minorTriad: [0,3,7],
+  major: [0,4,7],
+  minor: [0,3,7],
   major7: [0,4,7,11],
   minor7: [0,3,7,10],
-  dominant: [0,4,7,10],
-  diminished: [0,3,6,10]
+  dom: [0,4,10],
+  dom5: [0,4,7,10],
+  dom9: [0,2,4,10],
+  dim: [0,3,6],
+  // dimbb7: [0,3,6,9],
+  dimb7: [0,3,6,10],
+  sus2: [0,2,7],
+  sus4: [0,5,7],
+  pentatonic: [0,2,4,7,9],
+  dimPentatonic: [0,3,6,8,10],
 },
 CHORD_COLOR = {
-  majorTriad: 'rgba(0,0,255,0.5)',
-  minorTriad: 'rgba(255,0,0,0.5)',
-  major7: 'rgba(0,255,255,0.5)',
-  minor7: 'rgba(255,255,0,0.5)',
-  dominant: 'rgba(255,0,255,0.5)',
-  diminished: 'rgba(0,255,0,0.5)'
+  major: 'rgba(100,100,255,0.5)',
+  minor: 'rgba(255,100,100,0.5)',
+  major7: 'rgba(155,0,255,0.5)',
+  minor7: 'rgba(255,0,155,0.5)',
+  dom: 'rgba(255,100,0,0.5)',
+  dom5: 'rgba(255,100,0,0.5)',
+  dom9: 'rgba(255,155,0,0.5)',
+  dim: 'rgba(100,255,100,0.5)',
+  // dimbb7: 'rgba(0,155,0,0.5)',
+  dimb7: 'rgba(0,255,0,0.5)',
+  sus2: 'rgba(255,255,0,0.5)',
+  sus4: 'rgba(255,255,0,0.5)',
+  pentatonic: 'rgba(255,0,0,0.5)',
+  dimPentatonic: 'rgba(0,200,0,0.5)',
 };
 
 export class ScaleNode {
@@ -88,7 +104,7 @@ export class ScaleNode {
 }
 
 export const tweek = (notes, idx) => {
-  const pegs = notesToPegs(notes);
+  const pegs = getPegs(notes);
   let temp = pegs[idx], tweekStatus = 0;
 
   if (idx === 0) {
@@ -105,19 +121,17 @@ export const tweek = (notes, idx) => {
     tweekStatus++
   }
 
-  return { notes: pegsToNotes(pegs), tweekStatus };
+  return { notes: getNotes(pegs), tweekStatus };
 };
 
 export const generateNeighbors = (node, visited) => {
   const { notes, parentCenter, center } = node,
         parentNotes = node.parent ? node.parent.notes : null,
         adjustedPegs = [];
-  let neighborKeys = [], temp, parentTweekStatus;
+  let neighbors = [], temp, parentTweekStatus;
 
 //Check if visited notes contain the tweeked notes
 //If so, check if the center we want to put it at is also occupied, this will tell us not to include this neighbor
-
-
 
   for (var i = 0; i < 7; i++) {
     temp = tweek(notes, i);
@@ -125,33 +139,33 @@ export const generateNeighbors = (node, visited) => {
       if (isEqual(parentNotes, temp.notes)) {
         parentTweekStatus = temp.tweekStatus;
       } else if (!includesKey(visited, temp.notes)) {
-        neighborKeys.push(temp);
+        neighbors.push(temp);
       }
       adjustedPegs.push(i + 1);
     };
   }
 
   if (!parentNotes) {
-    while(!isSameType(neighborKeys[0].notes, neighborKeys[1].notes)) {
-      neighborKeys = rotate(neighborKeys);
+    while(!isSameType(neighbors[0].notes, neighbors[1].notes)) {
+      neighbors = rotate(neighbors);
     }
-    neighborKeys.forEach((newKey, i) => {
-      newKey.center = getCenter(center, DIRS[i]);
+    neighbors.forEach((neighbor, i) => {
+      neighbor.center = getCenter(center, DIRS[i]);
     })
   } else {
     const deltaX = 2 * center.x - parentCenter.x,
           deltaY = 2 * center.y - parentCenter.y;
-    neighborKeys.forEach(newKey => {
-      if (isSameType(parentNotes, newKey.notes)) {
-        newKey.center = { x: deltaX, y: parentCenter.y };
-      } else if (newKey.tweekStatus === parentTweekStatus) {
-        newKey.center = { x: parentCenter.x, y: deltaY };
+    neighbors.forEach(neighbor => {
+      if (isSameType(parentNotes, neighbor.notes)) {
+        neighbor.center = { x: deltaX, y: parentCenter.y };
+      } else if (neighbor.tweekStatus === parentTweekStatus) {
+        neighbor.center = { x: parentCenter.x, y: deltaY };
       } else {
-        newKey.center = { x: deltaX, y: deltaY };
+        neighbor.center = { x: deltaX, y: deltaY };
       }
     });
   }
-  return { data: neighborKeys, adjustedPegs };
+  return { neighbors, adjustedPegs };
 };
 
 export const buildKeyWheel = start => {
@@ -162,10 +176,10 @@ export const buildKeyWheel = start => {
   while (visited.length < 36) {
     currentNode = queue.shift();
     if (!currentNode) return start;
-    neighbors = generateNeighbors(currentNode, visited);
-    neighbors.data.forEach(neighborKey => {
-      if (!neighborKey) return;
-      newNode = new ScaleNode(neighborKey.notes, neighborKey.center);
+    neighbors = generateNeighbors(currentNode, visited).neighbors;
+    neighbors.forEach(neighbor => {
+      if (!neighbor) return;
+      newNode = new ScaleNode(neighbor.notes, neighbor.center);
       currentNode.addChild(newNode);
       queue.push(newNode);
       visited.push(newNode);
@@ -175,45 +189,37 @@ export const buildKeyWheel = start => {
 };
 
 export const keyReader = notes => {
-  const pegs = notesToPegs(notes);
-  const result = { name: null, rootIdx: pegs[0] };
-  let intervals = [], isMajorMatch, isMinorMatch, isNeaMatch;
-
-  for (let i = 0; i < pegs.length; i++) {
-    if (i === pegs.length - 1) {
-      intervals.push(12 + pegs[0] - pegs[i]);
-    } else {
-      intervals.push(pegs[i + 1] -  pegs[i]);
-    }
-  }
+  const pegs = getPegs(notes);
+  let rootIdx = pegs[0], intervals = getIntervals(pegs),
+      isMajorMatch, isMinorMatch, isNeaMatch, name;
 
   for (let i = 0; i < 7; i++) {
     isMajorMatch = true;
     isMinorMatch = true;
     isNeaMatch = true;
+
     for (let j = 0; j < intervals.length; j++) {
       if (intervals[j] !== MAJOR[j]) isMajorMatch = false;
       if (intervals[j] !== MELMINOR[j]) isMinorMatch = false;
       if (intervals[j] !== NEAPOLITAN[j]) isNeaMatch = false;
     }
+
     if (isMajorMatch) {
-      result.name = `${NOTE_NAMES[result.rootIdx]} Maj`;
-      return result;
+      name = `${NOTE_NAMES[rootIdx]} Maj`;
+      break;
     } else if (isMinorMatch) {
-      result.name = `${NOTE_NAMES[result.rootIdx]} mel`;
-      return result;
+      name = `${NOTE_NAMES[rootIdx]} mel`;
+      break;
     } else if (isNeaMatch) {
-      result.name = `${NOTE_NAMES[result.rootIdx]} neo`;
-      return result;
+      name = `${NOTE_NAMES[rootIdx]} neo`;
+      break;
     }
 
-    result.rootIdx += intervals[0];
+    rootIdx += intervals[0];
     intervals = rotate(intervals);
   }
-  return null
+  return { name, rootIdx };
 };
-
-
 
 //private helper methods
 //////////////////////////////////////////////////////////////////
@@ -237,17 +243,7 @@ export const includesKey = (nodes, notes) => {
   return false;
 };
 
-// export const includesCenter = (nodes, center) => {
-//   let centersArr = nodes.map(node => node.center);
-//   for (let i = 0; i < centersArr.length; i++) {
-//     if (centersArr[i].x === center.x && centersArr[i].y === center.y) {
-//       return true;
-//     }
-//   }
-//   return false;
-// };
-
-export const notesToPegs = notes => {
+export const getPegs = notes => {
   const pegs = [];
   notes.forEach((note, i) => {
     if (note) pegs.push(i)
@@ -255,7 +251,7 @@ export const notesToPegs = notes => {
   return pegs;
 };
 
-export const pegsToNotes = pegs => {
+export const getNotes = pegs => {
   const notes = Array(...EMPTY);
   pegs.forEach(peg => {
     if (peg < 0) peg += 12;
@@ -278,15 +274,15 @@ export const isSameType = (notes1, notes2) => {
 };
 
 export const rotate = arr => {
-  const result = [];
+  const rotated = [];
   for (let i = 0; i < arr.length; i++) {
     if (i === arr.length - 1) {
-      result.push(arr[0]);
+      rotated.push(arr[0]);
     } else {
-      result.push(arr[i+1]);
+      rotated.push(arr[i+1]);
     }
   }
-  return result;
+  return rotated;
 };
 
 export const getCenter = (center, parentDirection, d = 90) => {
@@ -301,23 +297,67 @@ export const getCenter = (center, parentDirection, d = 90) => {
 
 export const chordReader = notes => {
   const chords = Object.keys(SHAPE);
-  const result = { color: "transparent", rootIdx: 0 };
+  let color = "transparent", rootIdx = 0;
   let chordShape;
   for (var i = 0; i < chords.length; i++) {
-    chordShape = pegsToNotes(SHAPE[chords[i]])
+    chordShape = getNotes(SHAPE[chords[i]])
     if (isSameType(notes, chordShape)) {
-      result.color = CHORD_COLOR[chords[i]];
-      let rootIdx = 0, temp = [...notes];
+      let temp = [...notes];
       while (!isEqual(temp, chordShape)) {
         temp = rotate(temp);
-        result.rootIdx += 1;
+        rootIdx += 1;
       }
+      color = CHORD_COLOR[chords[i]];
+      name = `${NOTE_NAMES[rootIdx]} ${chords[i]}`;
       break;
     }
   }
-  if (result.color === "transparent") result.rootIdx = -1;
-  return result;
+  if (color === "transparent") {
+    rootIdx = -1;
+    name = "";
+  }
+  return { color, name, rootIdx };
 };
+
+export const getIntervals = pegs => {
+  const intervals = [];
+  for (let i = 0; i < pegs.length; i++) {
+    if (i === pegs.length - 1) {
+      intervals.push(12 + pegs[0] - pegs[i]);
+    } else {
+      intervals.push(pegs[i + 1] -  pegs[i]);
+    }
+  }
+  return intervals;
+};
+
+export const updateCanvas = (ctx, radius, notes) => {
+  const pegs = getPegs(notes);
+  const start = {
+    x: radius * (1 + Math.sin(Math.PI * pegs[0] / 6)),
+    y: radius * (1 - Math.cos(Math.PI * pegs[0] / 6))
+  };
+  ctx.clearRect(0, 0, 2 * radius, 2 * radius);
+  if (pegs.length < 3) return;
+  ctx.strokeStyle = 'green';
+  ctx.fillStyle = chordReader(notes).color;
+  //draw chord
+  ctx.beginPath();
+  ctx.moveTo(start.x, start.y);
+  pegs.forEach((peg, i) => {
+    if (i === 0) return;
+    const newPos = {
+      x: radius * (1 + Math.sin(Math.PI * peg / 6)),
+      y: radius * (1 - Math.cos(Math.PI * peg / 6))
+    };
+    let x = ctx.lineTo(newPos.x, newPos.y);
+  })
+  ctx.closePath();
+  ctx.stroke();
+  ctx.fill();
+};
+
+
 
 //
 // export const copy = arr => {

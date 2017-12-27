@@ -1,6 +1,6 @@
 import React from 'react';
 import Chord from './chord';
-import { NOTE_NAMES, EMPTY, notesToPegs, chordReader } from './util';
+import { NOTE_NAMES, EMPTY, getPegs, chordReader, updateCanvas } from './util';
 
 class Input extends React.Component {
   constructor(props) {
@@ -18,48 +18,34 @@ class Input extends React.Component {
   }
 
   componentDidMount() {
-    this.updateCanvas();
+    this.handleCanvas();
   }
 
   componentDidUpdate() {
-    this.updateCanvas();
+    this.handleCanvas();
   }
 
-  updateCanvas() {
+  handleCanvas() {
     const ctx = this.refs.canvas.getContext('2d');
     const radius = 80;
-    const pegs = notesToPegs(this.state.notes);
-    const start = {
-      x: radius * (1 + Math.sin(Math.PI * pegs[0] / 6)),
-      y: radius * (1 - Math.cos(Math.PI * pegs[0] / 6))
-    };
-    ctx.clearRect(0, 0, 2 * radius, 2 * radius);
-    ctx.strokeStyle = 'blue';
-    ctx.fillStyle = chordReader(this.state.notes).color;
-    //draw chord
-    ctx.beginPath();
-    ctx.moveTo(start.x, start.y);
-    pegs.forEach((peg, i) => {
-      if (i === 0) return;
-      const newPos = {
-        x: radius * (1 + Math.sin(Math.PI * peg / 6)),
-        y: radius * (1 - Math.cos(Math.PI * peg / 6))
-      };
-      let x = ctx.lineTo(newPos.x, newPos.y);
-    })
-    ctx.closePath();
-    ctx.stroke();
-    ctx.fill();
+    updateCanvas(ctx, radius, this.state.notes);
   }
 
   render() {
-    const noteRadius = 30;
-    const scaleRadius = 80;
-    const center = { x: 120, y: 300 };
     const { notes } = this.state;
+    const noteRadius = 30, scaleRadius = 80;
+    const center = { x: 120, y: 300 };
+    const { name: chordName, rootIdx: chordRootIdx } = chordReader(notes);
     return (
       <div>
         {notes.map((note, i) => {
+          const color = i === chordRootIdx ? "red": "black";
+          let backgroundColor;
+          if (note) {
+            backgroundColor = "yellow";
+          } else {
+            backgroundColor = note ? "#AAF" : "transparent";
+          }
           return (
             <div key={i}
               onClick={() => this.toggleNote(i)}
@@ -69,8 +55,9 @@ class Input extends React.Component {
               width: noteRadius,
               height: noteRadius,
               borderRadius: noteRadius,
-              backgroundColor: note ? "yellow": "transparent",
-              border: "1px solid black",
+              backgroundColor: backgroundColor,
+              border: `1px solid ${color}`,
+              color: color,
               textAlign: "center",
               top: center.y - scaleRadius * Math.cos(Math.PI * i / 6),
               left: center.x + scaleRadius * Math.sin(Math.PI * i / 6)
@@ -80,6 +67,13 @@ class Input extends React.Component {
             }}>{ NOTE_NAMES[i] }</span></div>
           )
         })}
+        <div style={{
+          position: "absolute",
+          top: center.y - 120,
+          left: center.x - chordName.length * 2,
+          textAlign: "center"
+        }}><span>{ chordName }</span>
+        </div>
         <canvas ref="canvas"
           width={2 * scaleRadius}
           height={2 * scaleRadius}

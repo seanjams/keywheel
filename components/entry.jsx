@@ -2,12 +2,12 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import Scale from './scale';
 import Input from './input';
-import { ScaleNode, buildKeyWheel, pegsToNotes, notesToPegs, CMAJOR, EMPTY } from './util';
+import { ScaleNode, buildKeyWheel, getNotes, getPegs, CMAJOR, EMPTY } from './util';
 
 class Root extends React.Component {
   constructor(props) {
     super(props);
-    const start = new ScaleNode(pegsToNotes([0,2,4,5,7,9,11]), { x: 720, y: 350 });
+    const start = new ScaleNode(getNotes([0,2,4,5,7,9,11]), { x: 720, y: 350 });
     this.state = {
       scales: buildKeyWheel(start),
       selected: [...EMPTY]
@@ -23,7 +23,7 @@ class Root extends React.Component {
 
   render() {
     const { selected, scales } = this.state;
-    const pegs = notesToPegs(selected);
+    const pegs = getPegs(selected);
     return (
       <div>
         <Input handleClick={this.handleClick} />

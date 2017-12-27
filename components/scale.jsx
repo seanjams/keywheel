@@ -1,51 +1,29 @@
 import React from 'react';
-import { keyReader, notesToPegs, chordReader, rotate } from './util';
+import { keyReader, getPegs, chordReader, rotate, updateCanvas } from './util';
 
 class Scale extends React.Component {
 
   componentDidMount() {
-    this.updateCanvas();
+    this.handleCanvas();
   }
 
   componentDidUpdate() {
-    this.updateCanvas();
+    this.handleCanvas();
   }
 
-  updateCanvas() {
+  handleCanvas() {
     const ctx = this.refs.canvas.getContext('2d');
     const radius = 36;
-    const { selectedNotes } = this.props;
-    const pegs = notesToPegs(selectedNotes);
-    const start = {
-      x: radius * (1 + Math.sin(Math.PI * pegs[0] / 6)),
-      y: radius * (1 - Math.cos(Math.PI * pegs[0] / 6))
-    };
-    ctx.clearRect(0, 0, 2 * radius, 2 * radius);
-    ctx.strokeStyle = 'green';
-    ctx.fillStyle = chordReader(selectedNotes).color;
-    //draw chord
-    ctx.beginPath();
-    ctx.moveTo(start.x, start.y);
-    pegs.forEach((peg, i) => {
-      if (i === 0) return;
-      const newPos = {
-        x: radius * (1 + Math.sin(Math.PI * peg / 6)),
-        y: radius * (1 - Math.cos(Math.PI * peg / 6))
-      };
-      let x = ctx.lineTo(newPos.x, newPos.y);
-    })
-    ctx.closePath();
-    ctx.stroke();
-    ctx.fill();
+    updateCanvas(ctx, radius, this.props.selectedNotes);
   }
 
   render() {
-    const noteRadius = 14, scaleRadius = 36;
     const { node, selectedNotes, rootReferenceEnabled } = this.props;
     const { rank, notes, center } = node;
     const { name, rootIdx } = keyReader(notes);
-    const chordRootIdx = chordReader(selectedNotes).rootIdx;
-    let pegs = notesToPegs(notes);
+    const { name: chordName, rootIdx: chordRootIdx } = chordReader(selectedNotes);
+    const noteRadius = 14, scaleRadius = 36;
+    let pegs = getPegs(notes);
     while (pegs[0] !== rootIdx) pegs = rotate(pegs);
 
     return (
