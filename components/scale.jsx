@@ -18,11 +18,12 @@ class Scale extends React.Component {
     updateCanvas(ctx, radius, this.props.selectedNotes);
   }
 
-  handleClick(pegs) {
+  handleClick(pegs, modeIdx = 0) {
     // e.preventDefault();
     Tone.Transport.cancel(0);
     let synth = new Tone.Synth().toMaster();
     let scale = [...pegs];
+    for (let i = 0; i < modeIdx; i++) scale = rotate(scale);
     const freqs = [];
     for (let i = 0; i < scale.length; i++) {
       if (scale[i + 1] < scale[i]) scale[i + 1] += 12;
@@ -48,7 +49,7 @@ class Scale extends React.Component {
     while (pegs[0] !== rootIdx) pegs = rotate(pegs);
 
     return (
-      <div onClick={() => this.handleClick(pegs)} >
+      <div onClick={() => this.handleClick(pegs)}>
         {notes.map((note, i) => {
           const color = i === chordRootIdx ? "red": "black";
           let backgroundColor, numLabel = null;
@@ -63,6 +64,10 @@ class Scale extends React.Component {
           }
           return (
             <div key={i}
+              onClick={e => {
+                e.stopPropagation();
+                note ? this.handleClick(pegs, pegs.indexOf(i)): null;
+              }}
               style={{
               position: "absolute",
               width: noteRadius,
@@ -103,8 +108,16 @@ class Scale extends React.Component {
           left: center.x - scaleRadius + noteRadius / 2
         }}/>
       </div>
-    )
+    );
   }
 }
 
 export default Scale;
+
+// onMouseEnter={() => {
+//   hoverColor = note ? "purple" : backgroundColor;
+//   console.log(hoverColor);
+// }}
+// onMouseLeave={() => {
+//   hoverColor = backgroundColor;
+// }}

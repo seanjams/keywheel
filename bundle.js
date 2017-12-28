@@ -18816,14 +18816,18 @@ var Scale = function (_React$Component) {
   }, {
     key: 'handleClick',
     value: function handleClick(pegs) {
+      var modeIdx = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 0;
+
       // e.preventDefault();
       _tone2.default.Transport.cancel(0);
       var synth = new _tone2.default.Synth().toMaster();
       var scale = [].concat(_toConsumableArray(pegs));
-      var freqs = [];
-      for (var i = 0; i < scale.length; i++) {
-        if (scale[i + 1] < scale[i]) scale[i + 1] += 12;
-        freqs.push(_tone2.default.Frequency().midiToFrequency(60 + scale[i]));
+      for (var i = 0; i < modeIdx; i++) {
+        scale = (0, _util.rotate)(scale);
+      }var freqs = [];
+      for (var _i = 0; _i < scale.length; _i++) {
+        if (scale[_i + 1] < scale[_i]) scale[_i + 1] += 12;
+        freqs.push(_tone2.default.Frequency().midiToFrequency(60 + scale[_i]));
       }
       freqs.push(freqs[0] * 2);
 
@@ -18882,6 +18886,10 @@ var Scale = function (_React$Component) {
           return _react2.default.createElement(
             'div',
             { key: i,
+              onClick: function onClick(e) {
+                e.stopPropagation();
+                note ? _this2.handleClick(pegs, pegs.indexOf(i)) : null;
+              },
               style: {
                 position: "absolute",
                 width: noteRadius,
@@ -18938,6 +18946,14 @@ var Scale = function (_React$Component) {
 }(_react2.default.Component);
 
 exports.default = Scale;
+
+// onMouseEnter={() => {
+//   hoverColor = note ? "purple" : backgroundColor;
+//   console.log(hoverColor);
+// }}
+// onMouseLeave={() => {
+//   hoverColor = backgroundColor;
+// }}
 
 /***/ }),
 /* 29 */,
@@ -19062,6 +19078,13 @@ var Input = function (_React$Component) {
           'button',
           { onClick: function onClick() {
               return _this2.handleClick((0, _util.getPegs)(notes));
+            }, style: {
+              position: "absolute",
+              top: center.y - 200,
+              left: center.x - 50,
+              border: "1px solid black",
+              borderRadius: "10px",
+              padding: "10px"
             } },
           'Sound Notes'
         ),

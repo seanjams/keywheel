@@ -60,7 +60,14 @@ class Input extends React.Component {
     const { name: chordName, rootIdx: chordRootIdx } = chordReader(notes);
     return (
       <div>
-        <button onClick={() => this.handleClick(getPegs(notes))}>Sound Notes</button>
+        <button onClick={() => this.handleClick(getPegs(notes))} style={{
+          position: "absolute",
+          top: center.y - 200,
+          left: center.x - 50,
+          border: "1px solid black",
+          borderRadius: "10px",
+          padding: "10px"
+        }}>Sound Notes</button>
         <button onClick={this.props.toggleRef} style={{
           position: "absolute",
           top: center.y - 140,
