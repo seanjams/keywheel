@@ -992,6 +992,16 @@ var updateCanvas = exports.updateCanvas = function updateCanvas(ctx, radius, not
   ctx.fill();
 };
 
+var getMajor = exports.getMajor = function getMajor(rootIdx) {
+  var temp = rootIdx;
+  var pegs = [temp];
+  for (var i = 0; i + 1 < MAJOR.length; i++) {
+    temp += MAJOR[i];
+    pegs.push(temp % 12);
+  }
+  return pegs;
+};
+
 //
 // export const copy = arr => {
 //   const result = [];
@@ -1364,9 +1374,11 @@ var Root = function (_React$Component) {
     var start = new _util.ScaleNode((0, _util.getNotes)([0, 2, 4, 5, 7, 9, 11]), { x: 720, y: 350 });
     _this.state = {
       scales: (0, _util.buildKeyWheel)(start),
-      selected: [].concat(_toConsumableArray(_util.EMPTY))
+      selected: [].concat(_toConsumableArray(_util.EMPTY)),
+      rootReferenceEnabled: false
     };
     _this.handleClick = _this.handleClick.bind(_this);
+    _this.toggleRef = _this.toggleRef.bind(_this);
     return _this;
   }
 
@@ -1378,19 +1390,28 @@ var Root = function (_React$Component) {
       this.setState({ selected: selected });
     }
   }, {
+    key: 'toggleRef',
+    value: function toggleRef() {
+      var rootReferenceEnabled = !this.state.rootReferenceEnabled;
+      this.setState({ rootReferenceEnabled: rootReferenceEnabled });
+    }
+  }, {
     key: 'render',
     value: function render() {
       var _this2 = this;
 
       var _state = this.state,
           selected = _state.selected,
-          scales = _state.scales;
+          scales = _state.scales,
+          rootReferenceEnabled = _state.rootReferenceEnabled;
 
       var pegs = (0, _util.getPegs)(selected);
       return _react2.default.createElement(
         'div',
         null,
-        _react2.default.createElement(_input2.default, { handleClick: this.handleClick }),
+        _react2.default.createElement(_input2.default, { handleClick: this.handleClick,
+          toggleRef: this.toggleRef,
+          rootReferenceEnabled: rootReferenceEnabled }),
         _react2.default.createElement(
           'div',
           { style: {
@@ -1402,7 +1423,11 @@ var Root = function (_React$Component) {
               if (!node.notes[i]) isMatch = false;
             });
             var selectedNotes = isMatch ? selected : [];
-            return _react2.default.createElement(_scale2.default, { key: i, node: node, selectedNotes: selectedNotes, handleClick: _this2.handleClick });
+            return _react2.default.createElement(_scale2.default, { key: i,
+              node: node,
+              selectedNotes: selectedNotes,
+              handleClick: _this2.handleClick,
+              rootReferenceEnabled: rootReferenceEnabled });
           })
         )
       );
@@ -18799,7 +18824,8 @@ var Scale = function (_React$Component) {
 
       var noteRadius = 14,
           scaleRadius = 36;
-      var pegs = (0, _util.getPegs)(notes);
+      var pegs = (0, _util.getPegs)(notes),
+          relMajor = (0, _util.getMajor)(rootIdx);
       while (pegs[0] !== rootIdx) {
         pegs = (0, _util.rotate)(pegs);
       }return _react2.default.createElement(
@@ -18807,11 +18833,16 @@ var Scale = function (_React$Component) {
         null,
         notes.map(function (note, i) {
           var color = i === chordRootIdx ? "red" : "black";
-          var backgroundColor = void 0;
+          var backgroundColor = void 0,
+              numLabel = null;
           if (selectedNotes[i]) {
             backgroundColor = "yellow";
           } else {
             backgroundColor = note ? "#AAF" : "transparent";
+          }
+          if (pegs.includes(i)) {
+            numLabel = i === relMajor[pegs.indexOf(i)] ? "" : "b";
+            numLabel += '' + (pegs.indexOf(i) + 1);
           }
           return _react2.default.createElement(
             'div',
@@ -18835,7 +18866,7 @@ var Scale = function (_React$Component) {
                   position: "relative",
                   top: "0.2em"
                 } },
-              pegs.includes(i) ? pegs.indexOf(i) + 1 : null
+              rootReferenceEnabled ? numLabel : i
             )
           );
         }),
@@ -18954,6 +18985,7 @@ var Input = function (_React$Component) {
       var _this2 = this;
 
       var notes = this.state.notes;
+      var rootReferenceEnabled = this.props.rootReferenceEnabled;
 
       var noteRadius = 30,
           scaleRadius = 80;
@@ -18966,6 +18998,18 @@ var Input = function (_React$Component) {
       return _react2.default.createElement(
         'div',
         null,
+        _react2.default.createElement(
+          'button',
+          { onClick: this.props.toggleRef, style: {
+              position: "absolute",
+              top: center.y - 140,
+              left: center.x - 50,
+              border: "1px solid black",
+              borderRadius: "10px",
+              padding: "10px"
+            } },
+          'Reference Root'
+        ),
         notes.map(function (note, i) {
           var color = i === chordRootIdx ? "red" : "black";
           var backgroundColor = void 0;
@@ -18999,7 +19043,7 @@ var Input = function (_React$Component) {
                   position: "relative",
                   top: "0.4em"
                 } },
-              _util.NOTE_NAMES[i]
+              rootReferenceEnabled ? _util.NOTE_NAMES[i] : i
             )
           );
         }),
@@ -19007,14 +19051,21 @@ var Input = function (_React$Component) {
           'div',
           { style: {
               position: "absolute",
-              top: center.y - 120,
-              left: center.x - chordName.length * 2,
+              top: center.y,
+              left: center.x - 22,
+              width: "80px",
               textAlign: "center"
             } },
           _react2.default.createElement(
             'span',
             null,
-            chordName
+            chordName.split(" ").map(function (piece) {
+              return _react2.default.createElement(
+                'p',
+                null,
+                piece
+              );
+            })
           )
         ),
         _react2.default.createElement('canvas', { ref: 'canvas',

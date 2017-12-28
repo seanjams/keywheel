@@ -33,11 +33,20 @@ class Input extends React.Component {
 
   render() {
     const { notes } = this.state;
+    const { rootReferenceEnabled } = this.props;
     const noteRadius = 30, scaleRadius = 80;
     const center = { x: 120, y: 300 };
     const { name: chordName, rootIdx: chordRootIdx } = chordReader(notes);
     return (
       <div>
+        <button onClick={this.props.toggleRef} style={{
+          position: "absolute",
+          top: center.y - 140,
+          left: center.x - 50,
+          border: "1px solid black",
+          borderRadius: "10px",
+          padding: "10px"
+        }}>Reference Root</button>
         {notes.map((note, i) => {
           const color = i === chordRootIdx ? "red": "black";
           let backgroundColor;
@@ -64,15 +73,20 @@ class Input extends React.Component {
             }}><span style={{
               position: "relative",
               top: "0.4em"
-            }}>{ NOTE_NAMES[i] }</span></div>
+            }}>{ rootReferenceEnabled ? NOTE_NAMES[i] : i }</span></div>
           )
         })}
         <div style={{
           position: "absolute",
-          top: center.y - 120,
-          left: center.x - chordName.length * 2,
+          top: center.y,
+          left: center.x - 22,
+          width: "80px",
           textAlign: "center"
-        }}><span>{ chordName }</span>
+        }}><span>{ chordName.split(" ").map(piece => {
+          return (
+            <p>{ piece }</p>
+          );
+        }) }</span>
         </div>
         <canvas ref="canvas"
           width={2 * scaleRadius}

@@ -10,9 +10,11 @@ class Root extends React.Component {
     const start = new ScaleNode(getNotes([0,2,4,5,7,9,11]), { x: 720, y: 350 });
     this.state = {
       scales: buildKeyWheel(start),
-      selected: [...EMPTY]
+      selected: [...EMPTY],
+      rootReferenceEnabled: false
     };
     this.handleClick = this.handleClick.bind(this);
+    this.toggleRef = this.toggleRef.bind(this);
   }
 
   handleClick(i) {
@@ -21,12 +23,19 @@ class Root extends React.Component {
     this.setState({ selected });
   }
 
+  toggleRef() {
+    const rootReferenceEnabled = !this.state.rootReferenceEnabled;
+    this.setState({ rootReferenceEnabled });
+  }
+
   render() {
-    const { selected, scales } = this.state;
+    const { selected, scales, rootReferenceEnabled } = this.state;
     const pegs = getPegs(selected);
     return (
       <div>
-        <Input handleClick={this.handleClick} />
+        <Input handleClick={this.handleClick}
+          toggleRef={this.toggleRef}
+          rootReferenceEnabled={rootReferenceEnabled} />
         <div style={{
           width: "80%"
         }}>
@@ -37,8 +46,12 @@ class Root extends React.Component {
             });
             let selectedNotes = isMatch ? selected: [];
             return (
-              <Scale key={i} node={node} selectedNotes={selectedNotes} handleClick={this.handleClick}/>
-            )
+              <Scale key={i}
+                node={node}
+                selectedNotes={selectedNotes}
+                handleClick={this.handleClick}
+                rootReferenceEnabled={rootReferenceEnabled} />
+            );
           })}
         </div>
       </div>

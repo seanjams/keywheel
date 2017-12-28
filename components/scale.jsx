@@ -1,5 +1,5 @@
 import React from 'react';
-import { keyReader, getPegs, chordReader, rotate, updateCanvas } from './util';
+import { keyReader, getPegs, chordReader, rotate, updateCanvas, getMajor } from './util';
 
 class Scale extends React.Component {
 
@@ -23,18 +23,22 @@ class Scale extends React.Component {
     const { name, rootIdx } = keyReader(notes);
     const { name: chordName, rootIdx: chordRootIdx } = chordReader(selectedNotes);
     const noteRadius = 14, scaleRadius = 36;
-    let pegs = getPegs(notes);
+    let pegs = getPegs(notes), relMajor = getMajor(rootIdx);
     while (pegs[0] !== rootIdx) pegs = rotate(pegs);
 
     return (
       <div>
         {notes.map((note, i) => {
           const color = i === chordRootIdx ? "red": "black";
-          let backgroundColor;
+          let backgroundColor, numLabel = null;
           if (selectedNotes[i]) {
             backgroundColor = "yellow";
           } else {
             backgroundColor = note ? "#AAF" : "transparent";
+          }
+          if (pegs.includes(i)) {
+            numLabel = i === relMajor[pegs.indexOf(i)] ? "": "b";
+            numLabel += `${pegs.indexOf(i) + 1}`;
           }
           return (
             <div key={i}
@@ -53,8 +57,8 @@ class Scale extends React.Component {
             }}><span style={{
               position: "relative",
               top: "0.2em"
-            }}>{ pegs.includes(i) ? pegs.indexOf(i) + 1 : null }</span></div>
-          )
+            }}>{ rootReferenceEnabled ? numLabel : i }</span></div>
+          );
         })}
         <div style={{
           position: "absolute",

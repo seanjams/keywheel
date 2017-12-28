@@ -357,6 +357,16 @@ export const updateCanvas = (ctx, radius, notes) => {
   ctx.fill();
 };
 
+export const getMajor = rootIdx => {
+  let temp = rootIdx;
+  const pegs = [temp];
+  for (let i = 0; i + 1 < MAJOR.length; i++) {
+    temp += MAJOR[i];
+    pegs.push(temp % 12);
+  }
+  return pegs;
+};
+
 
 
 //
