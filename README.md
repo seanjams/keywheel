@@ -1,6 +1,6 @@
 # Key Wheel #
 
-[Live](http://www.seanoreilly.co/KeyWheel)
+[Live](http://www.seanoreilly.co/keywheel)
 
 ### Examples
 
