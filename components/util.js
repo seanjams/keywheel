@@ -109,7 +109,7 @@ export const tweek = (notes, idx) => {
 
   if (idx === 0) {
     pegs[idx] = pegs[1] - pegs[0] + pegs[6] - 12;
-  } else if (idx === 6){
+  } else if (idx === pegs.length - 1){
     pegs[idx] = 12 + pegs[0] - pegs[6] + pegs[5];
   } else {
     pegs[idx] = pegs[idx + 1] - pegs[idx] + pegs[idx - 1];
@@ -130,8 +130,9 @@ export const generateNeighbors = (node, visited) => {
         adjustedPegs = [];
   let neighbors = [], temp, parentTweekStatus;
 
-//Check if visited notes contain the tweeked notes
-//If so, check if the center we want to put it at is also occupied, this will tell us not to include this neighbor
+  // Checks if tweek changes the key, then checks to see if
+  // changed key is either parent or other visited neighbor,
+  // then collects the neighbor if so
 
   for (var i = 0; i < 7; i++) {
     temp = tweek(notes, i);
@@ -144,6 +145,10 @@ export const generateNeighbors = (node, visited) => {
       adjustedPegs.push(i + 1);
     };
   }
+
+  //If no parentNotes, we are starting the keywheel.
+  //Generate the neighbors so that top and bottom neighbor pairs are same type.
+  //If parentNotes, use tweekStatus and isSameType to calculate centers
 
   if (!parentNotes) {
     while(!isSameType(neighbors[0].notes, neighbors[1].notes)) {
@@ -221,22 +226,71 @@ export const keyReader = notes => {
   return { name, rootIdx };
 };
 
+export const chordReader = notes => {
+  const chords = Object.keys(SHAPE);
+  let color = "transparent", rootIdx = 0, chordShape;
+
+  for (let i = 0; i < chords.length; i++) {
+    chordShape = getNotes(SHAPE[chords[i]])
+    if (isSameType(notes, chordShape)) {
+      let temp = [...notes];
+      while (!isEqual(temp, chordShape)) {
+        temp = rotate(temp);
+        rootIdx += 1;
+      }
+      color = CHORD_COLOR[chords[i]];
+      name = `${NOTE_NAMES[rootIdx]} ${chords[i]}`;
+      break;
+    }
+  }
+
+  if (color === "transparent") {
+    rootIdx = -1;
+    name = "";
+  }
+  return { color, name, rootIdx };
+};
+
+export const updateCanvas = (ctx, radius, notes) => {
+  const pegs = getPegs(notes);
+  const start = {
+    x: radius * (1 + Math.sin(Math.PI * pegs[0] / 6)),
+    y: radius * (1 - Math.cos(Math.PI * pegs[0] / 6))
+  };
+  ctx.clearRect(0, 0, 2 * radius, 2 * radius);
+  if (pegs.length < 3) return;
+  ctx.strokeStyle = 'green';
+  ctx.fillStyle = chordReader(notes).color;
+
+  //draw chord
+  ctx.beginPath();
+  ctx.moveTo(start.x, start.y);
+  pegs.forEach((peg, i) => {
+    if (i === 0) return;
+    const newPos = {
+      x: radius * (1 + Math.sin(Math.PI * peg / 6)),
+      y: radius * (1 - Math.cos(Math.PI * peg / 6))
+    };
+    let x = ctx.lineTo(newPos.x, newPos.y);
+  })
+  ctx.closePath();
+  ctx.stroke();
+  ctx.fill();
+};
+
 //private helper methods
 //////////////////////////////////////////////////////////////////
 
 export const isEqual = (notes1, notes2) => {
-  if (!notes1 || !notes2) return false;
-  if (notes1.length === notes2.length) {
-    for (let i = 0; i < notes1.length; i++) {
-      if (notes1[i] !== notes2[i]) return false;
-    }
-    return true;
+  if (!notes1 || !notes2 || notes1.length !== notes2.length) return false;
+  for (let i = 0; i < notes1.length; i++) {
+    if (notes1[i] !== notes2[i]) return false;
   }
-  return false;
+  return true;
 };
 
 export const includesKey = (nodes, notes) => {
-  let notesArr = nodes.map(node => node.notes);
+  const notesArr = nodes.map(node => node.notes);
   for (let i = 0; i < notesArr.length; i++) {
     if (isEqual(notesArr[i], notes)) return true;
   }
@@ -246,7 +300,7 @@ export const includesKey = (nodes, notes) => {
 export const getPegs = notes => {
   const pegs = [];
   notes.forEach((note, i) => {
-    if (note) pegs.push(i)
+    if (note) pegs.push(i);
   });
   return pegs;
 };
@@ -295,30 +349,6 @@ export const getCenter = (center, parentDirection, d = 90) => {
   return deltas[parentDirection];
 };
 
-export const chordReader = notes => {
-  const chords = Object.keys(SHAPE);
-  let color = "transparent", rootIdx = 0;
-  let chordShape;
-  for (var i = 0; i < chords.length; i++) {
-    chordShape = getNotes(SHAPE[chords[i]])
-    if (isSameType(notes, chordShape)) {
-      let temp = [...notes];
-      while (!isEqual(temp, chordShape)) {
-        temp = rotate(temp);
-        rootIdx += 1;
-      }
-      color = CHORD_COLOR[chords[i]];
-      name = `${NOTE_NAMES[rootIdx]} ${chords[i]}`;
-      break;
-    }
-  }
-  if (color === "transparent") {
-    rootIdx = -1;
-    name = "";
-  }
-  return { color, name, rootIdx };
-};
-
 export const getIntervals = pegs => {
   const intervals = [];
   for (let i = 0; i < pegs.length; i++) {
@@ -331,32 +361,6 @@ export const getIntervals = pegs => {
   return intervals;
 };
 
-export const updateCanvas = (ctx, radius, notes) => {
-  const pegs = getPegs(notes);
-  const start = {
-    x: radius * (1 + Math.sin(Math.PI * pegs[0] / 6)),
-    y: radius * (1 - Math.cos(Math.PI * pegs[0] / 6))
-  };
-  ctx.clearRect(0, 0, 2 * radius, 2 * radius);
-  if (pegs.length < 3) return;
-  ctx.strokeStyle = 'green';
-  ctx.fillStyle = chordReader(notes).color;
-  //draw chord
-  ctx.beginPath();
-  ctx.moveTo(start.x, start.y);
-  pegs.forEach((peg, i) => {
-    if (i === 0) return;
-    const newPos = {
-      x: radius * (1 + Math.sin(Math.PI * peg / 6)),
-      y: radius * (1 - Math.cos(Math.PI * peg / 6))
-    };
-    let x = ctx.lineTo(newPos.x, newPos.y);
-  })
-  ctx.closePath();
-  ctx.stroke();
-  ctx.fill();
-};
-
 export const getMajor = rootIdx => {
   let temp = rootIdx;
   const pegs = [temp];
@@ -367,9 +371,6 @@ export const getMajor = rootIdx => {
   return pegs;
 };
 
-
-
-//
 // export const copy = arr => {
 //   const result = [];
 //   for (let i = 0; i < arr.length; i++) {

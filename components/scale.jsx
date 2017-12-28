@@ -1,4 +1,5 @@
 import React from 'react';
+import Tone from 'tone';
 import { keyReader, getPegs, chordReader, rotate, updateCanvas, getMajor } from './util';
 
 class Scale extends React.Component {
@@ -17,6 +18,26 @@ class Scale extends React.Component {
     updateCanvas(ctx, radius, this.props.selectedNotes);
   }
 
+  handleClick(pegs) {
+    // e.preventDefault();
+    Tone.Transport.cancel(0);
+    let synth = new Tone.Synth().toMaster();
+    let scale = [...pegs];
+    const freqs = [];
+    for (let i = 0; i < scale.length; i++) {
+      if (scale[i + 1] < scale[i]) scale[i + 1] += 12;
+      freqs.push(Tone.Frequency().midiToFrequency(60 + scale[i]));
+    }
+    freqs.push(freqs[0] * 2);
+
+    const pattern = new Tone.Sequence((time, note) => {
+      synth.triggerAttackRelease(note, "8n", time);
+    }, freqs, "8n").start();
+    pattern.loop = 0;
+
+    let transport = Tone.Transport.start();
+  }
+
   render() {
     const { node, selectedNotes, rootReferenceEnabled } = this.props;
     const { rank, notes, center } = node;
@@ -27,7 +48,7 @@ class Scale extends React.Component {
     while (pegs[0] !== rootIdx) pegs = rotate(pegs);
 
     return (
-      <div>
+      <div onClick={() => this.handleClick(pegs)} >
         {notes.map((note, i) => {
           const color = i === chordRootIdx ? "red": "black";
           let backgroundColor, numLabel = null;

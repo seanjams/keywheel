@@ -1,5 +1,6 @@
 import React from 'react';
 import Chord from './chord';
+import Tone from 'tone';
 import { NOTE_NAMES, EMPTY, getPegs, chordReader, updateCanvas } from './util';
 
 class Input extends React.Component {
@@ -31,6 +32,26 @@ class Input extends React.Component {
     updateCanvas(ctx, radius, this.state.notes);
   }
 
+  handleClick(pegs) {
+    // e.preventDefault();
+    if (pegs.length === 0) return;
+    Tone.Transport.cancel(0);
+    let synth = new Tone.Synth().toMaster();
+    let scale = [...pegs];
+    const freqs = [];
+    for (let i = 0; i < scale.length; i++) {
+      if (scale[i + 1] < scale[i]) scale[i + 1] += 12;
+      freqs.push(Tone.Frequency().midiToFrequency(60 + scale[i]));
+    }
+
+    const pattern = new Tone.Sequence((time, note) => {
+      synth.triggerAttackRelease(note, "8n", time);
+    }, freqs, "8n").start();
+    pattern.loop = 0;
+
+    let transport = Tone.Transport.start();
+  }
+
   render() {
     const { notes } = this.state;
     const { rootReferenceEnabled } = this.props;
@@ -39,6 +60,7 @@ class Input extends React.Component {
     const { name: chordName, rootIdx: chordRootIdx } = chordReader(notes);
     return (
       <div>
+        <button onClick={() => this.handleClick(getPegs(notes))}>Sound Notes</button>
         <button onClick={this.props.toggleRef} style={{
           position: "absolute",
           top: center.y - 140,
@@ -82,9 +104,9 @@ class Input extends React.Component {
           left: center.x - 22,
           width: "80px",
           textAlign: "center"
-        }}><span>{ chordName.split(" ").map(piece => {
+        }}><span>{ chordName.split(" ").map((piece, i) => {
           return (
-            <p>{ piece }</p>
+            <p key={i}>{ piece }</p>
           );
         }) }</span>
         </div>
