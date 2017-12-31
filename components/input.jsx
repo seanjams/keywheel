@@ -1,7 +1,7 @@
 import React from 'react';
 import Chord from './chord';
 import Tone from 'tone';
-import { NOTE_NAMES, EMPTY, getPegs, chordReader, updateCanvas } from './util';
+import { NOTE_NAMES, EMPTY, getPegs, chordReader, updateCanvas, rotate } from './util';
 
 class Input extends React.Component {
   constructor(props) {
@@ -55,12 +55,16 @@ class Input extends React.Component {
   render() {
     const { notes } = this.state;
     const { rootReferenceEnabled } = this.props;
+    const { name: chordName, rootIdx: chordRootIdx } = chordReader(notes);
+    let pegs = getPegs(notes);
+    if (chordRootIdx > -1) {
+      while (pegs[0] !== chordRootIdx) pegs = rotate(pegs);
+    }
     const noteRadius = 30, scaleRadius = 80;
     const center = { x: 120, y: 300 };
-    const { name: chordName, rootIdx: chordRootIdx } = chordReader(notes);
     return (
       <div>
-        <button onClick={() => this.handleClick(getPegs(notes))} style={{
+        <button onClick={() => this.handleClick(pegs)} style={{
           position: "absolute",
           top: center.y - 200,
           left: center.x - 50,
