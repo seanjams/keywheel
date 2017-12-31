@@ -2,15 +2,7 @@
 
 [Live](http://www.seanoreilly.co/keywheel)
 
-### Examples
-
-![Ex1](./assets/example1.png)
-
-![Ex2](./assets/example2.png)
-
-![Ex3](./assets/example3.png)
-
-![Ex4](./assets/example4.png)
+![Demo](./assets/keywheeldemo.gif)
 
 ## TL:DR
 
@@ -54,6 +46,16 @@ This tool can be used by musicians in a variety of ways:
 2. Jamming with your friends or writing a song? What chord should I go to next? Plug in the notes you currently have and let the Key Wheel give you suggestions.
 
 3. The Key Wheel introduces a concept of distance between certain scale choices, and therefore sound. Musicians that write music that changes keys can use it to traverse the scales in clever ways towards a desired "far away" place.
+
+### Examples
+
+![Ex1](./assets/example1.png)
+
+![Ex2](./assets/example2.png)
+
+![Ex3](./assets/example3.png)
+
+![Ex4](./assets/example4.png)
 
 ### Future Features...
 
