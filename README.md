@@ -1,4 +1,4 @@
-# Key Wheel #
+# Key Wheel
 
 [Live](http://www.seanoreilly.co/keywheel)
 
@@ -37,7 +37,7 @@ These all have the commonality that they are spaced out, there are no clumps of 
 
 ## OK, so what is this thing?
 
-The Key Wheel is a network of 7 note scales. The choices of the notes on the clock are shown at each vertex, and they are connected to scales on their diagonals, which only differ by one pitch moved one clock step up or down. Some simple rules, discovered during my mathematical research at UC Davis, are baked into which notes are able to be adjusted, and the network yielded provides a visual understanding of sonic "distance" between all Diatonic (Major, Ionian), Melodic Minor (Altered), and Wholetone (Neapolitan) scales.
+The Key Wheel is a network of 7 note scales. The choices of the notes on the clock are shown at each vertex, and they are connected to scales on their diagonals, which only differ by one pitch moved one clock step up or down. Some simple rules, discovered during my mathematical research at UC Davis, constrain which notes are able to be adjusted, and the network yielded provides a visual understanding of sonic "distance" between all Diatonic (Major, Ionian), Melodic Minor (Altered), and Wholetone (Neapolitan) scales.
 
 This tool can be used by musicians in a variety of ways:
 
