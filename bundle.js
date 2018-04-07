@@ -568,7 +568,7 @@ module.exports = warning;
 
 
 Object.defineProperty(exports, "__esModule", {
-  value: true
+	value: true
 });
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -578,384 +578,392 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 // import {uniq} from 'lodash';
-var DIRS = exports.DIRS = ["TL", "TR", "BL", "BR"],
-    CMAJOR = exports.CMAJOR = [true, false, true, false, true, true, false, true, false, true, false, true],
-    EMPTY = exports.EMPTY = [false, false, false, false, false, false, false, false, false, false, false, false],
-    NOTE_NAMES = exports.NOTE_NAMES = ["C", "Db", "D", "Eb", "E", "F", "Gb", "G", "Ab", "A", "Bb", "B"],
-    MAJOR = exports.MAJOR = [2, 2, 1, 2, 2, 2, 1],
-    MELMINOR = exports.MELMINOR = [2, 1, 2, 2, 2, 2, 1],
-    NEAPOLITAN = exports.NEAPOLITAN = [1, 2, 2, 2, 2, 2, 1],
-    SHAPE = exports.SHAPE = {
-  major: [0, 4, 7],
-  minor: [0, 3, 7],
-  major7: [0, 4, 7, 11],
-  minor7: [0, 3, 7, 10],
-  dom: [0, 4, 10],
-  dom5: [0, 4, 7, 10],
-  dom9: [0, 2, 4, 10],
-  dim: [0, 3, 6],
-  // dimbb7: [0,3,6,9],
-  dimb7: [0, 3, 6, 10],
-  sus2: [0, 2, 7],
-  sus4: [0, 5, 7],
-  pentatonic: [0, 2, 4, 7, 9],
-  dimPentatonic: [0, 3, 6, 8, 10]
-},
-    CHORD_COLOR = exports.CHORD_COLOR = {
-  major: 'rgba(100,100,255,0.5)',
-  minor: 'rgba(255,100,100,0.5)',
-  major7: 'rgba(155,0,255,0.5)',
-  minor7: 'rgba(255,0,155,0.5)',
-  dom: 'rgba(255,100,0,0.5)',
-  dom5: 'rgba(255,100,0,0.5)',
-  dom9: 'rgba(255,155,0,0.5)',
-  dim: 'rgba(100,255,100,0.5)',
-  // dimbb7: 'rgba(0,155,0,0.5)',
-  dimb7: 'rgba(0,255,0,0.5)',
-  sus2: 'rgba(255,255,0,0.5)',
-  sus4: 'rgba(255,255,0,0.5)',
-  pentatonic: 'rgba(255,0,0,0.5)',
-  dimPentatonic: 'rgba(0,200,0,0.5)'
+var DIRS = exports.DIRS = ["TL", "TR", "BL", "BR"];
+
+var CMAJOR = exports.CMAJOR = [true, false, true, false, true, true, false, true, false, true, false, true];
+
+var EMPTY = exports.EMPTY = [false, false, false, false, false, false, false, false, false, false, false, false];
+
+var NOTE_NAMES = exports.NOTE_NAMES = ["C", "Db", "D", "Eb", "E", "F", "Gb", "G", "Ab", "A", "Bb", "B"];
+
+var MAJOR = exports.MAJOR = [2, 2, 1, 2, 2, 2, 1];
+var MELMINOR = exports.MELMINOR = [2, 1, 2, 2, 2, 2, 1];
+var NEAPOLITAN = exports.NEAPOLITAN = [1, 2, 2, 2, 2, 2, 1];
+var SHAPE = exports.SHAPE = {
+	major: [0, 4, 7],
+	minor: [0, 3, 7],
+	major7: [0, 4, 7, 11],
+	minor7: [0, 3, 7, 10],
+	dom: [0, 4, 10],
+	dom5: [0, 4, 7, 10],
+	dom9: [0, 2, 4, 10],
+	dim: [0, 3, 6],
+	// dimbb7: [0,3,6,9],
+	dimb7: [0, 3, 6, 10],
+	sus2: [0, 2, 7],
+	sus4: [0, 5, 7],
+	pentatonic: [0, 2, 4, 7, 9],
+	dimPentatonic: [0, 3, 6, 8, 10]
 };
 
+var CHORD_COLOR = exports.CHORD_COLOR = {
+	major: "rgba(100,100,255,0.5)",
+	minor: "rgba(255,100,100,0.5)",
+	major7: "rgba(155,0,255,0.5)",
+	minor7: "rgba(255,0,155,0.5)",
+	dom: "rgba(255,100,0,0.5)",
+	dom5: "rgba(255,100,0,0.5)",
+	dom9: "rgba(255,155,0,0.5)",
+	dim: "rgba(100,255,100,0.5)",
+	// dimbb7: 'rgba(0,155,0,0.5)',
+	dimb7: "rgba(0,255,0,0.5)",
+	sus2: "rgba(255,255,0,0.5)",
+	sus4: "rgba(255,255,0,0.5)",
+	pentatonic: "rgba(255,0,0,0.5)",
+	dimPentatonic: "rgba(0,200,0,0.5)"
+};
+
+//Scale Node class dynamically holds information about location
+
 var ScaleNode = exports.ScaleNode = function () {
-  function ScaleNode() {
-    var notes = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : CMAJOR;
-    var center = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : { x: 800, y: 400 };
+	function ScaleNode() {
+		var notes = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : CMAJOR;
+		var center = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : { x: 800, y: 400 };
 
-    _classCallCheck(this, ScaleNode);
+		_classCallCheck(this, ScaleNode);
 
-    this.rank = 0;
-    this.notes = notes;
-    this.center = center;
-    this.parent = null;
-    this.parentCenter = null;
-    this.children = [];
-  }
+		this.rank = 0;
+		this.notes = notes;
+		this.center = center;
+		this.parent = null;
+		this.parentCenter = null;
+		this.children = [];
+	}
 
-  _createClass(ScaleNode, [{
-    key: "addChild",
-    value: function addChild(node) {
-      node.parent = this;
-      node.parentCenter = this.center;
-      node.rank = this.rank + 1;
-      this.children.push(node);
-    }
-  }, {
-    key: "removeChild",
-    value: function removeChild(node) {
-      node.parent = null;
-      node.parentCenter = null;
-      node.rank = 0;
-      this.children.splice(this.children.indexOf(node), 1);
-    }
-  }]);
+	_createClass(ScaleNode, [{
+		key: "addChild",
+		value: function addChild(node) {
+			node.parent = this;
+			node.parentCenter = this.center;
+			node.rank = this.rank + 1;
+			this.children.push(node);
+		}
+	}, {
+		key: "removeChild",
+		value: function removeChild(node) {
+			node.parent = null;
+			node.parentCenter = null;
+			node.rank = 0;
+			this.children.splice(this.children.indexOf(node), 1);
+		}
+	}]);
 
-  return ScaleNode;
+	return ScaleNode;
 }();
 
 var tweek = exports.tweek = function tweek(notes, idx) {
-  var pegs = getPegs(notes);
-  var temp = pegs[idx],
-      tweekStatus = 0;
+	var pegs = getPegs(notes);
+	var temp = pegs[idx];
+	var tweekStatus = 0;
 
-  if (idx === 0) {
-    pegs[idx] = pegs[1] - pegs[0] + pegs[6] - 12;
-  } else if (idx === pegs.length - 1) {
-    pegs[idx] = 12 + pegs[0] - pegs[6] + pegs[5];
-  } else {
-    pegs[idx] = pegs[idx + 1] - pegs[idx] + pegs[idx - 1];
-  }
+	if (idx === 0) {
+		pegs[idx] = pegs[1] - pegs[0] + pegs[6] - 12;
+	} else if (idx === pegs.length - 1) {
+		pegs[idx] = 12 + pegs[0] - pegs[6] + pegs[5];
+	} else {
+		pegs[idx] = pegs[idx + 1] - pegs[idx] + pegs[idx - 1];
+	}
 
-  if (temp > pegs[idx]) {
-    tweekStatus--;
-  } else if (temp < pegs[idx]) {
-    tweekStatus++;
-  }
+	if (temp > pegs[idx]) {
+		tweekStatus--;
+	} else if (temp < pegs[idx]) {
+		tweekStatus++;
+	}
 
-  return { notes: getNotes(pegs), tweekStatus: tweekStatus };
+	return { notes: getNotes(pegs), tweekStatus: tweekStatus };
 };
 
 var generateNeighbors = exports.generateNeighbors = function generateNeighbors(node, visited) {
-  var notes = node.notes,
-      parentCenter = node.parentCenter,
-      center = node.center,
-      parentNotes = node.parent ? node.parent.notes : null,
-      adjustedPegs = [];
+	var notes = node.notes,
+	    parentCenter = node.parentCenter,
+	    center = node.center;
 
-  var neighbors = [],
-      temp = void 0,
-      parentTweekStatus = void 0;
+	var parentNotes = node.parent ? node.parent.notes : null;
+	var adjustedPegs = [];
+	var neighbors = [];
+	var temp = void 0;
+	var parentTweekStatus = void 0;
 
-  // Checks if tweek changes the key, then checks to see if
-  // changed key is either parent or other visited neighbor,
-  // then collects the neighbor if so
+	// Checks if tweek changes the key, then checks to see if
+	// changed key is either parent or other visited neighbor,
+	// then collects the neighbor if so
 
-  for (var i = 0; i < 7; i++) {
-    temp = tweek(notes, i);
-    if (!isEqual(notes, temp.notes)) {
-      if (isEqual(parentNotes, temp.notes)) {
-        parentTweekStatus = temp.tweekStatus;
-      } else if (!includesKey(visited, temp.notes)) {
-        neighbors.push(temp);
-      }
-      adjustedPegs.push(i + 1);
-    };
-  }
+	for (var i = 0; i < 7; i++) {
+		temp = tweek(notes, i);
+		if (!isEqual(notes, temp.notes)) {
+			if (isEqual(parentNotes, temp.notes)) {
+				parentTweekStatus = temp.tweekStatus;
+			} else if (!includesKey(visited, temp.notes)) {
+				neighbors.push(temp);
+			}
+			adjustedPegs.push(i + 1);
+		}
+	}
 
-  //If no parentNotes, we are starting the keywheel.
-  //Generate the neighbors so that top and bottom neighbor pairs are same type.
-  //If parentNotes, use tweekStatus and isSameType to calculate centers
+	//If no parentNotes, we are starting the keywheel.
+	//Generate the neighbors so that top and bottom neighbor pairs are same type.
+	//If parentNotes, use tweekStatus and isSameType to calculate centers
 
-  if (!parentNotes) {
-    while (!isSameType(neighbors[0].notes, neighbors[1].notes)) {
-      neighbors = rotate(neighbors);
-    }
-    neighbors.forEach(function (neighbor, i) {
-      neighbor.center = getCenter(center, DIRS[i]);
-    });
-  } else {
-    var deltaX = 2 * center.x - parentCenter.x,
-        deltaY = 2 * center.y - parentCenter.y;
-    neighbors.forEach(function (neighbor) {
-      if (isSameType(parentNotes, neighbor.notes)) {
-        neighbor.center = { x: deltaX, y: parentCenter.y };
-      } else if (neighbor.tweekStatus === parentTweekStatus) {
-        neighbor.center = { x: parentCenter.x, y: deltaY };
-      } else {
-        neighbor.center = { x: deltaX, y: deltaY };
-      }
-    });
-  }
-  return { neighbors: neighbors, adjustedPegs: adjustedPegs };
+	if (!parentNotes) {
+		while (!isSameType(neighbors[0].notes, neighbors[1].notes)) {
+			neighbors = rotate(neighbors);
+		}
+		neighbors.forEach(function (neighbor, i) {
+			neighbor.center = getCenter(center, DIRS[i]);
+		});
+	} else {
+		var deltaX = 2 * center.x - parentCenter.x,
+		    deltaY = 2 * center.y - parentCenter.y;
+		neighbors.forEach(function (neighbor) {
+			if (isSameType(parentNotes, neighbor.notes)) {
+				neighbor.center = { x: deltaX, y: parentCenter.y };
+			} else if (neighbor.tweekStatus === parentTweekStatus) {
+				neighbor.center = { x: parentCenter.x, y: deltaY };
+			} else {
+				neighbor.center = { x: deltaX, y: deltaY };
+			}
+		});
+	}
+
+	return { neighbors: neighbors, adjustedPegs: adjustedPegs };
 };
 
 var buildKeyWheel = exports.buildKeyWheel = function buildKeyWheel(start) {
-  var queue = [start],
-      visited = [start];
-  var currentNode = void 0,
-      neighbors = void 0,
-      newNode = void 0;
+	var queue = [start],
+	    visited = [start];
+	var currentNode = void 0,
+	    neighbors = void 0,
+	    newNode = void 0;
 
-  while (visited.length < 36) {
-    currentNode = queue.shift();
-    if (!currentNode) return start;
-    neighbors = generateNeighbors(currentNode, visited).neighbors;
-    neighbors.forEach(function (neighbor) {
-      if (!neighbor) return;
-      newNode = new ScaleNode(neighbor.notes, neighbor.center);
-      currentNode.addChild(newNode);
-      queue.push(newNode);
-      visited.push(newNode);
-    });
-  }
-  return visited;
+	while (visited.length < 36) {
+		currentNode = queue.shift();
+		if (!currentNode) return start;
+		neighbors = generateNeighbors(currentNode, visited).neighbors;
+		neighbors.forEach(function (neighbor) {
+			if (!neighbor) return;
+			newNode = new ScaleNode(neighbor.notes, neighbor.center);
+			currentNode.addChild(newNode);
+			queue.push(newNode);
+			visited.push(newNode);
+		});
+	}
+
+	return visited;
 };
 
+//returns name and rootIdx of key in Major, melMinor, or Neo
 var keyReader = exports.keyReader = function keyReader(notes) {
-  var pegs = getPegs(notes);
-  var rootIdx = pegs[0],
-      intervals = getIntervals(pegs),
-      isMajorMatch = void 0,
-      isMinorMatch = void 0,
-      isNeaMatch = void 0,
-      name = void 0;
+	var pegs = getPegs(notes);
+	var intervals = getIntervals(pegs);
+	var name = void 0;
+	var rootIdx = pegs[0];
 
-  for (var i = 0; i < 7; i++) {
-    isMajorMatch = true;
-    isMinorMatch = true;
-    isNeaMatch = true;
+	var isMajorMatch = void 0;
+	var isMinorMatch = void 0;
+	var isNeaMatch = void 0;
 
-    for (var j = 0; j < intervals.length; j++) {
-      if (intervals[j] !== MAJOR[j]) isMajorMatch = false;
-      if (intervals[j] !== MELMINOR[j]) isMinorMatch = false;
-      if (intervals[j] !== NEAPOLITAN[j]) isNeaMatch = false;
-    }
+	for (var i = 0; i < 7; i++) {
+		isMajorMatch = true;
+		isMinorMatch = true;
+		isNeaMatch = true;
 
-    if (isMajorMatch) {
-      name = NOTE_NAMES[rootIdx] + " Maj";
-      break;
-    } else if (isMinorMatch) {
-      name = NOTE_NAMES[rootIdx] + " mel";
-      break;
-    } else if (isNeaMatch) {
-      name = NOTE_NAMES[rootIdx] + " neo";
-      break;
-    }
+		for (var j = 0; j < intervals.length; j++) {
+			if (intervals[j] !== MAJOR[j]) isMajorMatch = false;
+			if (intervals[j] !== MELMINOR[j]) isMinorMatch = false;
+			if (intervals[j] !== NEAPOLITAN[j]) isNeaMatch = false;
+		}
 
-    rootIdx += intervals[0];
-    intervals = rotate(intervals);
-  }
-  return { name: name, rootIdx: rootIdx };
+		if (isMajorMatch) {
+			name = NOTE_NAMES[rootIdx] + " Maj";
+			break;
+		} else if (isMinorMatch) {
+			name = NOTE_NAMES[rootIdx] + " mel";
+			break;
+		} else if (isNeaMatch) {
+			name = NOTE_NAMES[rootIdx] + " neo";
+			break;
+		}
+
+		rootIdx += intervals[0];
+		intervals = rotate(intervals);
+	}
+
+	return { name: name, rootIdx: rootIdx };
 };
 
+//returns chord color, name, and rootIdx from dictionary
 var chordReader = exports.chordReader = function chordReader(notes) {
-  var chords = Object.keys(SHAPE);
-  var color = "transparent",
-      rootIdx = 0,
-      chordShape = void 0;
+	var chords = Object.keys(SHAPE);
+	var color = "transparent";
+	var rootIdx = 0;
+	var chordShape = void 0;
 
-  for (var i = 0; i < chords.length; i++) {
-    chordShape = getNotes(SHAPE[chords[i]]);
-    if (isSameType(notes, chordShape)) {
-      var temp = [].concat(_toConsumableArray(notes));
-      while (!isEqual(temp, chordShape)) {
-        temp = rotate(temp);
-        rootIdx += 1;
-      }
-      color = CHORD_COLOR[chords[i]];
-      name = NOTE_NAMES[rootIdx] + " " + chords[i];
-      break;
-    }
-  }
+	for (var i = 0; i < chords.length; i++) {
+		chordShape = getNotes(SHAPE[chords[i]]);
+		if (isSameType(notes, chordShape)) {
+			var temp = [].concat(_toConsumableArray(notes));
+			while (!isEqual(temp, chordShape)) {
+				temp = rotate(temp);
+				rootIdx += 1;
+			}
+			color = CHORD_COLOR[chords[i]];
+			name = NOTE_NAMES[rootIdx] + " " + chords[i];
+			break;
+		}
+	}
 
-  if (color === "transparent") {
-    rootIdx = -1;
-    name = "";
-  }
-  return { color: color, name: name, rootIdx: rootIdx };
+	if (color === "transparent") {
+		rootIdx = -1;
+		name = "";
+	}
+
+	return { color: color, name: name, rootIdx: rootIdx };
 };
 
 var updateCanvas = exports.updateCanvas = function updateCanvas(ctx, radius, notes) {
-  var pegs = getPegs(notes);
-  var start = {
-    x: radius * (1 + Math.sin(Math.PI * pegs[0] / 6)),
-    y: radius * (1 - Math.cos(Math.PI * pegs[0] / 6))
-  };
-  ctx.clearRect(0, 0, 2 * radius, 2 * radius);
-  if (pegs.length < 3) return;
-  ctx.strokeStyle = 'green';
-  ctx.fillStyle = chordReader(notes).color;
+	var pegs = getPegs(notes);
+	var start = {
+		x: radius * (1 + Math.sin(Math.PI * pegs[0] / 6)),
+		y: radius * (1 - Math.cos(Math.PI * pegs[0] / 6))
+	};
 
-  //draw chord
-  ctx.beginPath();
-  ctx.moveTo(start.x, start.y);
-  pegs.forEach(function (peg, i) {
-    if (i === 0) return;
-    var newPos = {
-      x: radius * (1 + Math.sin(Math.PI * peg / 6)),
-      y: radius * (1 - Math.cos(Math.PI * peg / 6))
-    };
-    var x = ctx.lineTo(newPos.x, newPos.y);
-  });
-  ctx.closePath();
-  ctx.stroke();
-  ctx.fill();
+	ctx.clearRect(0, 0, 2 * radius, 2 * radius);
+	if (pegs.length < 3) return;
+	ctx.strokeStyle = "green";
+	ctx.fillStyle = chordReader(notes).color;
+
+	//draw chord
+	ctx.beginPath();
+	ctx.moveTo(start.x, start.y);
+	pegs.forEach(function (peg, i) {
+		if (i === 0) return;
+		var newPos = {
+			x: radius * (1 + Math.sin(Math.PI * peg / 6)),
+			y: radius * (1 - Math.cos(Math.PI * peg / 6))
+		};
+
+		ctx.lineTo(newPos.x, newPos.y);
+	});
+	ctx.closePath();
+	ctx.stroke();
+	ctx.fill();
 };
 
 //private helper methods
 //////////////////////////////////////////////////////////////////
 
 var isEqual = exports.isEqual = function isEqual(notes1, notes2) {
-  if (!notes1 || !notes2 || notes1.length !== notes2.length) return false;
-  for (var i = 0; i < notes1.length; i++) {
-    if (notes1[i] !== notes2[i]) return false;
-  }
-  return true;
+	if (!notes1 || !notes2 || notes1.length !== notes2.length) return false;
+	for (var i = 0; i < notes1.length; i++) {
+		if (notes1[i] !== notes2[i]) return false;
+	}
+
+	return true;
 };
 
 var includesKey = exports.includesKey = function includesKey(nodes, notes) {
-  var notesArr = nodes.map(function (node) {
-    return node.notes;
-  });
-  for (var i = 0; i < notesArr.length; i++) {
-    if (isEqual(notesArr[i], notes)) return true;
-  }
-  return false;
+	var notesArr = nodes.map(function (node) {
+		return node.notes;
+	});
+	for (var i = 0; i < notesArr.length; i++) {
+		if (isEqual(notesArr[i], notes)) return true;
+	}
+
+	return false;
 };
 
 var getPegs = exports.getPegs = function getPegs(notes) {
-  var pegs = [];
-  notes.forEach(function (note, i) {
-    if (note) pegs.push(i);
-  });
-  return pegs;
+	var pegs = [];
+	notes.forEach(function (note, i) {
+		if (note) pegs.push(i);
+	});
+
+	return pegs;
 };
 
 var getNotes = exports.getNotes = function getNotes(pegs) {
-  var notes = Array.apply(undefined, EMPTY);
-  pegs.forEach(function (peg) {
-    if (peg < 0) peg += 12;
-    if (peg > 11) peg -= 12;
-    notes[peg] = true;
-  });
-  return notes;
+	var notes = Array.apply(undefined, EMPTY);
+	pegs.forEach(function (peg) {
+		if (peg < 0) peg += 12;
+		if (peg > 11) peg -= 12;
+		notes[peg] = true;
+	});
+
+	return notes;
 };
 
 var isSameType = exports.isSameType = function isSameType(notes1, notes2) {
-  var temp = notes2;
-  for (var i = 0; i < notes2.length; i++) {
-    if (isEqual(notes1, temp)) {
-      return true;
-    } else {
-      temp = rotate(temp);
-    }
-  }
-  return false;
+	var temp = notes2;
+	for (var i = 0; i < notes2.length; i++) {
+		if (isEqual(notes1, temp)) {
+			return true;
+		} else {
+			temp = rotate(temp);
+		}
+	}
+
+	return false;
 };
 
 var rotate = exports.rotate = function rotate(arr) {
-  var rotated = [];
-  for (var i = 0; i < arr.length; i++) {
-    if (i === arr.length - 1) {
-      rotated.push(arr[0]);
-    } else {
-      rotated.push(arr[i + 1]);
-    }
-  }
-  return rotated;
+	var rotated = [];
+	for (var i = 0; i < arr.length; i++) {
+		if (i === arr.length - 1) {
+			rotated.push(arr[0]);
+		} else {
+			rotated.push(arr[i + 1]);
+		}
+	}
+
+	return rotated;
 };
 
 var getCenter = exports.getCenter = function getCenter(center, parentDirection) {
-  var d = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : 90;
+	var d = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : 90;
 
-  var deltas = {
-    "TL": { x: center.x + d, y: center.y + d },
-    "BL": { x: center.x + d, y: center.y - d },
-    "TR": { x: center.x - d, y: center.y + d },
-    "BR": { x: center.x - d, y: center.y - d }
-  };
-  return deltas[parentDirection];
+	var deltas = {
+		TL: { x: center.x + d, y: center.y + d },
+		BL: { x: center.x + d, y: center.y - d },
+		TR: { x: center.x - d, y: center.y + d },
+		BR: { x: center.x - d, y: center.y - d }
+	};
+
+	return deltas[parentDirection];
 };
 
 var getIntervals = exports.getIntervals = function getIntervals(pegs) {
-  var intervals = [];
-  for (var i = 0; i < pegs.length; i++) {
-    if (i === pegs.length - 1) {
-      intervals.push(12 + pegs[0] - pegs[i]);
-    } else {
-      intervals.push(pegs[i + 1] - pegs[i]);
-    }
-  }
-  return intervals;
+	var intervals = [];
+	for (var i = 0; i < pegs.length; i++) {
+		if (i === pegs.length - 1) {
+			intervals.push(12 + pegs[0] - pegs[i]);
+		} else {
+			intervals.push(pegs[i + 1] - pegs[i]);
+		}
+	}
+
+	return intervals;
 };
 
 var getMajor = exports.getMajor = function getMajor(rootIdx) {
-  var temp = rootIdx;
-  var pegs = [temp];
-  for (var i = 0; i + 1 < MAJOR.length; i++) {
-    temp += MAJOR[i];
-    pegs.push(temp % 12);
-  }
-  return pegs;
+	var temp = rootIdx;
+	var pegs = [temp];
+	for (var i = 0; i + 1 < MAJOR.length; i++) {
+		temp += MAJOR[i];
+		pegs.push(temp % 12);
+	}
+
+	return pegs;
 };
-
-// export const copy = arr => {
-//   const result = [];
-//   for (let i = 0; i < arr.length; i++) {
-//     result.push(arr[i]);
-//   }
-//   return result;
-// };
-
-// let node = new ScaleNode();
-
-// const test1 = () => {
-//   keyReader(CMAJOR);
-// };
-//
-// console.log("RUNNNING TESTS");
-// test1();
 
 /***/ }),
 /* 8 */
@@ -25095,83 +25103,101 @@ function _possibleConstructorReturn(self, call) { if (!self) { throw new Referen
 
 function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
 
+var initialNotes = (0, _util.getNotes)([0, 2, 4, 5, 7, 9, 11]);
+
+var intialCenter = {
+	x: 720,
+	y: 350
+};
+
 var Root = function (_React$Component) {
-  _inherits(Root, _React$Component);
+	_inherits(Root, _React$Component);
 
-  function Root(props) {
-    _classCallCheck(this, Root);
+	function Root(props) {
+		_classCallCheck(this, Root);
 
-    var _this = _possibleConstructorReturn(this, (Root.__proto__ || Object.getPrototypeOf(Root)).call(this, props));
+		var _this = _possibleConstructorReturn(this, (Root.__proto__ || Object.getPrototypeOf(Root)).call(this, props));
 
-    var start = new _util.ScaleNode((0, _util.getNotes)([0, 2, 4, 5, 7, 9, 11]), { x: 720, y: 350 });
-    _this.state = {
-      scales: (0, _util.buildKeyWheel)(start),
-      selected: [].concat(_toConsumableArray(_util.EMPTY)),
-      rootReferenceEnabled: false
-    };
-    _this.handleClick = _this.handleClick.bind(_this);
-    _this.toggleRef = _this.toggleRef.bind(_this);
-    return _this;
-  }
+		var start = new _util.ScaleNode(initialNotes, intialCenter);
 
-  _createClass(Root, [{
-    key: 'handleClick',
-    value: function handleClick(i) {
-      var selected = [].concat(_toConsumableArray(this.state.selected));
-      selected[i] = !selected[i];
-      this.setState({ selected: selected });
-    }
-  }, {
-    key: 'toggleRef',
-    value: function toggleRef() {
-      var rootReferenceEnabled = !this.state.rootReferenceEnabled;
-      this.setState({ rootReferenceEnabled: rootReferenceEnabled });
-    }
-  }, {
-    key: 'render',
-    value: function render() {
-      var _this2 = this;
+		_this.state = {
+			scales: (0, _util.buildKeyWheel)(start),
+			selected: [].concat(_toConsumableArray(_util.EMPTY)),
+			rootReferenceEnabled: false
+		};
 
-      var _state = this.state,
-          selected = _state.selected,
-          scales = _state.scales,
-          rootReferenceEnabled = _state.rootReferenceEnabled;
+		_this.handleClick = _this.handleClick.bind(_this);
+		_this.toggleRef = _this.toggleRef.bind(_this);
+		return _this;
+	}
 
-      var pegs = (0, _util.getPegs)(selected);
-      return _react2.default.createElement(
-        'div',
-        null,
-        _react2.default.createElement(_input2.default, { handleClick: this.handleClick,
-          toggleRef: this.toggleRef,
-          rootReferenceEnabled: rootReferenceEnabled }),
-        _react2.default.createElement(
-          'div',
-          { style: {
-              width: "80%"
-            } },
-          scales.map(function (node, i) {
-            var isMatch = true;
-            pegs.forEach(function (i) {
-              if (!node.notes[i]) isMatch = false;
-            });
-            var selectedNotes = isMatch ? selected : [];
-            return _react2.default.createElement(_scale2.default, { key: i,
-              node: node,
-              selectedNotes: selectedNotes,
-              handleClick: _this2.handleClick,
-              rootReferenceEnabled: rootReferenceEnabled });
-          })
-        )
-      );
-    }
-  }]);
+	_createClass(Root, [{
+		key: "handleClick",
+		value: function handleClick(i) {
+			var selected = [].concat(_toConsumableArray(this.state.selected));
+			selected[i] = !selected[i];
+			this.setState({ selected: selected });
+		}
+	}, {
+		key: "toggleRef",
+		value: function toggleRef() {
+			var rootReferenceEnabled = !this.state.rootReferenceEnabled;
+			this.setState({ rootReferenceEnabled: rootReferenceEnabled });
+		}
+	}, {
+		key: "scaleComponents",
+		value: function scaleComponents() {
+			var _this2 = this;
 
-  return Root;
+			var _state = this.state,
+			    selected = _state.selected,
+			    scales = _state.scales,
+			    rootReferenceEnabled = _state.rootReferenceEnabled;
+
+			var pegs = (0, _util.getPegs)(selected);
+
+			return scales.map(function (node, i) {
+				var isMatch = pegs.every(function (i) {
+					return node.notes[i];
+				});
+				var selectedNotes = isMatch ? selected : [];
+
+				return _react2.default.createElement(_scale2.default, {
+					key: i,
+					node: node,
+					selectedNotes: selectedNotes,
+					handleClick: _this2.handleClick,
+					rootReferenceEnabled: rootReferenceEnabled
+				});
+			});
+		}
+	}, {
+		key: "render",
+		value: function render() {
+			var scaleDivs = this.scaleComponents();
+			return _react2.default.createElement(
+				"div",
+				null,
+				_react2.default.createElement(_input2.default, {
+					handleClick: this.handleClick,
+					toggleRef: this.toggleRef,
+					rootReferenceEnabled: this.state.rootReferenceEnabled
+				}),
+				_react2.default.createElement(
+					"div",
+					{ style: { width: "80%" } },
+					scaleDivs
+				)
+			);
+		}
+	}]);
+
+	return Root;
 }(_react2.default.Component);
 
-document.addEventListener('DOMContentLoaded', function () {
-  var root = document.getElementById('root');
-  _reactDom2.default.render(_react2.default.createElement(Root, null), root);
+document.addEventListener("DOMContentLoaded", function () {
+	var root = document.getElementById("root");
+	_reactDom2.default.render(_react2.default.createElement(Root, null), root);
 });
 
 /***/ }),
@@ -42490,7 +42516,7 @@ module.exports = camelize;
 
 
 Object.defineProperty(exports, "__esModule", {
-  value: true
+	value: true
 });
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -42515,173 +42541,195 @@ function _possibleConstructorReturn(self, call) { if (!self) { throw new Referen
 
 function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
 
+var noteRadius = 14;
+var scaleRadius = 36;
+
 var Scale = function (_React$Component) {
-  _inherits(Scale, _React$Component);
+	_inherits(Scale, _React$Component);
 
-  function Scale() {
-    _classCallCheck(this, Scale);
+	function Scale() {
+		_classCallCheck(this, Scale);
 
-    return _possibleConstructorReturn(this, (Scale.__proto__ || Object.getPrototypeOf(Scale)).apply(this, arguments));
-  }
+		return _possibleConstructorReturn(this, (Scale.__proto__ || Object.getPrototypeOf(Scale)).apply(this, arguments));
+	}
 
-  _createClass(Scale, [{
-    key: 'componentDidMount',
-    value: function componentDidMount() {
-      this.handleCanvas();
-    }
-  }, {
-    key: 'componentDidUpdate',
-    value: function componentDidUpdate() {
-      this.handleCanvas();
-    }
-  }, {
-    key: 'handleCanvas',
-    value: function handleCanvas() {
-      var ctx = this.refs.canvas.getContext('2d');
-      var radius = 36;
-      (0, _util.updateCanvas)(ctx, radius, this.props.selectedNotes);
-    }
-  }, {
-    key: 'handleClick',
-    value: function handleClick(pegs) {
-      var modeIdx = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 0;
+	_createClass(Scale, [{
+		key: "componentDidMount",
+		value: function componentDidMount() {
+			this.handleCanvas();
+		}
+	}, {
+		key: "componentDidUpdate",
+		value: function componentDidUpdate() {
+			this.handleCanvas();
+		}
+	}, {
+		key: "handleCanvas",
+		value: function handleCanvas() {
+			var ctx = this.refs.canvas.getContext("2d");
+			var radius = 36;
+			(0, _util.updateCanvas)(ctx, radius, this.props.selectedNotes);
+		}
+	}, {
+		key: "handleClick",
+		value: function handleClick(pegs) {
+			var modeIdx = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 0;
 
-      // e.preventDefault();
-      _tone2.default.Transport.cancel(0);
-      var synth = new _tone2.default.Synth().toMaster();
-      var scale = [].concat(_toConsumableArray(pegs));
-      for (var i = 0; i < modeIdx; i++) {
-        scale = (0, _util.rotate)(scale);
-      }var freqs = [];
-      for (var _i = 0; _i < scale.length; _i++) {
-        if (scale[_i + 1] < scale[_i]) scale[_i + 1] += 12;
-        freqs.push(_tone2.default.Frequency().midiToFrequency(60 + scale[_i]));
-      }
-      freqs.push(freqs[0] * 2);
+			_tone2.default.Transport.cancel(0);
 
-      var pattern = new _tone2.default.Sequence(function (time, note) {
-        synth.triggerAttackRelease(note, "8n", time);
-      }, freqs, "8n").start();
-      pattern.loop = 0;
+			var synth = new _tone2.default.Synth().toMaster();
+			var scale = [].concat(_toConsumableArray(pegs));
+			for (var i = 0; i < modeIdx; i++) {
+				scale = (0, _util.rotate)(scale);
+			}var freqs = [];
+			for (var _i = 0; _i < scale.length; _i++) {
+				if (scale[_i + 1] < scale[_i]) scale[_i + 1] += 12;
+				freqs.push(_tone2.default.Frequency().midiToFrequency(60 + scale[_i]));
+			}
+			freqs.push(freqs[0] * 2);
 
-      var transport = _tone2.default.Transport.start();
-    }
-  }, {
-    key: 'render',
-    value: function render() {
-      var _this2 = this;
+			var pattern = new _tone2.default.Sequence(function (time, note) {
+				synth.triggerAttackRelease(note, "8n", time);
+			}, freqs, "8n").start();
 
-      var _props = this.props,
-          node = _props.node,
-          selectedNotes = _props.selectedNotes,
-          rootReferenceEnabled = _props.rootReferenceEnabled;
-      var rank = node.rank,
-          notes = node.notes,
-          center = node.center;
+			pattern.loop = 0;
+			_tone2.default.Transport.start();
+		}
+	}, {
+		key: "init",
+		value: function init(i, pegs) {
+			var idx = pegs.indexOf(i);
+			if (idx >= 0) this.handleClick(pegs, idx);
+		}
+	}, {
+		key: "noteComponents",
+		value: function noteComponents(notes, pegs, center, relMajor) {
+			var _this2 = this;
 
-      var _keyReader = (0, _util.keyReader)(notes),
-          name = _keyReader.name,
-          rootIdx = _keyReader.rootIdx;
+			var _props = this.props,
+			    selectedNotes = _props.selectedNotes,
+			    rootReferenceEnabled = _props.rootReferenceEnabled;
 
-      var _chordReader = (0, _util.chordReader)(selectedNotes),
-          chordName = _chordReader.name,
-          chordRootIdx = _chordReader.rootIdx;
+			var _chordReader = (0, _util.chordReader)(selectedNotes),
+			    rootIdx = _chordReader.rootIdx;
 
-      var noteRadius = 14,
-          scaleRadius = 36;
-      var pegs = (0, _util.getPegs)(notes),
-          relMajor = (0, _util.getMajor)(rootIdx);
-      while (pegs[0] !== rootIdx) {
-        pegs = (0, _util.rotate)(pegs);
-      }return _react2.default.createElement(
-        'div',
-        { onClick: function onClick() {
-            return _this2.handleClick(pegs);
-          } },
-        notes.map(function (note, i) {
-          var color = i === chordRootIdx ? "red" : "black";
-          var backgroundColor = void 0,
-              numLabel = null;
-          if (selectedNotes[i]) {
-            backgroundColor = "yellow";
-          } else {
-            backgroundColor = note ? "#AAF" : "transparent";
-          }
-          if (pegs.includes(i)) {
-            numLabel = i === relMajor[pegs.indexOf(i)] ? "" : "b";
-            numLabel += '' + (pegs.indexOf(i) + 1);
-          }
-          return _react2.default.createElement(
-            'div',
-            { key: i,
-              onClick: function onClick(e) {
-                e.stopPropagation();
-                note ? _this2.handleClick(pegs, pegs.indexOf(i)) : null;
-              },
-              style: {
-                position: "absolute",
-                width: noteRadius,
-                height: noteRadius,
-                borderRadius: noteRadius,
-                backgroundColor: backgroundColor,
-                border: '1px solid ' + color,
-                color: color,
-                fontSize: "0.5em",
-                textAlign: "center",
-                top: center.y - scaleRadius * Math.cos(Math.PI * i / 6),
-                left: center.x + scaleRadius * Math.sin(Math.PI * i / 6)
-              } },
-            _react2.default.createElement(
-              'span',
-              { style: {
-                  position: "relative",
-                  top: "0.2em"
-                } },
-              rootReferenceEnabled ? numLabel : i
-            )
-          );
-        }),
-        _react2.default.createElement(
-          'div',
-          { style: {
-              position: "absolute",
-              top: center.y - 4,
-              left: center.x,
-              fontSize: "12px",
-              textAlign: "center"
-            } },
-          name.split(" ").map(function (piece, i) {
-            return _react2.default.createElement(
-              'p',
-              { key: i },
-              piece
-            );
-          })
-        ),
-        _react2.default.createElement('canvas', { ref: 'canvas',
-          width: 2 * scaleRadius,
-          height: 2 * scaleRadius,
-          style: {
-            position: "absolute",
-            top: center.y - scaleRadius + noteRadius / 2,
-            left: center.x - scaleRadius + noteRadius / 2
-          } })
-      );
-    }
-  }]);
+			return notes.map(function (note, i) {
+				var color = i === rootIdx ? "red" : "black";
+				var backgroundColor = void 0;
+				var numLabel = null;
 
-  return Scale;
+				if (selectedNotes[i]) {
+					backgroundColor = "yellow";
+				} else {
+					backgroundColor = note ? "#AAF" : "transparent";
+				}
+
+				if (pegs.includes(i)) {
+					numLabel = i === relMajor[pegs.indexOf(i)] ? "" : "b";
+					numLabel += "" + (pegs.indexOf(i) + 1);
+				}
+
+				var onClick = function onClick(e) {
+					e.stopPropagation();
+					_this2.init(i, pegs);
+				};
+
+				var style = {
+					position: "absolute",
+					width: noteRadius,
+					height: noteRadius,
+					borderRadius: noteRadius,
+					backgroundColor: backgroundColor,
+					border: "1px solid " + color,
+					color: color,
+					fontSize: "0.5em",
+					textAlign: "center",
+					top: center.y - scaleRadius * Math.cos(Math.PI * i / 6),
+					left: center.x + scaleRadius * Math.sin(Math.PI * i / 6)
+				};
+
+				var numLabelStyle = {
+					position: "relative",
+					top: "0.2em"
+				};
+
+				return _react2.default.createElement(
+					"div",
+					{ key: i, onClick: onClick, style: style },
+					_react2.default.createElement(
+						"span",
+						{ style: numLabelStyle },
+						rootReferenceEnabled ? numLabel : i
+					)
+				);
+			});
+		}
+	}, {
+		key: "render",
+		value: function render() {
+			var _this3 = this;
+
+			var node = this.props.node;
+			var notes = node.notes,
+			    center = node.center;
+
+			var _keyReader = (0, _util.keyReader)(notes),
+			    name = _keyReader.name,
+			    rootIdx = _keyReader.rootIdx;
+
+			var relMajor = (0, _util.getMajor)(rootIdx);
+			var pegs = (0, _util.getPegs)(notes);
+
+			while (pegs[0] !== rootIdx) {
+				pegs = (0, _util.rotate)(pegs);
+			}var noteDivs = this.noteComponents(notes, pegs, center, relMajor);
+			var label = name.split(" ").map(function (piece, i) {
+				return _react2.default.createElement(
+					"p",
+					{ key: i },
+					piece
+				);
+			});
+
+			var textStyle = {
+				position: "absolute",
+				top: center.y - 4,
+				left: center.x,
+				fontSize: "12px",
+				textAlign: "center"
+			};
+
+			var canvasStyle = {
+				position: "absolute",
+				top: center.y - scaleRadius + noteRadius / 2,
+				left: center.x - scaleRadius + noteRadius / 2
+			};
+
+			return _react2.default.createElement(
+				"div",
+				{ onClick: function onClick() {
+						return _this3.handleClick(pegs);
+					} },
+				noteDivs,
+				_react2.default.createElement(
+					"div",
+					{ style: textStyle },
+					label
+				),
+				_react2.default.createElement("canvas", {
+					ref: "canvas",
+					width: 2 * scaleRadius,
+					height: 2 * scaleRadius,
+					style: canvasStyle
+				})
+			);
+		}
+	}]);
+
+	return Scale;
 }(_react2.default.Component);
 
 exports.default = Scale;
-
-// onMouseEnter={() => {
-//   hoverColor = note ? "purple" : backgroundColor;
-//   console.log(hoverColor);
-// }}
-// onMouseLeave={() => {
-//   hoverColor = backgroundColor;
-// }}
 
 /***/ }),
 /* 30 */
@@ -42691,7 +42739,7 @@ exports.default = Scale;
 
 
 Object.defineProperty(exports, "__esModule", {
-  value: true
+	value: true
 });
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -42699,10 +42747,6 @@ var _createClass = function () { function defineProperties(target, props) { for 
 var _react = __webpack_require__(2);
 
 var _react2 = _interopRequireDefault(_react);
-
-var _chord = __webpack_require__(31);
-
-var _chord2 = _interopRequireDefault(_chord);
 
 var _tone = __webpack_require__(15);
 
@@ -42720,222 +42764,210 @@ function _possibleConstructorReturn(self, call) { if (!self) { throw new Referen
 
 function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
 
+var noteRadius = 30;
+var scaleRadius = 80;
+var center = { x: 120, y: 300 };
+
+var textStyle = {
+	position: "absolute",
+	top: center.y,
+	left: center.x - 22,
+	width: "80px",
+	textAlign: "center"
+};
+
+var canvasStyle = {
+	position: "absolute",
+	top: center.y - scaleRadius + noteRadius / 2,
+	left: center.x - scaleRadius + noteRadius / 2
+};
+
+var buttonStyle = function buttonStyle(x, y) {
+	return {
+		position: "absolute",
+		top: center.y - y,
+		left: center.x - x,
+		border: "1px solid black",
+		borderRadius: "10px",
+		padding: "10px"
+	};
+};
+
+var soundStyle = buttonStyle(50, 200);
+var refStyle = buttonStyle(50, 140);
+
 var Input = function (_React$Component) {
-  _inherits(Input, _React$Component);
+	_inherits(Input, _React$Component);
 
-  function Input(props) {
-    _classCallCheck(this, Input);
+	function Input(props) {
+		_classCallCheck(this, Input);
 
-    var _this = _possibleConstructorReturn(this, (Input.__proto__ || Object.getPrototypeOf(Input)).call(this, props));
+		var _this = _possibleConstructorReturn(this, (Input.__proto__ || Object.getPrototypeOf(Input)).call(this, props));
 
-    _this.state = {
-      notes: [].concat(_toConsumableArray(_util.EMPTY))
-    };
-    return _this;
-  }
+		_this.state = {
+			notes: [].concat(_toConsumableArray(_util.EMPTY))
+		};
+		return _this;
+	}
 
-  _createClass(Input, [{
-    key: 'toggleNote',
-    value: function toggleNote(i) {
-      var notes = [].concat(_toConsumableArray(this.state.notes));
-      notes[i] = !notes[i];
-      this.props.handleClick(i);
-      this.setState({ notes: notes });
-    }
-  }, {
-    key: 'componentDidMount',
-    value: function componentDidMount() {
-      this.handleCanvas();
-    }
-  }, {
-    key: 'componentDidUpdate',
-    value: function componentDidUpdate() {
-      this.handleCanvas();
-    }
-  }, {
-    key: 'handleCanvas',
-    value: function handleCanvas() {
-      var ctx = this.refs.canvas.getContext('2d');
-      var radius = 80;
-      (0, _util.updateCanvas)(ctx, radius, this.state.notes);
-    }
-  }, {
-    key: 'handleClick',
-    value: function handleClick(pegs) {
-      // e.preventDefault();
-      if (pegs.length === 0) return;
-      _tone2.default.Transport.cancel(0);
-      var synth = new _tone2.default.Synth().toMaster();
-      var scale = [].concat(_toConsumableArray(pegs));
-      var freqs = [];
-      for (var i = 0; i < scale.length; i++) {
-        if (scale[i + 1] < scale[i]) scale[i + 1] += 12;
-        freqs.push(_tone2.default.Frequency().midiToFrequency(60 + scale[i]));
-      }
+	_createClass(Input, [{
+		key: "toggleNote",
+		value: function toggleNote(i) {
+			var notes = [].concat(_toConsumableArray(this.state.notes));
+			notes[i] = !notes[i];
+			this.props.handleClick(i);
+			this.setState({ notes: notes });
+		}
+	}, {
+		key: "componentDidMount",
+		value: function componentDidMount() {
+			this.handleCanvas();
+		}
+	}, {
+		key: "componentDidUpdate",
+		value: function componentDidUpdate() {
+			this.handleCanvas();
+		}
+	}, {
+		key: "handleCanvas",
+		value: function handleCanvas() {
+			var ctx = this.refs.canvas.getContext("2d");
+			var radius = 80;
+			(0, _util.updateCanvas)(ctx, radius, this.state.notes);
+		}
+	}, {
+		key: "handleClick",
+		value: function handleClick(pegs) {
+			if (pegs.length === 0) return;
+			_tone2.default.Transport.cancel();
 
-      var pattern = new _tone2.default.Sequence(function (time, note) {
-        synth.triggerAttackRelease(note, "8n", time);
-      }, freqs, "8n").start();
-      pattern.loop = 0;
+			var synth = new _tone2.default.Synth().toMaster();
+			var scale = [].concat(_toConsumableArray(pegs));
+			var freqs = [];
 
-      var transport = _tone2.default.Transport.start();
-    }
-  }, {
-    key: 'render',
-    value: function render() {
-      var _this2 = this;
+			for (var i = 0; i < scale.length; i++) {
+				if (scale[i + 1] < scale[i]) scale[i + 1] += 12;
+				freqs.push(_tone2.default.Frequency().midiToFrequency(60 + scale[i]));
+			}
 
-      var notes = this.state.notes;
-      var rootReferenceEnabled = this.props.rootReferenceEnabled;
+			var pattern = new _tone2.default.Sequence(function (time, note) {
+				return synth.triggerAttackRelease(note, "8n", time);
+			}, freqs, "8n").start();
 
-      var _chordReader = (0, _util.chordReader)(notes),
-          chordName = _chordReader.name,
-          chordRootIdx = _chordReader.rootIdx;
+			pattern.loop = 0;
+			_tone2.default.Transport.start();
+		}
+	}, {
+		key: "noteComponents",
+		value: function noteComponents(notes, rootIdx) {
+			var _this2 = this;
 
-      var pegs = (0, _util.getPegs)(notes);
-      if (chordRootIdx > -1) {
-        while (pegs[0] !== chordRootIdx) {
-          pegs = (0, _util.rotate)(pegs);
-        }
-      }
-      var noteRadius = 30,
-          scaleRadius = 80;
-      var center = { x: 120, y: 300 };
-      return _react2.default.createElement(
-        'div',
-        null,
-        _react2.default.createElement(
-          'button',
-          { onClick: function onClick() {
-              return _this2.handleClick(pegs);
-            }, style: {
-              position: "absolute",
-              top: center.y - 200,
-              left: center.x - 50,
-              border: "1px solid black",
-              borderRadius: "10px",
-              padding: "10px"
-            } },
-          'Sound Notes'
-        ),
-        _react2.default.createElement(
-          'button',
-          { onClick: this.props.toggleRef, style: {
-              position: "absolute",
-              top: center.y - 140,
-              left: center.x - 50,
-              border: "1px solid black",
-              borderRadius: "10px",
-              padding: "10px"
-            } },
-          'Reference Root'
-        ),
-        notes.map(function (note, i) {
-          var color = i === chordRootIdx ? "red" : "black";
-          var backgroundColor = void 0;
-          if (note) {
-            backgroundColor = "yellow";
-          } else {
-            backgroundColor = note ? "#AAF" : "transparent";
-          }
-          return _react2.default.createElement(
-            'div',
-            { key: i,
-              onClick: function onClick() {
-                return _this2.toggleNote(i);
-              },
-              className: 'input-note',
-              style: {
-                position: "absolute",
-                width: noteRadius,
-                height: noteRadius,
-                borderRadius: noteRadius,
-                backgroundColor: backgroundColor,
-                border: '1px solid ' + color,
-                color: color,
-                textAlign: "center",
-                top: center.y - scaleRadius * Math.cos(Math.PI * i / 6),
-                left: center.x + scaleRadius * Math.sin(Math.PI * i / 6)
-              } },
-            _react2.default.createElement(
-              'span',
-              { style: {
-                  position: "relative",
-                  top: "0.4em"
-                } },
-              rootReferenceEnabled ? _util.NOTE_NAMES[i] : i
-            )
-          );
-        }),
-        _react2.default.createElement(
-          'div',
-          { style: {
-              position: "absolute",
-              top: center.y,
-              left: center.x - 22,
-              width: "80px",
-              textAlign: "center"
-            } },
-          _react2.default.createElement(
-            'span',
-            null,
-            chordName.split(" ").map(function (piece, i) {
-              return _react2.default.createElement(
-                'p',
-                { key: i },
-                piece
-              );
-            })
-          )
-        ),
-        _react2.default.createElement('canvas', { ref: 'canvas',
-          width: 2 * scaleRadius,
-          height: 2 * scaleRadius,
-          style: {
-            position: "absolute",
-            top: center.y - scaleRadius + noteRadius / 2,
-            left: center.x - scaleRadius + noteRadius / 2
-          } })
-      );
-    }
-  }]);
+			return notes.map(function (note, i) {
+				var color = i === rootIdx ? "red" : "black";
+				var backgroundColor = note ? "yellow" : "transparent";
 
-  return Input;
+				var style = {
+					position: "absolute",
+					width: noteRadius,
+					height: noteRadius,
+					borderRadius: noteRadius,
+					backgroundColor: backgroundColor,
+					border: "1px solid " + color,
+					color: color,
+					textAlign: "center",
+					top: center.y - scaleRadius * Math.cos(Math.PI * i / 6),
+					left: center.x + scaleRadius * Math.sin(Math.PI * i / 6)
+				};
+
+				return _react2.default.createElement(
+					"div",
+					{
+						key: i,
+						onClick: function onClick() {
+							return _this2.toggleNote(i);
+						},
+						className: "input-note",
+						style: style
+					},
+					_react2.default.createElement(
+						"span",
+						{
+							style: {
+								position: "relative",
+								top: "0.4em"
+							}
+						},
+						_this2.props.rootReferenceEnabled ? _util.NOTE_NAMES[i] : i
+					)
+				);
+			});
+		}
+	}, {
+		key: "render",
+		value: function render() {
+			var _this3 = this;
+
+			var notes = this.state.notes;
+
+			var _chordReader = (0, _util.chordReader)(notes),
+			    name = _chordReader.name,
+			    rootIdx = _chordReader.rootIdx;
+
+			var pegs = (0, _util.getPegs)(notes);
+
+			if (rootIdx > -1) {
+				while (pegs[0] !== rootIdx) {
+					pegs = (0, _util.rotate)(pegs);
+				}
+			}
+
+			var noteDivs = this.noteComponents(notes, rootIdx);
+
+			return _react2.default.createElement(
+				"div",
+				null,
+				_react2.default.createElement(
+					"button",
+					{ onClick: function onClick() {
+							return _this3.handleClick(pegs);
+						}, style: soundStyle },
+					"Sound Notes"
+				),
+				_react2.default.createElement(
+					"button",
+					{ onClick: this.props.toggleRef, style: refStyle },
+					"Reference Root"
+				),
+				noteDivs,
+				_react2.default.createElement(
+					"div",
+					{ style: textStyle },
+					_react2.default.createElement(
+						"span",
+						null,
+						name.split(" ").map(function (piece, i) {
+							return _react2.default.createElement(
+								"p",
+								{ key: i },
+								piece
+							);
+						})
+					)
+				),
+				_react2.default.createElement("canvas", {
+					ref: "canvas",
+					width: 2 * scaleRadius,
+					height: 2 * scaleRadius,
+					style: canvasStyle
+				})
+			);
+		}
+	}]);
+
+	return Input;
 }(_react2.default.Component);
 
 exports.default = Input;
-
-/***/ }),
-/* 31 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-// import React from 'React'
-//
-// class Chord extends React.Component {
-//   constructor(props) {
-//     super(props);
-//   }
-//
-//   componentDidMount() {
-//     this.updateCanvas();
-//   }
-//
-//   updateCanvas() {
-//     const ctx = this.refs.canvas.getContext('2d');
-//     const { center } = this.props;
-//     ctx.clearRect(center.x-90, center.y-90, 200, 200);
-//   }
-//
-//   render() {
-//     return (
-//       <canvas ref="canvas" width="200" height="200" />
-//     );
-//   }
-// }
-//
-// export default Chord;
-
 
 /***/ })
 /******/ ]);
