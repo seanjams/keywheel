@@ -1,4 +1,15 @@
-// import {uniq} from 'lodash';
+//keywheel size control
+export const SCALE_SPACING = 55;
+
+export const NOTE_RADIUS = 12;
+
+export const SCALE_RADIUS = 27;
+
+export const WHEEL_CENTER = {
+	x: 5.7 * SCALE_SPACING,
+	y: 3.7 * SCALE_SPACING,
+};
+
 export const DIRS = ["TL", "TR", "BL", "BR"];
 
 export const CMAJOR = [
@@ -369,7 +380,7 @@ export const rotate = arr => {
 	return rotated;
 };
 
-export const getCenter = (center, parentDirection, d = 90) => {
+export const getCenter = (center, parentDirection, d = SCALE_SPACING) => {
 	const deltas = {
 		TL: { x: center.x + d, y: center.y + d },
 		BL: { x: center.x + d, y: center.y - d },

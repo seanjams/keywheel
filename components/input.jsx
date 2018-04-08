@@ -103,10 +103,17 @@ class Input extends React.Component {
 				borderRadius: noteRadius,
 				backgroundColor,
 				border: `1px solid ${color}`,
-				color,
-				textAlign: "center",
 				top: center.y - scaleRadius * Math.cos(Math.PI * i / 6),
 				left: center.x + scaleRadius * Math.sin(Math.PI * i / 6),
+			};
+
+			const labelStyle = {
+				color,
+				fontSize: "0.5em",
+				textAlign: "center",
+				position: "relative",
+				top: "50%",
+				transform: "translateY(-50%)",
 			};
 
 			return (
@@ -116,12 +123,7 @@ class Input extends React.Component {
 					className="input-note"
 					style={style}
 				>
-					<span
-						style={{
-							position: "relative",
-							top: "0.4em",
-						}}
-					>
+					<span style={labelStyle}>
 						{this.props.rootReferenceEnabled ? NOTE_NAMES[i] : i}
 					</span>
 				</div>

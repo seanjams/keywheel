@@ -1,27 +1,23 @@
 import React from "react";
 import ReactDOM from "react-dom";
 import Scale from "./scale";
-import Input from "./input";
+import Input from "./input2";
 import {
+	WHEEL_CENTER,
+	CMAJOR,
+	EMPTY,
 	ScaleNode,
 	buildKeyWheel,
 	getNotes,
 	getPegs,
-	CMAJOR,
-	EMPTY,
 } from "./util";
 
 const initialNotes = getNotes([0, 2, 4, 5, 7, 9, 11]);
 
-const intialCenter = {
-	x: 720,
-	y: 350,
-};
-
 class Root extends React.Component {
 	constructor(props) {
 		super(props);
-		const start = new ScaleNode(initialNotes, intialCenter);
+		const start = new ScaleNode(initialNotes, WHEEL_CENTER);
 
 		this.state = {
 			scales: buildKeyWheel(start),
@@ -29,20 +25,20 @@ class Root extends React.Component {
 			rootReferenceEnabled: false,
 		};
 
-		this.handleClick = this.handleClick.bind(this)
-		this.toggleRef = this.toggleRef.bind(this)
+		this.handleClick = this.handleClick.bind(this);
+		this.toggleRef = this.toggleRef.bind(this);
 	}
 
 	handleClick(i) {
 		const selected = [...this.state.selected];
 		selected[i] = !selected[i];
 		this.setState({ selected });
-	};
+	}
 
 	toggleRef() {
 		const rootReferenceEnabled = !this.state.rootReferenceEnabled;
 		this.setState({ rootReferenceEnabled });
-	};
+	}
 
 	scaleComponents() {
 		const { selected, scales, rootReferenceEnabled } = this.state;
@@ -57,26 +53,26 @@ class Root extends React.Component {
 					key={i}
 					node={node}
 					selectedNotes={selectedNotes}
-					handleClick={this.handleClick}
 					rootReferenceEnabled={rootReferenceEnabled}
 				/>
 			);
 		});
-	};
+	}
 
 	render() {
-		const scaleDivs = this.scaleComponents()
+		const scaleDivs = this.scaleComponents();
 		return (
 			<div>
+				<div style={{ width: "60%" }}>{scaleDivs}</div>
+				<button onClick={this.toggleRef}>Reference Root</button>
 				<Input
+					selected={this.state.selected}
 					handleClick={this.handleClick}
-					toggleRef={this.toggleRef}
 					rootReferenceEnabled={this.state.rootReferenceEnabled}
 				/>
-				<div style={{ width: "80%" }}>{scaleDivs}</div>
 			</div>
 		);
-	};
+	}
 }
 
 document.addEventListener("DOMContentLoaded", () => {

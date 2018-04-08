@@ -1,6 +1,8 @@
 import React from "react";
 import Tone from "tone";
 import {
+	NOTE_RADIUS,
+	SCALE_RADIUS,
 	keyReader,
 	getPegs,
 	chordReader,
@@ -8,9 +10,6 @@ import {
 	updateCanvas,
 	getMajor,
 } from "./util";
-
-const noteRadius = 14;
-const scaleRadius = 36;
 
 class Scale extends React.Component {
 	componentDidMount() {
@@ -23,11 +22,11 @@ class Scale extends React.Component {
 
 	handleCanvas() {
 		const ctx = this.refs.canvas.getContext("2d");
-		const radius = 36;
+		const radius = 27;
 		updateCanvas(ctx, radius, this.props.selectedNotes);
 	}
 
-	handleClick(pegs, modeIdx = 0) {
+	soundScale(pegs, modeIdx = 0) {
 		Tone.Transport.cancel(0);
 
 		let synth = new Tone.Synth().toMaster();
@@ -53,9 +52,13 @@ class Scale extends React.Component {
 		Tone.Transport.start();
 	}
 
-	init(i, pegs) {
-		const idx = pegs.indexOf(i);
-		if (idx >= 0) this.handleClick(pegs, idx);
+	handleClick(i, pegs) {
+		if (this.props.handleClick) {
+			this.props.handleClick(i);
+		} else {
+			const idx = pegs.indexOf(i);
+			if (idx >= 0) this.soundScale(pegs, idx);
+		}
 	}
 
 	noteComponents(notes, pegs, center, relMajor) {
@@ -68,9 +71,9 @@ class Scale extends React.Component {
 			let numLabel = null;
 
 			if (selectedNotes[i]) {
-				backgroundColor = "yellow";
+				backgroundColor = "#FBF";
 			} else {
-				backgroundColor = note ? "#AAF" : "transparent";
+				backgroundColor = note ? "#ABF" : "transparent";
 			}
 
 			if (pegs.includes(i)) {
@@ -80,39 +83,41 @@ class Scale extends React.Component {
 
 			const onClick = e => {
 				e.stopPropagation();
-				this.init(i, pegs);
+				this.handleClick(i, pegs);
 			};
 
 			const style = {
 				position: "absolute",
-				width: noteRadius,
-				height: noteRadius,
-				borderRadius: noteRadius,
-				backgroundColor: backgroundColor,
+				width: NOTE_RADIUS,
+				height: NOTE_RADIUS,
+				borderRadius: NOTE_RADIUS,
+				backgroundColor,
 				border: `1px solid ${color}`,
-				color: color,
-				fontSize: "0.5em",
-				textAlign: "center",
-				top: center.y - scaleRadius * Math.cos(Math.PI * i / 6),
-				left: center.x + scaleRadius * Math.sin(Math.PI * i / 6),
+				top: center.y - SCALE_RADIUS * Math.cos(Math.PI * i / 6),
+				left: center.x + SCALE_RADIUS * Math.sin(Math.PI * i / 6),
 			};
 
 			const numLabelStyle = {
+				color,
+				fontSize: "0.5em",
+				textAlign: "center",
 				position: "relative",
-				top: "0.2em",
+				top: "50%",
+				transform: "translateY(-50%)",
 			};
 
 			return (
 				<div key={i} onClick={onClick} style={style}>
-					<span style={numLabelStyle}>
-						{rootReferenceEnabled ? numLabel : i}
-					</span>
+					<div style={numLabelStyle}>{rootReferenceEnabled ? numLabel : i}</div>
 				</div>
 			);
 		});
 	}
 
 	render() {
+		//if not a node, then treat as input component
+		//
+
 		const { node } = this.props;
 		const { notes, center } = node;
 		const { name, rootIdx } = keyReader(notes);
@@ -122,32 +127,39 @@ class Scale extends React.Component {
 		while (pegs[0] !== rootIdx) pegs = rotate(pegs);
 
 		const noteDivs = this.noteComponents(notes, pegs, center, relMajor);
-		const label = name.split(" ").map((piece, i) => {
-			return <p key={i}>{piece}</p>;
-		});
+
+		const label = this.props.handleClick
+			? null
+			: name.split(" ").map((piece, i) => {
+					return <p key={i}>{piece}</p>;
+			  });
+
+		const onClick = this.props.handleClick
+			? null
+			: () => this.handleClick(pegs);
 
 		const textStyle = {
 			position: "absolute",
 			top: center.y - 4,
 			left: center.x,
-			fontSize: "12px",
+			fontSize: "10px",
 			textAlign: "center",
 		};
 
 		const canvasStyle = {
 			position: "absolute",
-			top: center.y - scaleRadius + noteRadius / 2,
-			left: center.x - scaleRadius + noteRadius / 2,
+			top: center.y - SCALE_RADIUS + NOTE_RADIUS / 2,
+			left: center.x - SCALE_RADIUS + NOTE_RADIUS / 2,
 		};
 
 		return (
-			<div onClick={() => this.handleClick(pegs)}>
+			<div onClick={onClick}>
 				{noteDivs}
 				<div style={textStyle}>{label}</div>
 				<canvas
 					ref="canvas"
-					width={2 * scaleRadius}
-					height={2 * scaleRadius}
+					width={2 * SCALE_RADIUS}
+					height={2 * SCALE_RADIUS}
 					style={canvasStyle}
 				/>
 			</div>
