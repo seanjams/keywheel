@@ -1,7 +1,7 @@
 import React from "react";
 import ReactDOM from "react-dom";
 import Scale from "./scale";
-import Input from "./input2";
+import Input from "./input";
 import {
 	WHEEL_CENTER,
 	CMAJOR,
@@ -21,17 +21,30 @@ class Root extends React.Component {
 
 		this.state = {
 			scales: buildKeyWheel(start),
-			selected: [...EMPTY],
-			rootReferenceEnabled: false,
+			selected: [
+				[...EMPTY],
+				[...EMPTY],
+				[...EMPTY],
+				[...EMPTY],
+				[...EMPTY],
+				[...EMPTY],
+				[...EMPTY],
+				[...EMPTY],
+			],
+			mode: "each", //all, each
+			rootReferenceEnabled: true,
 		};
 
 		this.handleClick = this.handleClick.bind(this);
 		this.toggleRef = this.toggleRef.bind(this);
 	}
 
-	handleClick(i) {
-		const selected = [...this.state.selected];
-		selected[i] = !selected[i];
+	handleClick(i, id) {
+		const selected = [];
+		this.state.selected.forEach(notes => {
+			selected.push([...notes]);
+		});
+		selected[id][i] = !selected[id][i];
 		this.setState({ selected });
 	}
 
@@ -41,18 +54,14 @@ class Root extends React.Component {
 	}
 
 	scaleComponents() {
-		const { selected, scales, rootReferenceEnabled } = this.state;
-		const pegs = getPegs(selected);
-
+		const { selected, scales, rootReferenceEnabled, mode } = this.state;
 		return scales.map((node, i) => {
-			const isMatch = pegs.every(i => node.notes[i]);
-			const selectedNotes = isMatch ? selected : [];
-
 			return (
 				<Scale
 					key={i}
 					node={node}
-					selectedNotes={selectedNotes}
+					selected={selected}
+					mode={mode}
 					rootReferenceEnabled={rootReferenceEnabled}
 				/>
 			);
@@ -60,15 +69,16 @@ class Root extends React.Component {
 	}
 
 	render() {
+		const { selected, rootReferenceEnabled } = this.state;
 		const scaleDivs = this.scaleComponents();
 		return (
 			<div>
 				<div style={{ width: "60%" }}>{scaleDivs}</div>
 				<button onClick={this.toggleRef}>Reference Root</button>
 				<Input
-					selected={this.state.selected}
+					selected={selected}
 					handleClick={this.handleClick}
-					rootReferenceEnabled={this.state.rootReferenceEnabled}
+					rootReferenceEnabled={rootReferenceEnabled}
 				/>
 			</div>
 		);

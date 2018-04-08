@@ -6,6 +6,8 @@ import {
 	INPUT_NOTE_RADIUS,
 	INPUT_SCALE_RADIUS,
 	NOTE_NAMES,
+	EMPTY,
+	COLORS,
 	keyReader,
 	getPegs,
 	chordReader,
@@ -29,10 +31,42 @@ class Scale extends React.Component {
 		this.handleCanvas();
 	}
 
+	collectNotes() {
+		const result = [...EMPTY];
+		Object.values(this.props.selected).forEach(notes => {
+			notes.forEach((note, i) => {
+				if (note) result[i] = true;
+			});
+		});
+		return result;
+	}
+
 	handleCanvas() {
 		const ctx = this.refs.canvas.getContext("2d");
 		const radius = this.scaleRadius;
-		updateCanvas(ctx, radius, this.props.selectedNotes, this.props.color);
+		const { node, selected, mode, colorIdx } = this.props;
+		const { notes } = node;
+		let selectedNotes;
+
+		if (mode === "all") {
+			const notes = this.collectNotes(selected);
+			const pegs = getPegs(notes);
+			const isMatch = pegs.every(i => notes[i]);
+			selectedNotes = isMatch ? [notes] : [];
+		} else if (mode === "each") {
+			selectedNotes = [];
+			selected.forEach((arr, i) => {
+				const pegs = getPegs(arr);
+				const isMatch = pegs.every(i => notes[i]);
+				if (isMatch) {
+					selectedNotes.push(arr);
+				} else {
+					selectedNotes.push(null);
+				}
+			});
+		}
+
+		updateCanvas(ctx, radius, selectedNotes || selected, colorIdx);
 	}
 
 	soundScale(pegs, modeIdx = 0) {
@@ -71,20 +105,40 @@ class Scale extends React.Component {
 	}
 
 	noteComponents(notes, pegs, center, relMajor, rootIdx = null) {
-		const { selectedNotes, rootReferenceEnabled } = this.props;
+		const { selected, rootReferenceEnabled, isInput, colorIdx } = this.props;
 
 		return notes.map((note, i) => {
-			const color = i === rootIdx ? "red" : "black";
+			let color = "#333";
+			let borderColor = "#333";
 			let backgroundColor;
+			let noteColor;
 			let numLabel = null;
 
-			if (selectedNotes[i]) {
-				backgroundColor = "#7F7";
+			const isMatch = selected.some((arr, idx) => {
+				const arrPegs = getPegs(arr);
+				let match = arr[i] && arrPegs.every(j => notes[j]);
+
+				if (match) {
+					noteColor = noteColor || COLORS(1)[idx];
+				}
+				return match;
+			});
+
+			if (isInput && selected[0][i]) {
+				backgroundColor = COLORS(1)[colorIdx];
+				color = "#EEE";
+			} else if (isMatch) {
+				backgroundColor = noteColor || "#7D7"; //should never happen
+				color = "#EEE";
 			} else {
-				backgroundColor = note ? "#ABF" : "transparent";
+				backgroundColor = note ? "#AAA" : "transparent";
 			}
 
 			if (this.props.isInput) {
+				if (i === rootIdx) {
+					color = "#7D7";
+					borderColor = "#7D7";
+				}
 				numLabel = NOTE_NAMES[i];
 			} else {
 				if (pegs.includes(i)) {
@@ -104,7 +158,7 @@ class Scale extends React.Component {
 				height: this.noteRadius,
 				borderRadius: this.noteRadius,
 				backgroundColor,
-				border: `1px solid ${color}`,
+				border: `1px solid ${borderColor}`,
 				top: center.y - this.scaleRadius * Math.cos(Math.PI * i / 6),
 				left: center.x + this.scaleRadius * Math.sin(Math.PI * i / 6),
 			};
@@ -127,12 +181,10 @@ class Scale extends React.Component {
 	}
 
 	render() {
-		const { node, selectedNotes } = this.props;
+		const { node, selected } = this.props;
 		const { notes, center } = node;
 		const { name: keyName, rootIdx: keyRootIdx } = keyReader(notes);
-		const { name: chordName, rootIdx: chordRootIdx } = chordReader(
-			selectedNotes
-		);
+		const { name: chordName, rootIdx: chordRootIdx } = chordReader(selected[0]);
 		const relMajor = getMajor(keyRootIdx);
 		let pegs = getPegs(notes);
 		let label;

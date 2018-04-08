@@ -570,7 +570,7 @@ module.exports = warning;
 Object.defineProperty(exports, "__esModule", {
 	value: true
 });
-exports.getMajor = exports.getIntervals = exports.getCenter = exports.rotate = exports.isSameType = exports.getNotes = exports.getPegs = exports.includesKey = exports.updateCanvas = exports.chordReader = exports.keyReader = exports.buildKeyWheel = exports.generateNeighbors = exports.tweek = exports.ScaleNode = exports.CHORD_COLOR = exports.SHAPE = exports.NEAPOLITAN = exports.MELMINOR = exports.MAJOR = exports.NOTE_NAMES = exports.EMPTY = exports.CMAJOR = exports.DIRS = exports.WHEEL_CENTER = exports.INPUT_SCALE_RADIUS = exports.INPUT_NOTE_RADIUS = exports.SCALE_RADIUS = exports.NOTE_RADIUS = exports.SCALE_SPACING = undefined;
+exports.getMajor = exports.getIntervals = exports.getCenter = exports.rotate = exports.isSameType = exports.getNotes = exports.getPegs = exports.includesKey = exports.updateCanvas = exports.chordReader = exports.keyReader = exports.buildKeyWheel = exports.generateNeighbors = exports.tweek = exports.ScaleNode = exports.COLORS = exports.CHORD_COLOR = exports.SHAPE = exports.NEAPOLITAN = exports.MELMINOR = exports.MAJOR = exports.NOTE_NAMES = exports.EMPTY = exports.CMAJOR = exports.DIRS = exports.WHEEL_CENTER = exports.INPUT_SCALE_RADIUS = exports.INPUT_NOTE_RADIUS = exports.SCALE_RADIUS = exports.NOTE_RADIUS = exports.SCALE_SPACING = undefined;
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
@@ -591,9 +591,9 @@ var NOTE_RADIUS = exports.NOTE_RADIUS = 13;
 
 var SCALE_RADIUS = exports.SCALE_RADIUS = 30;
 
-var INPUT_NOTE_RADIUS = exports.INPUT_NOTE_RADIUS = 14;
+var INPUT_NOTE_RADIUS = exports.INPUT_NOTE_RADIUS = 20;
 
-var INPUT_SCALE_RADIUS = exports.INPUT_SCALE_RADIUS = 36;
+var INPUT_SCALE_RADIUS = exports.INPUT_SCALE_RADIUS = 50;
 
 var WHEEL_CENTER = exports.WHEEL_CENTER = {
 	x: 5.7 * SCALE_SPACING,
@@ -637,12 +637,16 @@ var CHORD_COLOR = exports.CHORD_COLOR = {
 	dom5: "rgba(255,100,0,0.5)",
 	dom9: "rgba(255,155,0,0.5)",
 	dim: "rgba(100,255,100,0.5)",
-	// dimbb7: 'rgba(0,155,0,0.5)',
+	dimbb7: "rgba(0,155,0,0.5)",
 	dimb7: "rgba(0,255,0,0.5)",
 	sus2: "rgba(255,255,0,0.5)",
 	sus4: "rgba(255,255,0,0.5)",
 	pentatonic: "rgba(255,0,0,0.5)",
 	dimPentatonic: "rgba(0,200,0,0.5)"
+};
+
+var COLORS = exports.COLORS = function COLORS(opacity) {
+	return ["rgba(255,100,100," + opacity + ")", "rgba(100,100,255," + opacity + ")", "rgba(255,0,155," + opacity + ")", "rgba(255,100,0," + opacity + ")", "rgba(0,155,0," + opacity + ")", "rgba(0,255,0," + opacity + ")", "rgba(255,255,0," + opacity + ")", "rgba(255,0,0," + opacity + ")"];
 };
 
 //Scale Node class dynamically holds information about location
@@ -851,35 +855,41 @@ var chordReader = exports.chordReader = function chordReader(notes) {
 	return { color: color, name: name, rootIdx: rootIdx };
 };
 
-var updateCanvas = exports.updateCanvas = function updateCanvas(ctx, radius, notes) {
-	var color = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : null;
-
-	var pegs = getPegs(notes);
-	var start = {
-		x: radius * (1 + Math.sin(Math.PI * pegs[0] / 6)),
-		y: radius * (1 - Math.cos(Math.PI * pegs[0] / 6))
-	};
+var updateCanvas = exports.updateCanvas = function updateCanvas(ctx, radius, selectedNotes) {
+	var colorIdx = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : null;
 
 	ctx.clearRect(0, 0, 2 * radius, 2 * radius);
-	if (pegs.length < 3) return;
-	ctx.strokeStyle = "green";
-	ctx.fillStyle = color || chordReader(notes).color;
-
-	//draw chord
-	ctx.beginPath();
-	ctx.moveTo(start.x, start.y);
-	pegs.forEach(function (peg, i) {
-		if (i === 0) return;
-		var newPos = {
-			x: radius * (1 + Math.sin(Math.PI * peg / 6)),
-			y: radius * (1 - Math.cos(Math.PI * peg / 6))
+	selectedNotes.forEach(function (notes, i) {
+		if (!notes) return;
+		var pegs = getPegs(notes);
+		if (pegs.length < 3) return;
+		var start = {
+			x: radius * (1 + Math.sin(Math.PI * pegs[0] / 6)),
+			y: radius * (1 - Math.cos(Math.PI * pegs[0] / 6))
 		};
 
-		ctx.lineTo(newPos.x, newPos.y);
+		ctx.strokeStyle = "#AAA";
+		if (selectedNotes.length > 1 && !colorIdx) {
+			ctx.fillStyle = COLORS(0.5)[i];
+		} else {
+			ctx.fillStyle = COLORS(0.5)[colorIdx] || chordReader(notes); //should never happen
+		}
+		//draw chord
+		ctx.beginPath();
+		ctx.moveTo(start.x, start.y);
+		pegs.forEach(function (peg, i) {
+			if (i === 0) return;
+			var newPos = {
+				x: radius * (1 + Math.sin(Math.PI * peg / 6)),
+				y: radius * (1 - Math.cos(Math.PI * peg / 6))
+			};
+
+			ctx.lineTo(newPos.x, newPos.y);
+		});
+		ctx.closePath();
+		ctx.stroke();
+		ctx.fill();
 	});
-	ctx.closePath();
-	ctx.stroke();
-	ctx.fill();
 };
 
 //private helper methods
@@ -25101,7 +25111,7 @@ var _scale = __webpack_require__(29);
 
 var _scale2 = _interopRequireDefault(_scale);
 
-var _input = __webpack_require__(31);
+var _input = __webpack_require__(30);
 
 var _input2 = _interopRequireDefault(_input);
 
@@ -25131,8 +25141,9 @@ var Root = function (_React$Component) {
 
 		_this.state = {
 			scales: (0, _util.buildKeyWheel)(start),
-			selected: [].concat(_toConsumableArray(_util.EMPTY)),
-			rootReferenceEnabled: false
+			selected: [[].concat(_toConsumableArray(_util.EMPTY)), [].concat(_toConsumableArray(_util.EMPTY)), [].concat(_toConsumableArray(_util.EMPTY)), [].concat(_toConsumableArray(_util.EMPTY)), [].concat(_toConsumableArray(_util.EMPTY)), [].concat(_toConsumableArray(_util.EMPTY)), [].concat(_toConsumableArray(_util.EMPTY)), [].concat(_toConsumableArray(_util.EMPTY))],
+			mode: "each", //all, each
+			rootReferenceEnabled: true
 		};
 
 		_this.handleClick = _this.handleClick.bind(_this);
@@ -25142,9 +25153,12 @@ var Root = function (_React$Component) {
 
 	_createClass(Root, [{
 		key: "handleClick",
-		value: function handleClick(i) {
-			var selected = [].concat(_toConsumableArray(this.state.selected));
-			selected[i] = !selected[i];
+		value: function handleClick(i, id) {
+			var selected = [];
+			this.state.selected.forEach(function (notes) {
+				selected.push([].concat(_toConsumableArray(notes)));
+			});
+			selected[id][i] = !selected[id][i];
 			this.setState({ selected: selected });
 		}
 	}, {
@@ -25159,20 +25173,15 @@ var Root = function (_React$Component) {
 			var _state = this.state,
 			    selected = _state.selected,
 			    scales = _state.scales,
-			    rootReferenceEnabled = _state.rootReferenceEnabled;
-
-			var pegs = (0, _util.getPegs)(selected);
+			    rootReferenceEnabled = _state.rootReferenceEnabled,
+			    mode = _state.mode;
 
 			return scales.map(function (node, i) {
-				var isMatch = pegs.every(function (i) {
-					return node.notes[i];
-				});
-				var selectedNotes = isMatch ? selected : [];
-
 				return _react2.default.createElement(_scale2.default, {
 					key: i,
 					node: node,
-					selectedNotes: selectedNotes,
+					selected: selected,
+					mode: mode,
 					rootReferenceEnabled: rootReferenceEnabled
 				});
 			});
@@ -25180,6 +25189,10 @@ var Root = function (_React$Component) {
 	}, {
 		key: "render",
 		value: function render() {
+			var _state2 = this.state,
+			    selected = _state2.selected,
+			    rootReferenceEnabled = _state2.rootReferenceEnabled;
+
 			var scaleDivs = this.scaleComponents();
 			return _react2.default.createElement(
 				"div",
@@ -25195,9 +25208,9 @@ var Root = function (_React$Component) {
 					"Reference Root"
 				),
 				_react2.default.createElement(_input2.default, {
-					selected: this.state.selected,
+					selected: selected,
 					handleClick: this.handleClick,
-					rootReferenceEnabled: this.state.rootReferenceEnabled
+					rootReferenceEnabled: rootReferenceEnabled
 				})
 			);
 		}
@@ -42576,11 +42589,53 @@ var Scale = function (_React$Component) {
 			this.handleCanvas();
 		}
 	}, {
+		key: "collectNotes",
+		value: function collectNotes() {
+			var result = [].concat(_toConsumableArray(_util.EMPTY));
+			Object.values(this.props.selected).forEach(function (notes) {
+				notes.forEach(function (note, i) {
+					if (note) result[i] = true;
+				});
+			});
+			return result;
+		}
+	}, {
 		key: "handleCanvas",
 		value: function handleCanvas() {
 			var ctx = this.refs.canvas.getContext("2d");
 			var radius = this.scaleRadius;
-			(0, _util.updateCanvas)(ctx, radius, this.props.selectedNotes, this.props.color);
+			var _props = this.props,
+			    node = _props.node,
+			    selected = _props.selected,
+			    mode = _props.mode,
+			    colorIdx = _props.colorIdx;
+			var notes = node.notes;
+
+			var selectedNotes = void 0;
+
+			if (mode === "all") {
+				var _notes = this.collectNotes(selected);
+				var pegs = (0, _util.getPegs)(_notes);
+				var isMatch = pegs.every(function (i) {
+					return _notes[i];
+				});
+				selectedNotes = isMatch ? [_notes] : [];
+			} else if (mode === "each") {
+				selectedNotes = [];
+				selected.forEach(function (arr, i) {
+					var pegs = (0, _util.getPegs)(arr);
+					var isMatch = pegs.every(function (i) {
+						return notes[i];
+					});
+					if (isMatch) {
+						selectedNotes.push(arr);
+					} else {
+						selectedNotes.push(null);
+					}
+				});
+			}
+
+			(0, _util.updateCanvas)(ctx, radius, selectedNotes || selected, colorIdx);
 		}
 	}, {
 		key: "soundScale",
@@ -42623,23 +42678,47 @@ var Scale = function (_React$Component) {
 			var _this2 = this;
 
 			var rootIdx = arguments.length > 4 && arguments[4] !== undefined ? arguments[4] : null;
-			var _props = this.props,
-			    selectedNotes = _props.selectedNotes,
-			    rootReferenceEnabled = _props.rootReferenceEnabled;
+			var _props2 = this.props,
+			    selected = _props2.selected,
+			    rootReferenceEnabled = _props2.rootReferenceEnabled,
+			    isInput = _props2.isInput,
+			    colorIdx = _props2.colorIdx;
 
 
 			return notes.map(function (note, i) {
-				var color = i === rootIdx ? "red" : "black";
+				var color = "#333";
+				var borderColor = "#333";
 				var backgroundColor = void 0;
+				var noteColor = void 0;
 				var numLabel = null;
 
-				if (selectedNotes[i]) {
-					backgroundColor = "#7F7";
+				var isMatch = selected.some(function (arr, idx) {
+					var arrPegs = (0, _util.getPegs)(arr);
+					var match = arr[i] && arrPegs.every(function (j) {
+						return notes[j];
+					});
+
+					if (match) {
+						noteColor = noteColor || (0, _util.COLORS)(1)[idx];
+					}
+					return match;
+				});
+
+				if (isInput && selected[0][i]) {
+					backgroundColor = (0, _util.COLORS)(1)[colorIdx];
+					color = "#EEE";
+				} else if (isMatch) {
+					backgroundColor = noteColor || "#7D7"; //should never happen
+					color = "#EEE";
 				} else {
-					backgroundColor = note ? "#ABF" : "transparent";
+					backgroundColor = note ? "#AAA" : "transparent";
 				}
 
 				if (_this2.props.isInput) {
+					if (i === rootIdx) {
+						color = "#7D7";
+						borderColor = "#7D7";
+					}
 					numLabel = _util.NOTE_NAMES[i];
 				} else {
 					if (pegs.includes(i)) {
@@ -42659,7 +42738,7 @@ var Scale = function (_React$Component) {
 					height: _this2.noteRadius,
 					borderRadius: _this2.noteRadius,
 					backgroundColor: backgroundColor,
-					border: "1px solid " + color,
+					border: "1px solid " + borderColor,
 					top: center.y - _this2.scaleRadius * Math.cos(Math.PI * i / 6),
 					left: center.x + _this2.scaleRadius * Math.sin(Math.PI * i / 6)
 				};
@@ -42689,9 +42768,9 @@ var Scale = function (_React$Component) {
 		value: function render() {
 			var _this3 = this;
 
-			var _props2 = this.props,
-			    node = _props2.node,
-			    selectedNotes = _props2.selectedNotes;
+			var _props3 = this.props,
+			    node = _props3.node,
+			    selected = _props3.selected;
 			var notes = node.notes,
 			    center = node.center;
 
@@ -42699,7 +42778,7 @@ var Scale = function (_React$Component) {
 			    keyName = _keyReader.name,
 			    keyRootIdx = _keyReader.rootIdx;
 
-			var _chordReader = (0, _util.chordReader)(selectedNotes),
+			var _chordReader = (0, _util.chordReader)(selected[0]),
 			    chordName = _chordReader.name,
 			    chordRootIdx = _chordReader.rootIdx;
 
@@ -42772,8 +42851,7 @@ var Scale = function (_React$Component) {
 exports.default = Scale;
 
 /***/ }),
-/* 30 */,
-/* 31 */
+/* 30 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -42782,8 +42860,6 @@ exports.default = Scale;
 Object.defineProperty(exports, "__esModule", {
 	value: true
 });
-
-var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
 var _react = __webpack_require__(2);
 
@@ -42801,148 +42877,94 @@ var _isEqual2 = _interopRequireDefault(_isEqual);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
-
-function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
-
 function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } }
 
-var colors = ["rgba(255,100,100,0.5)", "rgba(155,0,255,0.5)", "rgba(255,0,155,0.5)", "rgba(255,100,0,0.5)", "rgba(0,155,0,0.5)", "rgba(0,255,0,0.5)", "rgba(255,255,0,0.5)", "rgba(255,0,0,0.5)"];
+//make dynamically placed inputs later
+
+var getX = function getX(i) {
+	return i * 1.5 * window.innerWidth / 10 + 100;
+};
+
+var getY = function getY(i) {
+	return [450, 575][i];
+};
 
 var node = [{
 	notes: [].concat(_toConsumableArray(_util.EMPTY)),
 	center: {
-		x: 200,
-		y: 500
+		x: getX(0),
+		y: getY(0)
 	}
 }, {
 	notes: [].concat(_toConsumableArray(_util.EMPTY)),
 	center: {
-		x: 300,
-		y: 500
+		x: getX(1),
+		y: getY(0)
 	}
 }, {
 	notes: [].concat(_toConsumableArray(_util.EMPTY)),
 	center: {
-		x: 400,
-		y: 500
+		x: getX(2),
+		y: getY(0)
 	}
 }, {
 	notes: [].concat(_toConsumableArray(_util.EMPTY)),
 	center: {
-		x: 500,
-		y: 500
+		x: getX(3),
+		y: getY(0)
 	}
 }, {
 	notes: [].concat(_toConsumableArray(_util.EMPTY)),
 	center: {
-		x: 200,
-		y: 600
+		x: getX(0),
+		y: getY(1)
 	}
 }, {
 	notes: [].concat(_toConsumableArray(_util.EMPTY)),
 	center: {
-		x: 300,
-		y: 600
+		x: getX(1),
+		y: getY(1)
 	}
 }, {
 	notes: [].concat(_toConsumableArray(_util.EMPTY)),
 	center: {
-		x: 400,
-		y: 600
+		x: getX(2),
+		y: getY(1)
 	}
 }, {
 	notes: [].concat(_toConsumableArray(_util.EMPTY)),
 	center: {
-		x: 500,
-		y: 600
+		x: getX(3),
+		y: getY(1)
 	}
 }];
 
-var Input = function (_React$Component) {
-	_inherits(Input, _React$Component);
+var Input = function Input(props) {
+	var selected = props.selected;
 
-	function Input(props) {
-		_classCallCheck(this, Input);
-
-		var _this = _possibleConstructorReturn(this, (Input.__proto__ || Object.getPrototypeOf(Input)).call(this, props));
-
-		_this.state = {
-			selectedNotes: {
-				0: [].concat(_toConsumableArray(_util.EMPTY)),
-				1: [].concat(_toConsumableArray(_util.EMPTY)),
-				2: [].concat(_toConsumableArray(_util.EMPTY)),
-				3: [].concat(_toConsumableArray(_util.EMPTY)),
-				4: [].concat(_toConsumableArray(_util.EMPTY)),
-				5: [].concat(_toConsumableArray(_util.EMPTY)),
-				6: [].concat(_toConsumableArray(_util.EMPTY)),
-				7: [].concat(_toConsumableArray(_util.EMPTY))
-			}
-		};
-		_this.handleClick = _this.handleClick.bind(_this);
-		return _this;
-	}
-
-	_createClass(Input, [{
-		key: "handleClick",
-		value: function handleClick(i, id) {
-			var selectedNotes = Object.assign({}, this.state.selectedNotes);
-			selectedNotes[id][i] = !selectedNotes[id][i];
-
-			this.setState({ selectedNotes: selectedNotes });
-			var notes = this.collectNotes();
-
-			if (!(0, _isEqual2.default)(notes, this.props.selected)) {
-				this.props.handleClick(i);
-			}
-		}
-	}, {
-		key: "collectNotes",
-		value: function collectNotes() {
-			var result = [].concat(_toConsumableArray(_util.EMPTY));
-			Object.values(this.state.selectedNotes).forEach(function (notes) {
-				notes.forEach(function (note, i) {
-					if (note) result[i] = true;
-				});
+	return _react2.default.createElement(
+		"div",
+		null,
+		selected.map(function (notes, i) {
+			return _react2.default.createElement(_scale2.default, {
+				key: i,
+				node: node[i],
+				selected: [notes],
+				handleClick: function handleClick(k) {
+					return props.handleClick(k, i);
+				},
+				rootReferenceEnabled: props.rootReferenceEnabled,
+				isInput: true,
+				colorIdx: i
 			});
-			return result;
-		}
-	}, {
-		key: "render",
-		value: function render() {
-			var _this2 = this;
-
-			var selectedNotes = this.state.selectedNotes;
-
-
-			return _react2.default.createElement(
-				"div",
-				null,
-				[0, 1, 2, 3, 4, 5, 6, 7].map(function (i) {
-					return _react2.default.createElement(_scale2.default, {
-						key: i,
-						node: node[i],
-						selectedNotes: selectedNotes[i],
-						handleClick: function handleClick(j) {
-							return _this2.handleClick(j, i);
-						},
-						rootReferenceEnabled: _this2.props.rootReferenceEnabled,
-						isInput: true,
-						color: colors[i]
-					});
-				})
-			);
-		}
-	}]);
-
-	return Input;
-}(_react2.default.Component);
+		})
+	);
+};
 
 exports.default = Input;
 
 /***/ }),
+/* 31 */,
 /* 32 */,
 /* 33 */
 /***/ (function(module, exports) {

@@ -7,9 +7,9 @@ export const NOTE_RADIUS = 13;
 
 export const SCALE_RADIUS = 30;
 
-export const INPUT_NOTE_RADIUS = 14;
+export const INPUT_NOTE_RADIUS = 20;
 
-export const INPUT_SCALE_RADIUS = 36;
+export const INPUT_SCALE_RADIUS = 50;
 
 export const WHEEL_CENTER = {
 	x: 5.7 * SCALE_SPACING,
@@ -92,13 +92,24 @@ export const CHORD_COLOR = {
 	dom5: "rgba(255,100,0,0.5)",
 	dom9: "rgba(255,155,0,0.5)",
 	dim: "rgba(100,255,100,0.5)",
-	// dimbb7: 'rgba(0,155,0,0.5)',
+	dimbb7: "rgba(0,155,0,0.5)",
 	dimb7: "rgba(0,255,0,0.5)",
 	sus2: "rgba(255,255,0,0.5)",
 	sus4: "rgba(255,255,0,0.5)",
 	pentatonic: "rgba(255,0,0,0.5)",
 	dimPentatonic: "rgba(0,200,0,0.5)",
 };
+
+export const COLORS = opacity => [
+	`rgba(255,100,100,${opacity})`,
+	`rgba(100,100,255,${opacity})`,
+	`rgba(255,0,155,${opacity})`,
+	`rgba(255,100,0,${opacity})`,
+	`rgba(0,155,0,${opacity})`,
+	`rgba(0,255,0,${opacity})`,
+	`rgba(255,255,0,${opacity})`,
+	`rgba(255,0,0,${opacity})`,
+];
 
 //Scale Node class dynamically holds information about location
 export class ScaleNode {
@@ -289,33 +300,39 @@ export const chordReader = notes => {
 	return { color, name, rootIdx };
 };
 
-export const updateCanvas = (ctx, radius, notes, color = null) => {
-	const pegs = getPegs(notes);
-	const start = {
-		x: radius * (1 + Math.sin(Math.PI * pegs[0] / 6)),
-		y: radius * (1 - Math.cos(Math.PI * pegs[0] / 6)),
-	};
-
+export const updateCanvas = (ctx, radius, selectedNotes, colorIdx = null) => {
 	ctx.clearRect(0, 0, 2 * radius, 2 * radius);
-	if (pegs.length < 3) return;
-	ctx.strokeStyle = "green";
-	ctx.fillStyle = color || chordReader(notes).color;
-
-	//draw chord
-	ctx.beginPath();
-	ctx.moveTo(start.x, start.y);
-	pegs.forEach((peg, i) => {
-		if (i === 0) return;
-		const newPos = {
-			x: radius * (1 + Math.sin(Math.PI * peg / 6)),
-			y: radius * (1 - Math.cos(Math.PI * peg / 6)),
+	selectedNotes.forEach((notes, i) => {
+		if (!notes) return;
+		const pegs = getPegs(notes);
+		if (pegs.length < 3) return;
+		const start = {
+			x: radius * (1 + Math.sin(Math.PI * pegs[0] / 6)),
+			y: radius * (1 - Math.cos(Math.PI * pegs[0] / 6)),
 		};
 
-		ctx.lineTo(newPos.x, newPos.y);
+		ctx.strokeStyle = "#AAA";
+		if (selectedNotes.length > 1 && !colorIdx) {
+			ctx.fillStyle = COLORS(0.5)[i];
+		} else {
+			ctx.fillStyle = COLORS(0.5)[colorIdx] || chordReader(notes); //should never happen
+		}
+		//draw chord
+		ctx.beginPath();
+		ctx.moveTo(start.x, start.y);
+		pegs.forEach((peg, i) => {
+			if (i === 0) return;
+			const newPos = {
+				x: radius * (1 + Math.sin(Math.PI * peg / 6)),
+				y: radius * (1 - Math.cos(Math.PI * peg / 6)),
+			};
+
+			ctx.lineTo(newPos.x, newPos.y);
+		});
+		ctx.closePath();
+		ctx.stroke();
+		ctx.fill();
 	});
-	ctx.closePath();
-	ctx.stroke();
-	ctx.fill();
 };
 
 //private helper methods
