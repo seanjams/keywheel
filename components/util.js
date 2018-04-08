@@ -1,9 +1,15 @@
+import isEqual from "lodash/isEqual";
+
 //keywheel size control
-export const SCALE_SPACING = 55;
+export const SCALE_SPACING = 60;
 
-export const NOTE_RADIUS = 12;
+export const NOTE_RADIUS = 13;
 
-export const SCALE_RADIUS = 27;
+export const SCALE_RADIUS = 30;
+
+export const INPUT_NOTE_RADIUS = 14;
+
+export const INPUT_SCALE_RADIUS = 36;
 
 export const WHEEL_CENTER = {
 	x: 5.7 * SCALE_SPACING,
@@ -147,8 +153,8 @@ export const generateNeighbors = (node, visited) => {
 	const parentNotes = node.parent ? node.parent.notes : null;
 	const adjustedPegs = [];
 	let neighbors = [];
-	let temp;
 	let parentTweekStatus;
+	let temp;
 
 	// Checks if tweek changes the key, then checks to see if
 	// changed key is either parent or other visited neighbor,
@@ -156,14 +162,13 @@ export const generateNeighbors = (node, visited) => {
 
 	for (var i = 0; i < 7; i++) {
 		temp = tweek(notes, i);
-		if (!isEqual(notes, temp.notes)) {
-			if (isEqual(parentNotes, temp.notes)) {
-				parentTweekStatus = temp.tweekStatus;
-			} else if (!includesKey(visited, temp.notes)) {
-				neighbors.push(temp);
-			}
-			adjustedPegs.push(i + 1);
+		if (isEqual(notes, temp.notes)) continue;
+		if (isEqual(parentNotes, temp.notes)) {
+			parentTweekStatus = temp.tweekStatus;
+		} else if (!includesKey(visited, temp.notes)) {
+			neighbors.push(temp);
 		}
+		adjustedPegs.push(i + 1);
 	}
 
 	//If no parentNotes, we are starting the keywheel.
@@ -178,8 +183,8 @@ export const generateNeighbors = (node, visited) => {
 			neighbor.center = getCenter(center, DIRS[i]);
 		});
 	} else {
-		const deltaX = 2 * center.x - parentCenter.x,
-			deltaY = 2 * center.y - parentCenter.y;
+		const deltaX = 2 * center.x - parentCenter.x;
+		const deltaY = 2 * center.y - parentCenter.y;
 		neighbors.forEach(neighbor => {
 			if (isSameType(parentNotes, neighbor.notes)) {
 				neighbor.center = { x: deltaX, y: parentCenter.y };
@@ -195,8 +200,8 @@ export const generateNeighbors = (node, visited) => {
 };
 
 export const buildKeyWheel = start => {
-	const queue = [start],
-		visited = [start];
+	const queue = [start];
+	const visited = [start];
 	let currentNode, neighbors, newNode;
 
 	while (visited.length < 36) {
@@ -284,7 +289,7 @@ export const chordReader = notes => {
 	return { color, name, rootIdx };
 };
 
-export const updateCanvas = (ctx, radius, notes) => {
+export const updateCanvas = (ctx, radius, notes, color = null) => {
 	const pegs = getPegs(notes);
 	const start = {
 		x: radius * (1 + Math.sin(Math.PI * pegs[0] / 6)),
@@ -294,7 +299,7 @@ export const updateCanvas = (ctx, radius, notes) => {
 	ctx.clearRect(0, 0, 2 * radius, 2 * radius);
 	if (pegs.length < 3) return;
 	ctx.strokeStyle = "green";
-	ctx.fillStyle = chordReader(notes).color;
+	ctx.fillStyle = color || chordReader(notes).color;
 
 	//draw chord
 	ctx.beginPath();
@@ -315,15 +320,6 @@ export const updateCanvas = (ctx, radius, notes) => {
 
 //private helper methods
 //////////////////////////////////////////////////////////////////
-
-export const isEqual = (notes1, notes2) => {
-	if (!notes1 || !notes2 || notes1.length !== notes2.length) return false;
-	for (let i = 0; i < notes1.length; i++) {
-		if (notes1[i] !== notes2[i]) return false;
-	}
-
-	return true;
-};
 
 export const includesKey = (nodes, notes) => {
 	const notesArr = nodes.map(node => node.notes);

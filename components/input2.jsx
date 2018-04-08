@@ -1,7 +1,77 @@
 import React from "react";
 import Scale from "./scale";
 import { EMPTY } from "./util";
-import { isEqual } from "lodash";
+import isEqual from "lodash/isEqual";
+
+const colors = [
+	"rgba(255,100,100,0.5)",
+	"rgba(155,0,255,0.5)",
+	"rgba(255,0,155,0.5)",
+	"rgba(255,100,0,0.5)",
+	"rgba(0,155,0,0.5)",
+	"rgba(0,255,0,0.5)",
+	"rgba(255,255,0,0.5)",
+	"rgba(255,0,0,0.5)",
+];
+
+const node = [
+	{
+		notes: [...EMPTY],
+		center: {
+			x: 200,
+			y: 500,
+		},
+	},
+	{
+		notes: [...EMPTY],
+		center: {
+			x: 300,
+			y: 500,
+		},
+	},
+	{
+		notes: [...EMPTY],
+		center: {
+			x: 400,
+			y: 500,
+		},
+	},
+	{
+		notes: [...EMPTY],
+		center: {
+			x: 500,
+			y: 500,
+		},
+	},
+	{
+		notes: [...EMPTY],
+		center: {
+			x: 200,
+			y: 600,
+		},
+	},
+	{
+		notes: [...EMPTY],
+		center: {
+			x: 300,
+			y: 600,
+		},
+	},
+	{
+		notes: [...EMPTY],
+		center: {
+			x: 400,
+			y: 600,
+		},
+	},
+	{
+		notes: [...EMPTY],
+		center: {
+			x: 500,
+			y: 600,
+		},
+	},
+];
 
 class Input extends React.Component {
 	constructor(props) {
@@ -21,20 +91,6 @@ class Input extends React.Component {
 		this.handleClick = this.handleClick.bind(this);
 	}
 
-	// componentDidMount() {
-	// 	this.handleCanvas();
-	// }
-
-	// componentDidUpdate() {
-	// 	this.handleCanvas();
-	// }
-
-	// handleCanvas() {
-	// 	const ctx = this.refs.canvas.getContext("2d");
-	// 	const radius = 80;
-	// 	updateCanvas(ctx, radius, this.state.notes);
-	// }
-
 	handleClick(i, id) {
 		const selectedNotes = Object.assign({}, this.state.selectedNotes);
 		selectedNotes[id][i] = !selectedNotes[id][i];
@@ -45,8 +101,6 @@ class Input extends React.Component {
 		if (!isEqual(notes, this.props.selected)) {
 			this.props.handleClick(i);
 		}
-		//generate subset of notes to send back up top
-		// this.props.handleClick()
 	}
 
 	collectNotes() {
@@ -61,23 +115,21 @@ class Input extends React.Component {
 
 	render() {
 		const { selectedNotes } = this.state;
-		const node = {
-			notes: [...EMPTY],
-			center: {
-				x: 500,
-				y: 500,
-			},
-		};
 
 		return (
 			<div>
 				{[0, 1, 2, 3, 4, 5, 6, 7].map(i => {
-					<Scale
-						node={node[i]}
-						selectedNotes={selectedNotes[i]}
-						handleClick={j => this.handleClick(j, i)}
-						rootReferenceEnabled={this.props.rootReferenceEnabled}
-					/>;
+					return (
+						<Scale
+							key={i}
+							node={node[i]}
+							selectedNotes={selectedNotes[i]}
+							handleClick={j => this.handleClick(j, i)}
+							rootReferenceEnabled={this.props.rootReferenceEnabled}
+							isInput={true}
+							color={colors[i]}
+						/>
+					);
 				})}
 			</div>
 		);

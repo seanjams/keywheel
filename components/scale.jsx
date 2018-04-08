@@ -3,6 +3,9 @@ import Tone from "tone";
 import {
 	NOTE_RADIUS,
 	SCALE_RADIUS,
+	INPUT_NOTE_RADIUS,
+	INPUT_SCALE_RADIUS,
+	NOTE_NAMES,
 	keyReader,
 	getPegs,
 	chordReader,
@@ -12,6 +15,12 @@ import {
 } from "./util";
 
 class Scale extends React.Component {
+	constructor(props) {
+		super(props);
+		this.scaleRadius = this.props.isInput ? INPUT_SCALE_RADIUS : SCALE_RADIUS;
+		this.noteRadius = this.props.isInput ? INPUT_NOTE_RADIUS : NOTE_RADIUS;
+	}
+
 	componentDidMount() {
 		this.handleCanvas();
 	}
@@ -22,8 +31,8 @@ class Scale extends React.Component {
 
 	handleCanvas() {
 		const ctx = this.refs.canvas.getContext("2d");
-		const radius = 27;
-		updateCanvas(ctx, radius, this.props.selectedNotes);
+		const radius = this.scaleRadius;
+		updateCanvas(ctx, radius, this.props.selectedNotes, this.props.color);
 	}
 
 	soundScale(pegs, modeIdx = 0) {
@@ -61,9 +70,8 @@ class Scale extends React.Component {
 		}
 	}
 
-	noteComponents(notes, pegs, center, relMajor) {
+	noteComponents(notes, pegs, center, relMajor, rootIdx = null) {
 		const { selectedNotes, rootReferenceEnabled } = this.props;
-		const { rootIdx } = chordReader(selectedNotes);
 
 		return notes.map((note, i) => {
 			const color = i === rootIdx ? "red" : "black";
@@ -71,14 +79,18 @@ class Scale extends React.Component {
 			let numLabel = null;
 
 			if (selectedNotes[i]) {
-				backgroundColor = "#FBF";
+				backgroundColor = "#7F7";
 			} else {
 				backgroundColor = note ? "#ABF" : "transparent";
 			}
 
-			if (pegs.includes(i)) {
-				numLabel = i === relMajor[pegs.indexOf(i)] ? "" : "b";
-				numLabel += `${pegs.indexOf(i) + 1}`;
+			if (this.props.isInput) {
+				numLabel = NOTE_NAMES[i];
+			} else {
+				if (pegs.includes(i)) {
+					numLabel = i === relMajor[pegs.indexOf(i)] ? "" : "b";
+					numLabel += `${pegs.indexOf(i) + 1}`;
+				}
 			}
 
 			const onClick = e => {
@@ -88,13 +100,13 @@ class Scale extends React.Component {
 
 			const style = {
 				position: "absolute",
-				width: NOTE_RADIUS,
-				height: NOTE_RADIUS,
-				borderRadius: NOTE_RADIUS,
+				width: this.noteRadius,
+				height: this.noteRadius,
+				borderRadius: this.noteRadius,
 				backgroundColor,
 				border: `1px solid ${color}`,
-				top: center.y - SCALE_RADIUS * Math.cos(Math.PI * i / 6),
-				left: center.x + SCALE_RADIUS * Math.sin(Math.PI * i / 6),
+				top: center.y - this.scaleRadius * Math.cos(Math.PI * i / 6),
+				left: center.x + this.scaleRadius * Math.sin(Math.PI * i / 6),
 			};
 
 			const numLabelStyle = {
@@ -115,27 +127,42 @@ class Scale extends React.Component {
 	}
 
 	render() {
-		//if not a node, then treat as input component
-		//
-
-		const { node } = this.props;
+		const { node, selectedNotes } = this.props;
 		const { notes, center } = node;
-		const { name, rootIdx } = keyReader(notes);
-		const relMajor = getMajor(rootIdx);
+		const { name: keyName, rootIdx: keyRootIdx } = keyReader(notes);
+		const { name: chordName, rootIdx: chordRootIdx } = chordReader(
+			selectedNotes
+		);
+		const relMajor = getMajor(keyRootIdx);
 		let pegs = getPegs(notes);
+		let label;
 
-		while (pegs[0] !== rootIdx) pegs = rotate(pegs);
+		while (pegs[0] !== keyRootIdx) pegs = rotate(pegs);
 
-		const noteDivs = this.noteComponents(notes, pegs, center, relMajor);
-
-		const label = this.props.handleClick
-			? null
-			: name.split(" ").map((piece, i) => {
+		if (this.props.isInput) {
+			label =
+				chordName &&
+				chordName.split(" ").map((piece, i) => {
 					return <p key={i}>{piece}</p>;
-			  });
+				});
+		} else {
+			label =
+				keyName &&
+				keyName.split(" ").map((piece, i) => {
+					return <p key={i}>{piece}</p>;
+				});
+		}
+
+		const noteDivs = this.noteComponents(
+			notes,
+			pegs,
+			center,
+			relMajor,
+			chordRootIdx
+		);
 
 		const onClick = this.props.handleClick
-			? null
+			? () => {}
 			: () => this.handleClick(pegs);
 
 		const textStyle = {
@@ -148,8 +175,8 @@ class Scale extends React.Component {
 
 		const canvasStyle = {
 			position: "absolute",
-			top: center.y - SCALE_RADIUS + NOTE_RADIUS / 2,
-			left: center.x - SCALE_RADIUS + NOTE_RADIUS / 2,
+			top: center.y - this.scaleRadius + this.noteRadius / 2,
+			left: center.x - this.scaleRadius + this.noteRadius / 2,
 		};
 
 		return (
@@ -158,8 +185,8 @@ class Scale extends React.Component {
 				<div style={textStyle}>{label}</div>
 				<canvas
 					ref="canvas"
-					width={2 * SCALE_RADIUS}
-					height={2 * SCALE_RADIUS}
+					width={2 * this.scaleRadius}
+					height={2 * this.scaleRadius}
 					style={canvasStyle}
 				/>
 			</div>
