@@ -136,8 +136,8 @@ class Scale extends React.Component {
 
 			if (this.props.isInput) {
 				if (i === rootIdx) {
-					color = "#7D7";
-					borderColor = "#7D7";
+					color = "gold";
+					borderColor = "brown";
 				}
 				numLabel = NOTE_NAMES[i];
 			} else {

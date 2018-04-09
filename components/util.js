@@ -106,10 +106,19 @@ export const COLORS = opacity => [
 	`rgba(255,0,155,${opacity})`,
 	`rgba(255,100,0,${opacity})`,
 	`rgba(0,155,0,${opacity})`,
-	`rgba(0,255,0,${opacity})`,
-	`rgba(255,255,0,${opacity})`,
-	`rgba(255,0,0,${opacity})`,
+	`rgba(155,0,255,${opacity})`,
+	`rgba(255,155,0,${opacity})`,
+	`rgba(0,155,100,${opacity})`,
 ];
+
+// `rgba(255,100,100,1)`,
+// `rgba(100,100,255,1)`,
+// `rgba(255,0,155,1)`,
+// `rgba(255,100,0,1)`,
+// `rgba(0,155,0,1)`,
+// "rgba(155,0,255,1)",
+// "rgba(255,155,0,1)"
+// `rgba(0,155,100,1)`,
 
 //Scale Node class dynamically holds information about location
 export class ScaleNode {
