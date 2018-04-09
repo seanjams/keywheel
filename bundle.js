@@ -570,13 +570,15 @@ module.exports = warning;
 Object.defineProperty(exports, "__esModule", {
 	value: true
 });
-exports.getMajor = exports.getIntervals = exports.getCenter = exports.rotate = exports.isSameType = exports.getNotes = exports.getPegs = exports.includesKey = exports.updateCanvas = exports.chordReader = exports.keyReader = exports.buildKeyWheel = exports.generateNeighbors = exports.tweek = exports.ScaleNode = exports.COLORS = exports.CHORD_COLOR = exports.SHAPE = exports.NEAPOLITAN = exports.MELMINOR = exports.MAJOR = exports.NOTE_NAMES = exports.EMPTY = exports.CMAJOR = exports.DIRS = exports.WHEEL_CENTER = exports.INPUT_SCALE_RADIUS = exports.INPUT_NOTE_RADIUS = exports.SCALE_RADIUS = exports.NOTE_RADIUS = exports.SCALE_SPACING = undefined;
+exports.getMajor = exports.getIntervals = exports.getCenter = exports.rotate = exports.isSameType = exports.collectNotes = exports.getNotes = exports.getPegs = exports.includesKey = exports.updateCanvas = exports.chordReader = exports.keyReader = exports.buildKeyWheel = exports.generateNeighbors = exports.tweek = exports.ScaleNode = exports.SHAPE = exports.NEAPOLITAN = exports.MELMINOR = exports.MAJOR = exports.NOTE_NAMES = exports.EMPTY = exports.CMAJOR = exports.DIRS = exports.WHEEL_CENTER = exports.INPUT_SCALE_RADIUS = exports.INPUT_NOTE_RADIUS = exports.SCALE_RADIUS = exports.NOTE_RADIUS = exports.SCALE_SPACING = undefined;
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
 var _isEqual = __webpack_require__(56);
 
 var _isEqual2 = _interopRequireDefault(_isEqual);
+
+var _colors = __webpack_require__(124);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
@@ -620,43 +622,13 @@ var SHAPE = exports.SHAPE = {
 	dom5: [0, 4, 7, 10],
 	dom9: [0, 2, 4, 10],
 	dim: [0, 3, 6],
-	// dimbb7: [0,3,6,9],
+	dimbb7: [0, 3, 6, 9],
 	dimb7: [0, 3, 6, 10],
 	sus2: [0, 2, 7],
 	sus4: [0, 5, 7],
 	pentatonic: [0, 2, 4, 7, 9],
 	dimPentatonic: [0, 3, 6, 8, 10]
 };
-
-var CHORD_COLOR = exports.CHORD_COLOR = {
-	major: "rgba(100,100,255,0.5)",
-	minor: "rgba(255,100,100,0.5)",
-	major7: "rgba(155,0,255,0.5)",
-	minor7: "rgba(255,0,155,0.5)",
-	dom: "rgba(255,100,0,0.5)",
-	dom5: "rgba(255,100,0,0.5)",
-	dom9: "rgba(255,155,0,0.5)",
-	dim: "rgba(100,255,100,0.5)",
-	dimbb7: "rgba(0,155,0,0.5)",
-	dimb7: "rgba(0,255,0,0.5)",
-	sus2: "rgba(255,255,0,0.5)",
-	sus4: "rgba(255,255,0,0.5)",
-	pentatonic: "rgba(255,0,0,0.5)",
-	dimPentatonic: "rgba(0,200,0,0.5)"
-};
-
-var COLORS = exports.COLORS = function COLORS(opacity) {
-	return ["rgba(255,100,100," + opacity + ")", "rgba(100,100,255," + opacity + ")", "rgba(255,0,155," + opacity + ")", "rgba(255,100,0," + opacity + ")", "rgba(0,155,0," + opacity + ")", "rgba(155,0,255," + opacity + ")", "rgba(255,155,0," + opacity + ")", "rgba(0,155,100," + opacity + ")"];
-};
-
-// `rgba(255,100,100,1)`,
-// `rgba(100,100,255,1)`,
-// `rgba(255,0,155,1)`,
-// `rgba(255,100,0,1)`,
-// `rgba(0,155,0,1)`,
-// "rgba(155,0,255,1)",
-// "rgba(255,155,0,1)"
-// `rgba(0,155,100,1)`,
 
 //Scale Node class dynamically holds information about location
 
@@ -850,7 +822,7 @@ var chordReader = exports.chordReader = function chordReader(notes) {
 				temp = rotate(temp);
 				rootIdx += 1;
 			}
-			color = CHORD_COLOR[chords[i]];
+			color = _colors.CHORD_COLOR[chords[i]];
 			name = NOTE_NAMES[rootIdx] + " " + chords[i];
 			break;
 		}
@@ -864,12 +836,10 @@ var chordReader = exports.chordReader = function chordReader(notes) {
 	return { color: color, name: name, rootIdx: rootIdx };
 };
 
-var updateCanvas = exports.updateCanvas = function updateCanvas(ctx, radius, selectedNotes) {
-	var colorIdx = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : null;
-
+var updateCanvas = exports.updateCanvas = function updateCanvas(ctx, radius, selectedNotes, colorIdx) {
 	ctx.clearRect(0, 0, 2 * radius, 2 * radius);
 	selectedNotes.forEach(function (notes, i) {
-		if (!notes) return;
+		if (notes.length === 0) return;
 		var pegs = getPegs(notes);
 		if (pegs.length < 3) return;
 		var start = {
@@ -878,11 +848,15 @@ var updateCanvas = exports.updateCanvas = function updateCanvas(ctx, radius, sel
 		};
 
 		ctx.strokeStyle = "#AAA";
-		if (selectedNotes.length > 1 && !colorIdx) {
-			ctx.fillStyle = COLORS(0.5)[i];
+
+		if (selectedNotes.length > 1) {
+			ctx.fillStyle = (0, _colors.COLORS)(0.5)[i];
+		} else if (colorIdx !== null) {
+			ctx.fillStyle = (0, _colors.COLORS)(0.5)[colorIdx];
 		} else {
-			ctx.fillStyle = COLORS(0.5)[colorIdx] || chordReader(notes); //should never happen
+			ctx.fillStyle = (0, _colors.COLORS)(0.5)[8];
 		}
+
 		//draw chord
 		ctx.beginPath();
 		ctx.moveTo(start.x, start.y);
@@ -933,6 +907,16 @@ var getNotes = exports.getNotes = function getNotes(pegs) {
 	});
 
 	return notes;
+};
+
+var collectNotes = exports.collectNotes = function collectNotes(notesArr) {
+	var result = [].concat(EMPTY);
+	notesArr.forEach(function (notes) {
+		notes.forEach(function (note, i) {
+			if (note) result[i] = true;
+		});
+	});
+	return result;
 };
 
 var isSameType = exports.isSameType = function isSameType(notes1, notes2) {
@@ -25151,12 +25135,13 @@ var Root = function (_React$Component) {
 		_this.state = {
 			scales: (0, _util.buildKeyWheel)(start),
 			selected: [[].concat(_toConsumableArray(_util.EMPTY)), [].concat(_toConsumableArray(_util.EMPTY)), [].concat(_toConsumableArray(_util.EMPTY)), [].concat(_toConsumableArray(_util.EMPTY)), [].concat(_toConsumableArray(_util.EMPTY)), [].concat(_toConsumableArray(_util.EMPTY)), [].concat(_toConsumableArray(_util.EMPTY)), [].concat(_toConsumableArray(_util.EMPTY))],
-			mode: "each", //all, each
+			mode: "union", //all, each
 			rootReferenceEnabled: true
 		};
 
 		_this.handleClick = _this.handleClick.bind(_this);
 		_this.toggleRef = _this.toggleRef.bind(_this);
+		_this.toggleMode = _this.toggleMode.bind(_this);
 		return _this;
 	}
 
@@ -25169,6 +25154,12 @@ var Root = function (_React$Component) {
 			});
 			selected[id][i] = !selected[id][i];
 			this.setState({ selected: selected });
+		}
+	}, {
+		key: "toggleMode",
+		value: function toggleMode() {
+			var mode = this.state.mode === "union" ? "intersection" : "union";
+			this.setState({ mode: mode });
 		}
 	}, {
 		key: "toggleRef",
@@ -25188,8 +25179,10 @@ var Root = function (_React$Component) {
 			return scales.map(function (node, i) {
 				return _react2.default.createElement(_scale2.default, {
 					key: i,
-					node: node,
+					notes: node.notes,
+					center: node.center,
 					selected: selected,
+					isInput: false,
 					mode: mode,
 					rootReferenceEnabled: rootReferenceEnabled
 				});
@@ -25208,18 +25201,35 @@ var Root = function (_React$Component) {
 				null,
 				_react2.default.createElement(
 					"div",
-					{ style: { width: "60%" } },
+					{ style: { width: "60%", display: "inline-block" } },
 					scaleDivs
 				),
 				_react2.default.createElement(
-					"button",
-					{ onClick: this.toggleRef },
-					"Reference Root"
+					"div",
+					{ style: { width: "40%", display: "inline-block" } },
+					_react2.default.createElement(
+						"div",
+						{
+							style: { margin: "auto", display: "flex", flexDirection: "column" }
+						},
+						_react2.default.createElement(
+							"button",
+							{ onClick: this.toggleRef },
+							"Reference Root"
+						),
+						_react2.default.createElement(
+							"button",
+							{ onClick: this.toggleMode },
+							"Mode: ",
+							this.state.mode
+						)
+					)
 				),
 				_react2.default.createElement(_input2.default, {
 					selected: selected,
 					handleClick: this.handleClick,
-					rootReferenceEnabled: rootReferenceEnabled
+					rootReferenceEnabled: rootReferenceEnabled,
+					mode: this.state.mode
 				})
 			);
 		}
@@ -42564,6 +42574,8 @@ var _tone2 = _interopRequireDefault(_tone);
 
 var _util = __webpack_require__(7);
 
+var _colors = __webpack_require__(124);
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } }
@@ -42598,53 +42610,54 @@ var Scale = function (_React$Component) {
 			this.handleCanvas();
 		}
 	}, {
-		key: "collectNotes",
-		value: function collectNotes() {
-			var result = [].concat(_toConsumableArray(_util.EMPTY));
-			Object.values(this.props.selected).forEach(function (notes) {
-				notes.forEach(function (note, i) {
-					if (note) result[i] = true;
-				});
-			});
-			return result;
-		}
-	}, {
 		key: "handleCanvas",
 		value: function handleCanvas() {
 			var ctx = this.refs.canvas.getContext("2d");
 			var radius = this.scaleRadius;
 			var _props = this.props,
-			    node = _props.node,
+			    notes = _props.notes,
 			    selected = _props.selected,
 			    mode = _props.mode,
-			    colorIdx = _props.colorIdx;
-			var notes = node.notes;
+			    index = _props.index,
+			    isInput = _props.isInput;
 
-			var selectedNotes = void 0;
+			var result = void 0;
+			var colorIdx = void 0;
 
-			if (mode === "all") {
-				var _notes = this.collectNotes(selected);
-				var pegs = (0, _util.getPegs)(_notes);
+			if (isInput) {
+				result = index ? [selected[index]] : [];
+				colorIdx = index || 8;
+			} else if (mode === "intersection") {
+				var collected = (0, _util.collectNotes)(selected);
+				var pegs = (0, _util.getPegs)(collected);
 				var isMatch = pegs.every(function (i) {
-					return _notes[i];
+					return notes[i];
 				});
-				selectedNotes = isMatch ? [_notes] : [];
-			} else if (mode === "each") {
-				selectedNotes = [];
+				colorIdx = 8;
+
+				if (isMatch && pegs.length > 0) {
+					result = [collected];
+				} else {
+					result = [];
+				}
+			} else if (mode === "union") {
+				result = [];
+				colorIdx = null;
+
 				selected.forEach(function (arr, i) {
 					var pegs = (0, _util.getPegs)(arr);
 					var isMatch = pegs.every(function (i) {
 						return notes[i];
 					});
-					if (isMatch) {
-						selectedNotes.push(arr);
+					if (isMatch && pegs.length > 0) {
+						result.push(arr);
 					} else {
-						selectedNotes.push(null);
+						result.push([]);
 					}
 				});
 			}
 
-			(0, _util.updateCanvas)(ctx, radius, selectedNotes || selected, colorIdx);
+			(0, _util.updateCanvas)(ctx, radius, result, colorIdx);
 		}
 	}, {
 		key: "soundScale",
@@ -42691,45 +42704,50 @@ var Scale = function (_React$Component) {
 			    selected = _props2.selected,
 			    rootReferenceEnabled = _props2.rootReferenceEnabled,
 			    isInput = _props2.isInput,
-			    colorIdx = _props2.colorIdx;
+			    index = _props2.index;
 
 
 			return notes.map(function (note, i) {
-				var color = "#333";
-				var borderColor = "#333";
-				var backgroundColor = void 0;
+				var color = _colors.darkGrey;
+				var borderColor = _colors.darkGrey;
+				var backgroundColor = _colors.transparent;
 				var noteColor = void 0;
 				var numLabel = null;
 
-				var isMatch = selected.some(function (arr, idx) {
-					var arrPegs = (0, _util.getPegs)(arr);
-					var match = arr[i] && arrPegs.every(function (j) {
-						return notes[j];
+				var isMatch = function isMatch() {
+					return selected.some(function (arr, j) {
+						var arrPegs = (0, _util.getPegs)(arr);
+						var match = arr[i] && arrPegs.length > 0 && arrPegs.every(function (k) {
+							return notes[k];
+						});
+
+						if (match) {
+							noteColor = noteColor || (0, _util.COLORS)(1)[j];
+						}
+						return match;
 					});
+				};
 
-					if (match) {
-						noteColor = noteColor || (0, _util.COLORS)(1)[idx];
+				if (isInput) {
+					if (selected[index][i]) {
+						backgroundColor = (0, _util.COLORS)(1)[index];
+						if (rootIdx && i === rootIdx) {
+							color = _colors.gold;
+							borderColor = _colors.brown;
+						} else {
+							color = _colors.offWhite;
+						}
 					}
-					return match;
-				});
 
-				if (isInput && selected[0][i]) {
-					backgroundColor = (0, _util.COLORS)(1)[colorIdx];
-					color = "#EEE";
-				} else if (isMatch) {
-					backgroundColor = noteColor || "#7D7"; //should never happen
-					color = "#EEE";
-				} else {
-					backgroundColor = note ? "#AAA" : "transparent";
-				}
-
-				if (_this2.props.isInput) {
-					if (i === rootIdx) {
-						color = "gold";
-						borderColor = "brown";
-					}
 					numLabel = _util.NOTE_NAMES[i];
 				} else {
+					if (isMatch()) {
+						backgroundColor = noteColor; //should never happen
+						color = _colors.offWhite;
+					} else if (note) {
+						backgroundColor = _colors.grey;
+					}
+
 					if (pegs.includes(i)) {
 						numLabel = i === relMajor[pegs.indexOf(i)] ? "" : "b";
 						numLabel += "" + (pegs.indexOf(i) + 1);
@@ -42778,16 +42796,17 @@ var Scale = function (_React$Component) {
 			var _this3 = this;
 
 			var _props3 = this.props,
-			    node = _props3.node,
-			    selected = _props3.selected;
-			var notes = node.notes,
-			    center = node.center;
+			    notes = _props3.notes,
+			    center = _props3.center,
+			    selected = _props3.selected,
+			    isInput = _props3.isInput,
+			    index = _props3.index;
 
 			var _keyReader = (0, _util.keyReader)(notes),
 			    keyName = _keyReader.name,
 			    keyRootIdx = _keyReader.rootIdx;
 
-			var _chordReader = (0, _util.chordReader)(selected[0]),
+			var _chordReader = (0, _util.chordReader)(selected[index]),
 			    chordName = _chordReader.name,
 			    chordRootIdx = _chordReader.rootIdx;
 
@@ -42797,7 +42816,7 @@ var Scale = function (_React$Component) {
 
 			while (pegs[0] !== keyRootIdx) {
 				pegs = (0, _util.rotate)(pegs);
-			}if (this.props.isInput) {
+			}if (isInput) {
 				label = chordName && chordName.split(" ").map(function (piece, i) {
 					return _react2.default.createElement(
 						"p",
@@ -42954,17 +42973,19 @@ var Input = function Input(props) {
 	return _react2.default.createElement(
 		"div",
 		null,
-		selected.map(function (notes, i) {
+		selected.map(function (_, i) {
 			return _react2.default.createElement(_scale2.default, {
 				key: i,
-				node: node[i],
-				selected: [notes],
+				notes: [].concat(_toConsumableArray(_util.EMPTY)),
+				center: node[i].center,
+				selected: selected,
 				handleClick: function handleClick(k) {
 					return props.handleClick(k, i);
 				},
 				rootReferenceEnabled: props.rootReferenceEnabled,
 				isInput: true,
-				colorIdx: i
+				mode: props.mode,
+				index: i
 			});
 		})
 	);
@@ -45850,6 +45871,49 @@ var WeakMap = getNative(root, 'WeakMap');
 
 module.exports = WeakMap;
 
+
+/***/ }),
+/* 124 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+	value: true
+});
+var darkgrey = exports.darkgrey = "#333";
+
+var grey = exports.grey = "#AAA";
+
+var offWhite = exports.offWhite = "#EEE";
+
+var gold = exports.gold = "gold";
+
+var brown = exports.brown = "brown";
+
+var transparent = exports.transparent = "transparent";
+
+var COLORS = exports.COLORS = function COLORS(opacity) {
+	return ["rgba(255,100,100," + opacity + ")", "rgba(100,100,255," + opacity + ")", "rgba(255,0,155," + opacity + ")", "rgba(255,100,0," + opacity + ")", "rgba(0,155,0," + opacity + ")", "rgba(155,0,255," + opacity + ")", "rgba(255,155,0," + opacity + ")", "rgba(0,155,100," + opacity + ")", "rgba(255,255,0," + opacity + ")"];
+};
+
+var CHORD_COLOR = exports.CHORD_COLOR = {
+	major: "rgba(100,100,255,0.5)",
+	minor: "rgba(255,100,100,0.5)",
+	major7: "rgba(155,0,255,0.5)",
+	minor7: "rgba(255,0,155,0.5)",
+	dom: "rgba(255,100,0,0.5)",
+	dom5: "rgba(255,100,0,0.5)",
+	dom9: "rgba(255,155,0,0.5)",
+	dim: "rgba(100,255,100,0.5)",
+	dimbb7: "rgba(0,155,0,0.5)",
+	dimb7: "rgba(0,255,0,0.5)",
+	sus2: "rgba(255,255,0,0.5)",
+	sus4: "rgba(255,255,0,0.5)",
+	pentatonic: "rgba(255,0,0,0.5)",
+	dimPentatonic: "rgba(0,200,0,0.5)"
+};
 
 /***/ })
 /******/ ]);

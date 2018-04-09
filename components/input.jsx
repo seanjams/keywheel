@@ -76,16 +76,18 @@ const Input = props => {
 	const { selected } = props;
 	return (
 		<div>
-			{selected.map((notes, i) => {
+			{selected.map((_, i) => {
 				return (
 					<Scale
 						key={i}
-						node={node[i]}
-						selected={[notes]}
+						notes={[...EMPTY]}
+						center={node[i].center}
+						selected={selected}
 						handleClick={k => props.handleClick(k, i)}
 						rootReferenceEnabled={props.rootReferenceEnabled}
 						isInput={true}
-						colorIdx={i}
+						mode={props.mode}
+						index={i}
 					/>
 				);
 			})}

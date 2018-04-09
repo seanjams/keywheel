@@ -31,12 +31,13 @@ class Root extends React.Component {
 				[...EMPTY],
 				[...EMPTY],
 			],
-			mode: "each", //all, each
+			mode: "union", //all, each
 			rootReferenceEnabled: true,
 		};
 
 		this.handleClick = this.handleClick.bind(this);
 		this.toggleRef = this.toggleRef.bind(this);
+		this.toggleMode = this.toggleMode.bind(this);
 	}
 
 	handleClick(i, id) {
@@ -46,6 +47,11 @@ class Root extends React.Component {
 		});
 		selected[id][i] = !selected[id][i];
 		this.setState({ selected });
+	}
+
+	toggleMode() {
+		const mode = this.state.mode === "union" ? "intersection" : "union";
+		this.setState({ mode });
 	}
 
 	toggleRef() {
@@ -59,8 +65,10 @@ class Root extends React.Component {
 			return (
 				<Scale
 					key={i}
-					node={node}
+					notes={node.notes}
+					center={node.center}
 					selected={selected}
+					isInput={false}
 					mode={mode}
 					rootReferenceEnabled={rootReferenceEnabled}
 				/>
@@ -73,12 +81,20 @@ class Root extends React.Component {
 		const scaleDivs = this.scaleComponents();
 		return (
 			<div>
-				<div style={{ width: "60%" }}>{scaleDivs}</div>
-				<button onClick={this.toggleRef}>Reference Root</button>
+				<div style={{ width: "60%", display: "inline-block" }}>{scaleDivs}</div>
+				<div style={{ width: "40%", display: "inline-block" }}>
+					<div
+						style={{ margin: "auto", display: "flex", flexDirection: "column" }}
+					>
+						<button onClick={this.toggleRef}>Reference Root</button>
+						<button onClick={this.toggleMode}>Mode: {this.state.mode}</button>
+					</div>
+				</div>
 				<Input
 					selected={selected}
 					handleClick={this.handleClick}
 					rootReferenceEnabled={rootReferenceEnabled}
+					mode={this.state.mode}
 				/>
 			</div>
 		);

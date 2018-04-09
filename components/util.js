@@ -1,4 +1,5 @@
 import isEqual from "lodash/isEqual";
+import { COLORS, CHORD_COLOR } from "./colors";
 
 //keywheel size control
 export const SCALE_SPACING = 60;
@@ -75,50 +76,13 @@ export const SHAPE = {
 	dom5: [0, 4, 7, 10],
 	dom9: [0, 2, 4, 10],
 	dim: [0, 3, 6],
-	// dimbb7: [0,3,6,9],
+	dimbb7: [0, 3, 6, 9],
 	dimb7: [0, 3, 6, 10],
 	sus2: [0, 2, 7],
 	sus4: [0, 5, 7],
 	pentatonic: [0, 2, 4, 7, 9],
 	dimPentatonic: [0, 3, 6, 8, 10],
 };
-
-export const CHORD_COLOR = {
-	major: "rgba(100,100,255,0.5)",
-	minor: "rgba(255,100,100,0.5)",
-	major7: "rgba(155,0,255,0.5)",
-	minor7: "rgba(255,0,155,0.5)",
-	dom: "rgba(255,100,0,0.5)",
-	dom5: "rgba(255,100,0,0.5)",
-	dom9: "rgba(255,155,0,0.5)",
-	dim: "rgba(100,255,100,0.5)",
-	dimbb7: "rgba(0,155,0,0.5)",
-	dimb7: "rgba(0,255,0,0.5)",
-	sus2: "rgba(255,255,0,0.5)",
-	sus4: "rgba(255,255,0,0.5)",
-	pentatonic: "rgba(255,0,0,0.5)",
-	dimPentatonic: "rgba(0,200,0,0.5)",
-};
-
-export const COLORS = opacity => [
-	`rgba(255,100,100,${opacity})`,
-	`rgba(100,100,255,${opacity})`,
-	`rgba(255,0,155,${opacity})`,
-	`rgba(255,100,0,${opacity})`,
-	`rgba(0,155,0,${opacity})`,
-	`rgba(155,0,255,${opacity})`,
-	`rgba(255,155,0,${opacity})`,
-	`rgba(0,155,100,${opacity})`,
-];
-
-// `rgba(255,100,100,1)`,
-// `rgba(100,100,255,1)`,
-// `rgba(255,0,155,1)`,
-// `rgba(255,100,0,1)`,
-// `rgba(0,155,0,1)`,
-// "rgba(155,0,255,1)",
-// "rgba(255,155,0,1)"
-// `rgba(0,155,100,1)`,
 
 //Scale Node class dynamically holds information about location
 export class ScaleNode {
@@ -309,10 +273,10 @@ export const chordReader = notes => {
 	return { color, name, rootIdx };
 };
 
-export const updateCanvas = (ctx, radius, selectedNotes, colorIdx = null) => {
+export const updateCanvas = (ctx, radius, selectedNotes, colorIdx) => {
 	ctx.clearRect(0, 0, 2 * radius, 2 * radius);
 	selectedNotes.forEach((notes, i) => {
-		if (!notes) return;
+		if (notes.length === 0) return;
 		const pegs = getPegs(notes);
 		if (pegs.length < 3) return;
 		const start = {
@@ -321,11 +285,15 @@ export const updateCanvas = (ctx, radius, selectedNotes, colorIdx = null) => {
 		};
 
 		ctx.strokeStyle = "#AAA";
-		if (selectedNotes.length > 1 && !colorIdx) {
+
+		if (selectedNotes.length > 1) {
 			ctx.fillStyle = COLORS(0.5)[i];
+		} else if (colorIdx !== null) {
+			ctx.fillStyle = COLORS(0.5)[colorIdx];
 		} else {
-			ctx.fillStyle = COLORS(0.5)[colorIdx] || chordReader(notes); //should never happen
+			ctx.fillStyle = COLORS(0.5)[8];
 		}
+
 		//draw chord
 		ctx.beginPath();
 		ctx.moveTo(start.x, start.y);
@@ -374,6 +342,16 @@ export const getNotes = pegs => {
 	});
 
 	return notes;
+};
+
+export const collectNotes = notesArr => {
+	const result = [...EMPTY];
+	notesArr.forEach(notes => {
+		notes.forEach((note, i) => {
+			if (note) result[i] = true;
+		});
+	});
+	return result;
 };
 
 export const isSameType = (notes1, notes2) => {

@@ -10,11 +10,14 @@ import {
 	COLORS,
 	keyReader,
 	getPegs,
+	collectNotes,
 	chordReader,
 	rotate,
 	updateCanvas,
 	getMajor,
 } from "./util";
+
+import { darkGrey, grey, offWhite, gold, brown, transparent } from "./colors";
 
 class Scale extends React.Component {
 	constructor(props) {
@@ -31,42 +34,43 @@ class Scale extends React.Component {
 		this.handleCanvas();
 	}
 
-	collectNotes() {
-		const result = [...EMPTY];
-		Object.values(this.props.selected).forEach(notes => {
-			notes.forEach((note, i) => {
-				if (note) result[i] = true;
-			});
-		});
-		return result;
-	}
-
 	handleCanvas() {
 		const ctx = this.refs.canvas.getContext("2d");
 		const radius = this.scaleRadius;
-		const { node, selected, mode, colorIdx } = this.props;
-		const { notes } = node;
-		let selectedNotes;
+		const { notes, selected, mode, index, isInput } = this.props;
+		let result;
+		let colorIdx;
 
-		if (mode === "all") {
-			const notes = this.collectNotes(selected);
-			const pegs = getPegs(notes);
+		if (isInput) {
+			result = index ? [selected[index]] : [];
+			colorIdx = index || 8;
+		} else if (mode === "intersection") {
+			const collected = collectNotes(selected);
+			const pegs = getPegs(collected);
 			const isMatch = pegs.every(i => notes[i]);
-			selectedNotes = isMatch ? [notes] : [];
-		} else if (mode === "each") {
-			selectedNotes = [];
+			colorIdx = 8;
+
+			if (isMatch && pegs.length > 0) {
+				result = [collected];
+			} else {
+				result = [];
+			}
+		} else if (mode === "union") {
+			result = [];
+			colorIdx = null;
+
 			selected.forEach((arr, i) => {
 				const pegs = getPegs(arr);
 				const isMatch = pegs.every(i => notes[i]);
-				if (isMatch) {
-					selectedNotes.push(arr);
+				if (isMatch && pegs.length > 0) {
+					result.push(arr);
 				} else {
-					selectedNotes.push(null);
+					result.push([]);
 				}
 			});
 		}
 
-		updateCanvas(ctx, radius, selectedNotes || selected, colorIdx);
+		updateCanvas(ctx, radius, result, colorIdx);
 	}
 
 	soundScale(pegs, modeIdx = 0) {
@@ -105,42 +109,47 @@ class Scale extends React.Component {
 	}
 
 	noteComponents(notes, pegs, center, relMajor, rootIdx = null) {
-		const { selected, rootReferenceEnabled, isInput, colorIdx } = this.props;
+		const { selected, rootReferenceEnabled, isInput, index } = this.props;
 
 		return notes.map((note, i) => {
-			let color = "#333";
-			let borderColor = "#333";
-			let backgroundColor;
+			let color = darkGrey;
+			let borderColor = darkGrey;
+			let backgroundColor = transparent;
 			let noteColor;
 			let numLabel = null;
 
-			const isMatch = selected.some((arr, idx) => {
-				const arrPegs = getPegs(arr);
-				let match = arr[i] && arrPegs.every(j => notes[j]);
+			const isMatch = () =>
+				selected.some((arr, j) => {
+					const arrPegs = getPegs(arr);
+					let match =
+						arr[i] && arrPegs.length > 0 && arrPegs.every(k => notes[k]);
 
-				if (match) {
-					noteColor = noteColor || COLORS(1)[idx];
+					if (match) {
+						noteColor = noteColor || COLORS(1)[j];
+					}
+					return match;
+				});
+
+			if (isInput) {
+				if (selected[index][i]) {
+					backgroundColor = COLORS(1)[index];
+					if (rootIdx && i === rootIdx) {
+						color = gold;
+						borderColor = brown;
+					} else {
+						color = offWhite;
+					}
 				}
-				return match;
-			});
 
-			if (isInput && selected[0][i]) {
-				backgroundColor = COLORS(1)[colorIdx];
-				color = "#EEE";
-			} else if (isMatch) {
-				backgroundColor = noteColor || "#7D7"; //should never happen
-				color = "#EEE";
-			} else {
-				backgroundColor = note ? "#AAA" : "transparent";
-			}
-
-			if (this.props.isInput) {
-				if (i === rootIdx) {
-					color = "gold";
-					borderColor = "brown";
-				}
 				numLabel = NOTE_NAMES[i];
 			} else {
+				if (isMatch()) {
+					backgroundColor = noteColor; //should never happen
+					color = offWhite;
+				} else if (note) {
+					backgroundColor = grey;
+				}
+
 				if (pegs.includes(i)) {
 					numLabel = i === relMajor[pegs.indexOf(i)] ? "" : "b";
 					numLabel += `${pegs.indexOf(i) + 1}`;
@@ -181,17 +190,18 @@ class Scale extends React.Component {
 	}
 
 	render() {
-		const { node, selected } = this.props;
-		const { notes, center } = node;
+		const { notes, center, selected, isInput, index } = this.props;
 		const { name: keyName, rootIdx: keyRootIdx } = keyReader(notes);
-		const { name: chordName, rootIdx: chordRootIdx } = chordReader(selected[0]);
+		const { name: chordName, rootIdx: chordRootIdx } = chordReader(
+			selected[index]
+		);
 		const relMajor = getMajor(keyRootIdx);
 		let pegs = getPegs(notes);
 		let label;
 
 		while (pegs[0] !== keyRootIdx) pegs = rotate(pegs);
 
-		if (this.props.isInput) {
+		if (isInput) {
 			label =
 				chordName &&
 				chordName.split(" ").map((piece, i) => {
