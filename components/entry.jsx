@@ -74,7 +74,7 @@ class Root extends React.Component {
 					isInput={false}
 					mode={mode}
 					rootReferenceEnabled={rootReferenceEnabled}
-					index={null}
+					index={-1}
 				/>
 			);
 		});

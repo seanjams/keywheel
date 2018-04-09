@@ -1386,8 +1386,8 @@ var Scale = function (_React$Component) {
 			var colorIdx = void 0;
 
 			if (isInput) {
-				result = index ? [selected[index]] : [];
-				colorIdx = index || 8;
+				result = index >= 0 ? [selected[index]] : [];
+				colorIdx = index >= 0 ? index : 8;
 			} else if (mode === "intersection") {
 				var collected = (0, _util.collectNotes)(selected);
 				var pegs = (0, _util.getPegs)(collected);
@@ -1460,7 +1460,7 @@ var Scale = function (_React$Component) {
 		value: function noteComponents(notes, pegs, center, relMajor) {
 			var _this2 = this;
 
-			var rootIdx = arguments.length > 4 && arguments[4] !== undefined ? arguments[4] : null;
+			var rootIdx = arguments.length > 4 && arguments[4] !== undefined ? arguments[4] : -1;
 			var _props2 = this.props,
 			    selected = _props2.selected,
 			    rootReferenceEnabled = _props2.rootReferenceEnabled,
@@ -1492,7 +1492,7 @@ var Scale = function (_React$Component) {
 				if (isInput) {
 					if (selected[index][i]) {
 						backgroundColor = (0, _colors.COLORS)(1)[index];
-						if (rootIdx && i === rootIdx) {
+						if (rootIdx >= 0 && i === rootIdx) {
 							color = _colors.gold;
 							borderColor = _colors.brown;
 						} else {
@@ -1930,6 +1930,8 @@ var updateCanvas = exports.updateCanvas = function updateCanvas(ctx, radius, sel
 			y: radius * (1 - Math.cos(Math.PI * pegs[0] / 6))
 		};
 
+		console.log(selectedNotes, colorIdx);
+
 		if (selectedNotes.length > 1) {
 			ctx.fillStyle = (0, _colors.COLORS)(0.5)[i];
 		} else if (colorIdx !== null) {
@@ -1939,6 +1941,7 @@ var updateCanvas = exports.updateCanvas = function updateCanvas(ctx, radius, sel
 		}
 
 		ctx.strokeStyle = _colors.grey;
+
 		//draw chord
 		ctx.beginPath();
 		ctx.moveTo(start.x, start.y);
@@ -2660,7 +2663,7 @@ var Root = function (_React$Component) {
 					isInput: false,
 					mode: mode,
 					rootReferenceEnabled: rootReferenceEnabled,
-					index: null
+					index: -1
 				});
 			});
 		}

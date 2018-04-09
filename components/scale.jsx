@@ -52,8 +52,8 @@ class Scale extends React.Component {
 		let colorIdx;
 
 		if (isInput) {
-			result = index ? [selected[index]] : [];
-			colorIdx = index || 8;
+			result = index >= 0 ? [selected[index]] : [];
+			colorIdx = index >= 0 ? index : 8;
 		} else if (mode === "intersection") {
 			const collected = collectNotes(selected);
 			const pegs = getPegs(collected);
@@ -118,7 +118,7 @@ class Scale extends React.Component {
 		}
 	}
 
-	noteComponents(notes, pegs, center, relMajor, rootIdx = null) {
+	noteComponents(notes, pegs, center, relMajor, rootIdx = -1) {
 		const { selected, rootReferenceEnabled, isInput, index } = this.props;
 
 		return notes.map((note, i) => {
@@ -143,7 +143,7 @@ class Scale extends React.Component {
 			if (isInput) {
 				if (selected[index][i]) {
 					backgroundColor = COLORS(1)[index];
-					if (rootIdx && i === rootIdx) {
+					if (rootIdx >= 0 && i === rootIdx) {
 						color = gold;
 						borderColor = brown;
 					} else {

@@ -219,6 +219,8 @@ export const updateCanvas = (ctx, radius, selectedNotes, colorIdx) => {
 			y: radius * (1 - Math.cos(Math.PI * pegs[0] / 6)),
 		};
 
+		console.log(selectedNotes, colorIdx);
+
 		if (selectedNotes.length > 1) {
 			ctx.fillStyle = COLORS(0.5)[i];
 		} else if (colorIdx !== null) {
@@ -228,6 +230,7 @@ export const updateCanvas = (ctx, radius, selectedNotes, colorIdx) => {
 		}
 
 		ctx.strokeStyle = grey;
+
 		//draw chord
 		ctx.beginPath();
 		ctx.moveTo(start.x, start.y);
