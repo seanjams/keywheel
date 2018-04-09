@@ -1,6 +1,6 @@
-export const darkgrey = "#333";
+export const darkGrey = "#333";
 
-export const grey = "#AAA";
+export const grey = "#BBB";
 
 export const offWhite = "#EEE";
 
@@ -20,6 +20,15 @@ export const COLORS = opacity => [
 	`rgba(255,155,0,${opacity})`,
 	`rgba(0,155,100,${opacity})`,
 	`rgba(255,255,0,${opacity})`,
+];
+
+export const INTERVAL_COLORS = [
+	`rgba(50,50,255,1)`,
+	`rgba(255,0,155,1)`,
+	`rgba(255,100,0,1)`,
+	`rgba(0,155,0,1)`,
+	`rgba(155,0,255,1)`,
+	`rgba(255,155,0,1)`,
 ];
 
 export const CHORD_COLOR = {

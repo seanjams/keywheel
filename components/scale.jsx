@@ -1,13 +1,25 @@
 import React from "react";
 import Tone from "tone";
 import {
+	darkGrey,
+	grey,
+	offWhite,
+	gold,
+	brown,
+	transparent,
+	COLORS,
+} from "../colors";
+
+import {
 	NOTE_RADIUS,
 	SCALE_RADIUS,
 	INPUT_NOTE_RADIUS,
 	INPUT_SCALE_RADIUS,
 	NOTE_NAMES,
 	EMPTY,
-	COLORS,
+} from "../consts";
+
+import {
 	keyReader,
 	getPegs,
 	collectNotes,
@@ -15,9 +27,7 @@ import {
 	rotate,
 	updateCanvas,
 	getMajor,
-} from "./util";
-
-import { darkGrey, grey, offWhite, gold, brown, transparent } from "./colors";
+} from "../util";
 
 class Scale extends React.Component {
 	constructor(props) {

@@ -1,98 +1,78 @@
 import React from "react";
 import Scale from "./scale";
-import { EMPTY, COLORS } from "./util";
+import { EMPTY, SHAPE, NOTE_NAMES, node } from "../consts";
+import { getNotes } from "../util";
 import isEqual from "lodash/isEqual";
 
 //make dynamically placed inputs later
 
-const getX = i => {
-	return i * 1.5 * window.innerWidth / 10 + 100;
-};
+class Input extends React.Component {
+	constructor(props) {
+		super(props);
+		this.state = {
+			noteName: "C",
+			chordName: "major",
+		};
+	}
 
-const getY = i => {
-	return [450, 575][i];
-};
+	calculateChord(i) {
+		const { noteName, chordName } = this.state;
+		const rootIdx = NOTE_NAMES.indexOf(noteName);
+		const pegs = SHAPE[chordName].map(note => (note + rootIdx) % 12).sort();
+		this.props.handleGroup(getNotes(pegs), i);
+	}
 
-const node = [
-	{
-		notes: [...EMPTY],
-		center: {
-			x: getX(0),
-			y: getY(0),
-		},
-	},
-	{
-		notes: [...EMPTY],
-		center: {
-			x: getX(1),
-			y: getY(0),
-		},
-	},
-	{
-		notes: [...EMPTY],
-		center: {
-			x: getX(2),
-			y: getY(0),
-		},
-	},
-	{
-		notes: [...EMPTY],
-		center: {
-			x: getX(3),
-			y: getY(0),
-		},
-	},
-	{
-		notes: [...EMPTY],
-		center: {
-			x: getX(0),
-			y: getY(1),
-		},
-	},
-	{
-		notes: [...EMPTY],
-		center: {
-			x: getX(1),
-			y: getY(1),
-		},
-	},
-	{
-		notes: [...EMPTY],
-		center: {
-			x: getX(2),
-			y: getY(1),
-		},
-	},
-	{
-		notes: [...EMPTY],
-		center: {
-			x: getX(3),
-			y: getY(1),
-		},
-	},
-];
+	onNameChange(e, i) {
+		const noteName = e.target.value;
+		this.setState({ noteName }, () => this.calculateChord(i));
+	}
 
-const Input = props => {
-	const { selected } = props;
-	return (
-		<div>
-			{selected.map((_, i) => {
-				return (
-					<Scale
-						key={i}
-						notes={[...EMPTY]}
-						center={node[i].center}
-						selected={selected}
-						handleClick={k => props.handleClick(k, i)}
-						rootReferenceEnabled={props.rootReferenceEnabled}
-						isInput={true}
-						mode={props.mode}
-						index={i}
-					/>
-				);
-			})}
-		</div>
-	);
-};
+	onChordChange(e, i) {
+		const chordName = e.target.value;
+		this.setState({ chordName }, () => this.calculateChord(i));
+	}
+
+	render() {
+		const { selected } = this.props;
+		return (
+			<div>
+				{selected.map((_, i) => {
+					return (
+						<div key={i}>
+							<select onChange={e => this.onNameChange(e, i)}>
+								{NOTE_NAMES.map((name, j) => {
+									return (
+										<option key={j} value={name} defaultValue={j === 0}>
+											{name}
+										</option>
+									);
+								})}
+							</select>
+							<select onChange={e => this.onChordChange(e, i)}>
+								{Object.keys(SHAPE).map((chordName, j) => {
+									return (
+										<option key={j} value={chordName} defaultValue={j === 0}>
+											{chordName}
+										</option>
+									);
+								})}
+							</select>
+							<Scale
+								notes={[...EMPTY]}
+								center={node[i].center}
+								selected={selected}
+								handleClick={k => this.props.handleClick(k, i)}
+								rootReferenceEnabled={this.props.rootReferenceEnabled}
+								isInput={true}
+								mode={this.props.mode}
+								index={i}
+							/>
+						</div>
+					);
+				})}
+			</div>
+		);
+	}
+}
 
 export default Input;

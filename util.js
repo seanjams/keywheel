@@ -1,88 +1,23 @@
 import isEqual from "lodash/isEqual";
-import { COLORS, CHORD_COLOR } from "./colors";
+import { COLORS, CHORD_COLOR, INTERVAL_COLORS, grey } from "./colors";
+import {
+	SCALE_SPACING,
+	SCALE_RADIUS,
+	NOTE_RADIUS,
+	INPUT_SCALE_RADIUS,
+	INPUT_NOTE_RADIUS,
+	WHEEL_CENTER,
+	DIRS,
+	CMAJOR,
+	EMPTY,
+	NOTE_NAMES,
+	MAJOR,
+	MELMINOR,
+	NEAPOLITAN,
+	SHAPE,
+} from "./consts";
 
 //keywheel size control
-export const SCALE_SPACING = 60;
-
-export const NOTE_RADIUS = 13;
-
-export const SCALE_RADIUS = 30;
-
-export const INPUT_NOTE_RADIUS = 20;
-
-export const INPUT_SCALE_RADIUS = 50;
-
-export const WHEEL_CENTER = {
-	x: 5.7 * SCALE_SPACING,
-	y: 3.7 * SCALE_SPACING,
-};
-
-export const DIRS = ["TL", "TR", "BL", "BR"];
-
-export const CMAJOR = [
-	true,
-	false,
-	true,
-	false,
-	true,
-	true,
-	false,
-	true,
-	false,
-	true,
-	false,
-	true,
-];
-
-export const EMPTY = [
-	false,
-	false,
-	false,
-	false,
-	false,
-	false,
-	false,
-	false,
-	false,
-	false,
-	false,
-	false,
-];
-
-export const NOTE_NAMES = [
-	"C",
-	"Db",
-	"D",
-	"Eb",
-	"E",
-	"F",
-	"Gb",
-	"G",
-	"Ab",
-	"A",
-	"Bb",
-	"B",
-];
-
-export const MAJOR = [2, 2, 1, 2, 2, 2, 1];
-export const MELMINOR = [2, 1, 2, 2, 2, 2, 1];
-export const NEAPOLITAN = [1, 2, 2, 2, 2, 2, 1];
-export const SHAPE = {
-	major: [0, 4, 7],
-	minor: [0, 3, 7],
-	major7: [0, 4, 7, 11],
-	minor7: [0, 3, 7, 10],
-	dom: [0, 4, 10],
-	dom5: [0, 4, 7, 10],
-	dom9: [0, 2, 4, 10],
-	dim: [0, 3, 6],
-	dimbb7: [0, 3, 6, 9],
-	dimb7: [0, 3, 6, 10],
-	sus2: [0, 2, 7],
-	sus4: [0, 5, 7],
-	pentatonic: [0, 2, 4, 7, 9],
-	dimPentatonic: [0, 3, 6, 8, 10],
-};
 
 //Scale Node class dynamically holds information about location
 export class ScaleNode {
@@ -284,8 +219,6 @@ export const updateCanvas = (ctx, radius, selectedNotes, colorIdx) => {
 			y: radius * (1 - Math.cos(Math.PI * pegs[0] / 6)),
 		};
 
-		ctx.strokeStyle = "#AAA";
-
 		if (selectedNotes.length > 1) {
 			ctx.fillStyle = COLORS(0.5)[i];
 		} else if (colorIdx !== null) {
@@ -294,16 +227,17 @@ export const updateCanvas = (ctx, radius, selectedNotes, colorIdx) => {
 			ctx.fillStyle = COLORS(0.5)[8];
 		}
 
+		ctx.strokeStyle = grey;
 		//draw chord
 		ctx.beginPath();
 		ctx.moveTo(start.x, start.y);
 		pegs.forEach((peg, i) => {
 			if (i === 0) return;
+			let delta = peg - peg[i - 1];
 			const newPos = {
 				x: radius * (1 + Math.sin(Math.PI * peg / 6)),
 				y: radius * (1 - Math.cos(Math.PI * peg / 6)),
 			};
-
 			ctx.lineTo(newPos.x, newPos.y);
 		});
 		ctx.closePath();

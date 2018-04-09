@@ -2,15 +2,8 @@ import React from "react";
 import ReactDOM from "react-dom";
 import Scale from "./scale";
 import Input from "./input";
-import {
-	WHEEL_CENTER,
-	CMAJOR,
-	EMPTY,
-	ScaleNode,
-	buildKeyWheel,
-	getNotes,
-	getPegs,
-} from "./util";
+import { ScaleNode, buildKeyWheel, getNotes, getPegs } from "../util";
+import { WHEEL_CENTER, CMAJOR, EMPTY } from "../consts";
 
 const initialNotes = getNotes([0, 2, 4, 5, 7, 9, 11]);
 
@@ -31,11 +24,12 @@ class Root extends React.Component {
 				[...EMPTY],
 				[...EMPTY],
 			],
-			mode: "union", //all, each
+			mode: "union",
 			rootReferenceEnabled: true,
 		};
 
 		this.handleClick = this.handleClick.bind(this);
+		this.handleGroup = this.handleGroup.bind(this);
 		this.toggleRef = this.toggleRef.bind(this);
 		this.toggleMode = this.toggleMode.bind(this);
 	}
@@ -46,6 +40,15 @@ class Root extends React.Component {
 			selected.push([...notes]);
 		});
 		selected[id][i] = !selected[id][i];
+		this.setState({ selected });
+	}
+
+	handleGroup(notes, id) {
+		const selected = [];
+		this.state.selected.forEach(notes => {
+			selected.push([...notes]);
+		});
+		selected[id] = notes;
 		this.setState({ selected });
 	}
 
@@ -71,6 +74,7 @@ class Root extends React.Component {
 					isInput={false}
 					mode={mode}
 					rootReferenceEnabled={rootReferenceEnabled}
+					index={null}
 				/>
 			);
 		});
@@ -93,6 +97,7 @@ class Root extends React.Component {
 				<Input
 					selected={selected}
 					handleClick={this.handleClick}
+					handleGroup={this.handleGroup}
 					rootReferenceEnabled={rootReferenceEnabled}
 					mode={this.state.mode}
 				/>
