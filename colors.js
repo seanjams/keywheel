@@ -11,15 +11,15 @@ export const brown = "brown";
 export const transparent = "transparent";
 
 export const COLORS = opacity => [
-	`rgba(255,100,100,${opacity})`,
-	`rgba(100,100,255,${opacity})`,
-	`rgba(255,0,155,${opacity})`,
-	`rgba(255,100,0,${opacity})`,
-	`rgba(0,155,0,${opacity})`,
-	`rgba(155,0,255,${opacity})`,
-	`rgba(255,155,0,${opacity})`,
-	`rgba(0,155,100,${opacity})`,
-	`rgba(255,255,0,${opacity})`,
+	`rgba(230, 25, 75, ${opacity})`,
+	`rgba(60, 180, 75,${opacity})`,
+	`rgba(0, 130, 200,${opacity})`,
+	`rgba(245, 130, 48,${opacity})`,
+	`rgba(145, 30, 180,${opacity})`,
+	`rgba(128, 0, 0,${opacity})`,
+	`rgba(0, 0, 128,${opacity})`,
+	`rgba(0, 128, 128,${opacity})`,
+	`rgba(255, 225, 25,${opacity})`,
 ];
 
 export const INTERVAL_COLORS = [

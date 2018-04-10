@@ -32,37 +32,33 @@ import {
 class Scale extends React.Component {
 	constructor(props) {
 		super(props);
-		this.scaleRadius = this.props.isInput
-			? 1.2 * SCALE_RADIUS()
-			: SCALE_RADIUS();
-		this.noteRadius = this.props.isInput ? 1.3 * NOTE_RADIUS() : NOTE_RADIUS();
-		this.numLabelSize = this.props.isInput
-			? `${0.1 + NUM_LABEL_SIZE()}em`
-			: `${NUM_LABEL_SIZE()}em`;
-		this.textLabelSize = this.props.isInput
-			? `${1 + TEXT_LABEL_SIZE()}px`
-			: `${TEXT_LABEL_SIZE()}px`;
+		if (this.props.isInput) {
+			this.scaleRadius = 1.2 * SCALE_RADIUS();
+			this.noteRadius = 1.3 * NOTE_RADIUS();
+			this.numLabelSize = `${0.1 + NUM_LABEL_SIZE()}em`;
+			this.textLabelSize = `${1 + TEXT_LABEL_SIZE()}px`;
+		} else {
+			this.scaleRadius = SCALE_RADIUS();
+			this.noteRadius = NOTE_RADIUS();
+			this.numLabelSize = `${NUM_LABEL_SIZE()}em`;
+			this.textLabelSize = `${TEXT_LABEL_SIZE()}px`;
+		}
 
 		this.updateRadius = this.updateRadius.bind(this);
 	}
 
 	updateRadius() {
-		let numLabelSize = NUM_LABEL_SIZE();
-		let textLabelSize = TEXT_LABEL_SIZE();
-		let noteRadius = NOTE_RADIUS();
-		let scaleRadius = SCALE_RADIUS();
-
 		if (this.props.isInput) {
-			noteRadius *= 1.3;
-			scaleRadius *= 1.2;
-			numLabelSize += 0.1;
-			textLabelSize += 1;
+			this.scaleRadius = 1.2 * SCALE_RADIUS();
+			this.noteRadius = 1.3 * NOTE_RADIUS();
+			this.numLabelSize = `${0.1 + NUM_LABEL_SIZE()}em`;
+			this.textLabelSize = `${1 + TEXT_LABEL_SIZE()}px`;
+		} else {
+			this.scaleRadius = SCALE_RADIUS();
+			this.noteRadius = NOTE_RADIUS();
+			this.numLabelSize = `${NUM_LABEL_SIZE()}em`;
+			this.textLabelSize = `${TEXT_LABEL_SIZE()}px`;
 		}
-
-		this.noteRadius = noteRadius;
-		this.scaleRadius = scaleRadius;
-		this.numLabelSize = `${numLabelSize}em`;
-		this.textLabelSize = `${textLabelSize}px`;
 	}
 
 	componentDidMount() {
@@ -119,6 +115,7 @@ class Scale extends React.Component {
 
 	soundScale(pegs, modeIdx = 0) {
 		Tone.Transport.cancel(0);
+		if (this.props.mute) return;
 
 		let synth = new Tone.Synth().toMaster();
 		let scale = [...pegs];
@@ -188,7 +185,7 @@ class Scale extends React.Component {
 				numLabel = NOTE_NAMES[i];
 			} else {
 				if (isMatch()) {
-					backgroundColor = noteColor; //should never happen
+					backgroundColor = noteColor;
 					color = offWhite;
 				} else if (note) {
 					backgroundColor = grey;
@@ -277,7 +274,6 @@ class Scale extends React.Component {
 			left: center.x,
 			fontSize: this.textLabelSize,
 			textAlign: "center",
-			// width: "100%",
 		};
 
 		const canvasStyle = {

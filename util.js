@@ -345,3 +345,14 @@ export const getMajor = rootIdx => {
 
 	return pegs;
 };
+
+export const getEmptySet = () => [
+	[...EMPTY],
+	[...EMPTY],
+	[...EMPTY],
+	[...EMPTY],
+	[...EMPTY],
+	[...EMPTY],
+	[...EMPTY],
+	[...EMPTY],
+];

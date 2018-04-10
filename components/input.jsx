@@ -57,10 +57,13 @@ class Input extends React.Component {
 									fontSize: `${TEXT_LABEL_SIZE()}px`,
 								}}
 							>
-								<select onChange={e => this.onNameChange(e, i)}>
+								<select onChange={e => this.onNameChange(e, i)} defaultValue="">
+									<option disabled value="">
+										--
+									</option>
 									{NOTE_NAMES.map((name, j) => {
 										return (
-											<option key={j} value={name} defaultValue={j === 0}>
+											<option key={j} value={name}>
 												{name}
 											</option>
 										);
@@ -69,7 +72,11 @@ class Input extends React.Component {
 								<select
 									onChange={e => this.onChordChange(e, i)}
 									style={{ width: 1.2 * scaleSpacing }}
+									defaultValue=""
 								>
+									<option disabled value="">
+										--
+									</option>
 									{Object.keys(SHAPE).map((chordName, j) => {
 										return (
 											<option key={j} value={chordName} defaultValue={j === 0}>
@@ -88,6 +95,7 @@ class Input extends React.Component {
 								isInput={true}
 								mode={this.props.mode}
 								index={i}
+								mute={this.state.mute}
 							/>
 						</div>
 					);

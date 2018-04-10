@@ -2,10 +2,24 @@ import React from "react";
 import ReactDOM from "react-dom";
 import Scale from "./scale";
 import Input from "./input";
-import { ScaleNode, buildKeyWheel, getNotes, getPegs } from "../util";
+import {
+	ScaleNode,
+	buildKeyWheel,
+	getNotes,
+	getPegs,
+	getEmptySet,
+} from "../util";
 import { WHEEL_CENTER, CMAJOR, EMPTY, SCALE_SPACING } from "../consts";
 
 const initialNotes = getNotes([0, 2, 4, 5, 7, 9, 11]);
+
+const buttonStyle = {
+	padding: "10px",
+	border: "1px solid brown",
+	backgroundColor: "rgba(100,100,255,0.5)",
+	borderRadius: "5px",
+	textAlign: "center",
+};
 
 class Root extends React.Component {
 	constructor(props) {
@@ -14,25 +28,19 @@ class Root extends React.Component {
 
 		this.state = {
 			scales: buildKeyWheel(start, SCALE_SPACING()),
-			selected: [
-				[...EMPTY],
-				[...EMPTY],
-				[...EMPTY],
-				[...EMPTY],
-				[...EMPTY],
-				[...EMPTY],
-				[...EMPTY],
-				[...EMPTY],
-			],
+			selected: getEmptySet(),
 			mode: "union",
 			rootReferenceEnabled: true,
+			mute: true,
 		};
 
 		this.handleClick = this.handleClick.bind(this);
 		this.handleGroup = this.handleGroup.bind(this);
 		this.toggleRef = this.toggleRef.bind(this);
 		this.toggleMode = this.toggleMode.bind(this);
+		this.toggleMute = this.toggleMute.bind(this);
 		this.rebuildKeyWheel = this.rebuildKeyWheel.bind(this);
+		this.clearNotes = this.clearNotes.bind(this);
 	}
 
 	rebuildKeyWheel() {
@@ -41,6 +49,10 @@ class Root extends React.Component {
 		const newStart = new ScaleNode(initialNotes, newCenter);
 		const scales = buildKeyWheel(newStart, width);
 		this.setState({ scales });
+	}
+
+	clearNotes() {
+		this.setState({ selected: getEmptySet() });
 	}
 
 	componentDidMount() {
@@ -79,6 +91,11 @@ class Root extends React.Component {
 		this.setState({ rootReferenceEnabled });
 	}
 
+	toggleMute() {
+		const mute = !this.state.mute;
+		this.setState({ mute });
+	}
+
 	scaleComponents() {
 		const { selected, scales, rootReferenceEnabled, mode } = this.state;
 		return scales.map((node, i) => {
@@ -92,6 +109,7 @@ class Root extends React.Component {
 					mode={mode}
 					rootReferenceEnabled={rootReferenceEnabled}
 					index={-1}
+					mute={this.state.mute}
 				/>
 			);
 		});
@@ -107,14 +125,27 @@ class Root extends React.Component {
 					style={{
 						width: "35%",
 						display: "inline-block",
-						backgroundColor: "yellow",
 					}}
 				>
 					<div
-						style={{ margin: "auto", display: "flex", flexDirection: "column" }}
+						style={{
+							display: "flex",
+							justifyContent: "space-evenly",
+							paddingTop: "30px",
+						}}
 					>
-						<button onClick={this.toggleRef}>Reference Root</button>
-						<button onClick={this.toggleMode}>Mode: {this.state.mode}</button>
+						<button style={buttonStyle} onClick={this.toggleRef}>
+							Reference: {this.state.rootReferenceEnabled ? "Scale" : "Numbers"}
+						</button>
+						<button style={buttonStyle} onClick={this.toggleMode}>
+							Mode: {this.state.mode === "union" ? "Union" : "Intersection"}
+						</button>
+						<button style={buttonStyle} onClick={this.clearNotes}>
+							Clear
+						</button>
+						<button style={buttonStyle} onClick={this.toggleMute}>
+							{this.state.mute ? "Unmute" : "Mute"}
+						</button>
 					</div>
 					<Input
 						selected={selected}
@@ -122,6 +153,7 @@ class Root extends React.Component {
 						handleGroup={this.handleGroup}
 						rootReferenceEnabled={rootReferenceEnabled}
 						mode={this.state.mode}
+						mute={this.state.mute}
 					/>
 				</div>
 			</div>

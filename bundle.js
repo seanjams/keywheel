@@ -1373,10 +1373,17 @@ var Scale = function (_React$Component) {
 
 		var _this = _possibleConstructorReturn(this, (Scale.__proto__ || Object.getPrototypeOf(Scale)).call(this, props));
 
-		_this.scaleRadius = _this.props.isInput ? 1.2 * (0, _consts.SCALE_RADIUS)() : (0, _consts.SCALE_RADIUS)();
-		_this.noteRadius = _this.props.isInput ? 1.3 * (0, _consts.NOTE_RADIUS)() : (0, _consts.NOTE_RADIUS)();
-		_this.numLabelSize = _this.props.isInput ? 0.1 + (0, _consts.NUM_LABEL_SIZE)() + "em" : (0, _consts.NUM_LABEL_SIZE)() + "em";
-		_this.textLabelSize = _this.props.isInput ? 1 + (0, _consts.TEXT_LABEL_SIZE)() + "px" : (0, _consts.TEXT_LABEL_SIZE)() + "px";
+		if (_this.props.isInput) {
+			_this.scaleRadius = 1.2 * (0, _consts.SCALE_RADIUS)();
+			_this.noteRadius = 1.3 * (0, _consts.NOTE_RADIUS)();
+			_this.numLabelSize = 0.1 + (0, _consts.NUM_LABEL_SIZE)() + "em";
+			_this.textLabelSize = 1 + (0, _consts.TEXT_LABEL_SIZE)() + "px";
+		} else {
+			_this.scaleRadius = (0, _consts.SCALE_RADIUS)();
+			_this.noteRadius = (0, _consts.NOTE_RADIUS)();
+			_this.numLabelSize = (0, _consts.NUM_LABEL_SIZE)() + "em";
+			_this.textLabelSize = (0, _consts.TEXT_LABEL_SIZE)() + "px";
+		}
 
 		_this.updateRadius = _this.updateRadius.bind(_this);
 		return _this;
@@ -1385,22 +1392,17 @@ var Scale = function (_React$Component) {
 	_createClass(Scale, [{
 		key: "updateRadius",
 		value: function updateRadius() {
-			var numLabelSize = (0, _consts.NUM_LABEL_SIZE)();
-			var textLabelSize = (0, _consts.TEXT_LABEL_SIZE)();
-			var noteRadius = (0, _consts.NOTE_RADIUS)();
-			var scaleRadius = (0, _consts.SCALE_RADIUS)();
-
 			if (this.props.isInput) {
-				noteRadius *= 1.3;
-				scaleRadius *= 1.2;
-				numLabelSize += 0.1;
-				textLabelSize += 1;
+				this.scaleRadius = 1.2 * (0, _consts.SCALE_RADIUS)();
+				this.noteRadius = 1.3 * (0, _consts.NOTE_RADIUS)();
+				this.numLabelSize = 0.1 + (0, _consts.NUM_LABEL_SIZE)() + "em";
+				this.textLabelSize = 1 + (0, _consts.TEXT_LABEL_SIZE)() + "px";
+			} else {
+				this.scaleRadius = (0, _consts.SCALE_RADIUS)();
+				this.noteRadius = (0, _consts.NOTE_RADIUS)();
+				this.numLabelSize = (0, _consts.NUM_LABEL_SIZE)() + "em";
+				this.textLabelSize = (0, _consts.TEXT_LABEL_SIZE)() + "px";
 			}
-
-			this.noteRadius = noteRadius;
-			this.scaleRadius = scaleRadius;
-			this.numLabelSize = numLabelSize + "em";
-			this.textLabelSize = textLabelSize + "px";
 		}
 	}, {
 		key: "componentDidMount",
@@ -1474,6 +1476,7 @@ var Scale = function (_React$Component) {
 			var modeIdx = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 0;
 
 			_tone2.default.Transport.cancel(0);
+			if (this.props.mute) return;
 
 			var synth = new _tone2.default.Synth().toMaster();
 			var scale = [].concat(_toConsumableArray(pegs));
@@ -1551,7 +1554,7 @@ var Scale = function (_React$Component) {
 					numLabel = _consts.NOTE_NAMES[i];
 				} else {
 					if (isMatch()) {
-						backgroundColor = noteColor; //should never happen
+						backgroundColor = noteColor;
 						color = _colors.offWhite;
 					} else if (note) {
 						backgroundColor = _colors.grey;
@@ -1655,7 +1658,6 @@ var Scale = function (_React$Component) {
 				left: center.x,
 				fontSize: this.textLabelSize,
 				textAlign: "center"
-				// width: "100%",
 			};
 
 			var canvasStyle = {
@@ -1715,7 +1717,7 @@ var brown = exports.brown = "brown";
 var transparent = exports.transparent = "transparent";
 
 var COLORS = exports.COLORS = function COLORS(opacity) {
-	return ["rgba(255,100,100," + opacity + ")", "rgba(100,100,255," + opacity + ")", "rgba(255,0,155," + opacity + ")", "rgba(255,100,0," + opacity + ")", "rgba(0,155,0," + opacity + ")", "rgba(155,0,255," + opacity + ")", "rgba(255,155,0," + opacity + ")", "rgba(0,155,100," + opacity + ")", "rgba(255,255,0," + opacity + ")"];
+	return ["rgba(230, 25, 75, " + opacity + ")", "rgba(60, 180, 75," + opacity + ")", "rgba(0, 130, 200," + opacity + ")", "rgba(245, 130, 48," + opacity + ")", "rgba(145, 30, 180," + opacity + ")", "rgba(128, 0, 0," + opacity + ")", "rgba(0, 0, 128," + opacity + ")", "rgba(0, 128, 128," + opacity + ")", "rgba(255, 225, 25," + opacity + ")"];
 };
 
 var INTERVAL_COLORS = exports.INTERVAL_COLORS = ["rgba(50,50,255,1)", "rgba(255,0,155,1)", "rgba(255,100,0,1)", "rgba(0,155,0,1)", "rgba(155,0,255,1)", "rgba(255,155,0,1)"];
@@ -1747,7 +1749,7 @@ var CHORD_COLOR = exports.CHORD_COLOR = {
 Object.defineProperty(exports, "__esModule", {
 	value: true
 });
-exports.getMajor = exports.getIntervals = exports.getCenter = exports.rotate = exports.isSameType = exports.collectNotes = exports.getNotes = exports.getPegs = exports.includesKey = exports.updateCanvas = exports.chordReader = exports.keyReader = exports.buildKeyWheel = exports.generateNeighbors = exports.tweek = exports.ScaleNode = undefined;
+exports.getEmptySet = exports.getMajor = exports.getIntervals = exports.getCenter = exports.rotate = exports.isSameType = exports.collectNotes = exports.getNotes = exports.getPegs = exports.includesKey = exports.updateCanvas = exports.chordReader = exports.keyReader = exports.buildKeyWheel = exports.generateNeighbors = exports.tweek = exports.ScaleNode = undefined;
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
@@ -2116,6 +2118,10 @@ var getMajor = exports.getMajor = function getMajor(rootIdx) {
 	}
 
 	return pegs;
+};
+
+var getEmptySet = exports.getEmptySet = function getEmptySet() {
+	return [[].concat(_toConsumableArray(_consts.EMPTY)), [].concat(_toConsumableArray(_consts.EMPTY)), [].concat(_toConsumableArray(_consts.EMPTY)), [].concat(_toConsumableArray(_consts.EMPTY)), [].concat(_toConsumableArray(_consts.EMPTY)), [].concat(_toConsumableArray(_consts.EMPTY)), [].concat(_toConsumableArray(_consts.EMPTY)), [].concat(_toConsumableArray(_consts.EMPTY))];
 };
 
 /***/ }),
@@ -2640,6 +2646,14 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 
 var initialNotes = (0, _util.getNotes)([0, 2, 4, 5, 7, 9, 11]);
 
+var buttonStyle = {
+	padding: "10px",
+	border: "1px solid brown",
+	backgroundColor: "rgba(100,100,255,0.5)",
+	borderRadius: "5px",
+	textAlign: "center"
+};
+
 var Root = function (_React$Component) {
 	_inherits(Root, _React$Component);
 
@@ -2652,16 +2666,19 @@ var Root = function (_React$Component) {
 
 		_this.state = {
 			scales: (0, _util.buildKeyWheel)(start, (0, _consts.SCALE_SPACING)()),
-			selected: [[].concat(_toConsumableArray(_consts.EMPTY)), [].concat(_toConsumableArray(_consts.EMPTY)), [].concat(_toConsumableArray(_consts.EMPTY)), [].concat(_toConsumableArray(_consts.EMPTY)), [].concat(_toConsumableArray(_consts.EMPTY)), [].concat(_toConsumableArray(_consts.EMPTY)), [].concat(_toConsumableArray(_consts.EMPTY)), [].concat(_toConsumableArray(_consts.EMPTY))],
+			selected: (0, _util.getEmptySet)(),
 			mode: "union",
-			rootReferenceEnabled: true
+			rootReferenceEnabled: true,
+			mute: true
 		};
 
 		_this.handleClick = _this.handleClick.bind(_this);
 		_this.handleGroup = _this.handleGroup.bind(_this);
 		_this.toggleRef = _this.toggleRef.bind(_this);
 		_this.toggleMode = _this.toggleMode.bind(_this);
+		_this.toggleMute = _this.toggleMute.bind(_this);
 		_this.rebuildKeyWheel = _this.rebuildKeyWheel.bind(_this);
+		_this.clearNotes = _this.clearNotes.bind(_this);
 		return _this;
 	}
 
@@ -2673,6 +2690,11 @@ var Root = function (_React$Component) {
 			var newStart = new _util.ScaleNode(initialNotes, newCenter);
 			var scales = (0, _util.buildKeyWheel)(newStart, width);
 			this.setState({ scales: scales });
+		}
+	}, {
+		key: "clearNotes",
+		value: function clearNotes() {
+			this.setState({ selected: (0, _util.getEmptySet)() });
 		}
 	}, {
 		key: "componentDidMount",
@@ -2717,8 +2739,16 @@ var Root = function (_React$Component) {
 			this.setState({ rootReferenceEnabled: rootReferenceEnabled });
 		}
 	}, {
+		key: "toggleMute",
+		value: function toggleMute() {
+			var mute = !this.state.mute;
+			this.setState({ mute: mute });
+		}
+	}, {
 		key: "scaleComponents",
 		value: function scaleComponents() {
+			var _this2 = this;
+
 			var _state = this.state,
 			    selected = _state.selected,
 			    scales = _state.scales,
@@ -2734,7 +2764,8 @@ var Root = function (_React$Component) {
 					isInput: false,
 					mode: mode,
 					rootReferenceEnabled: rootReferenceEnabled,
-					index: -1
+					index: -1,
+					mute: _this2.state.mute
 				});
 			});
 		}
@@ -2759,25 +2790,39 @@ var Root = function (_React$Component) {
 					{
 						style: {
 							width: "35%",
-							display: "inline-block",
-							backgroundColor: "yellow"
+							display: "inline-block"
 						}
 					},
 					_react2.default.createElement(
 						"div",
 						{
-							style: { margin: "auto", display: "flex", flexDirection: "column" }
+							style: {
+								display: "flex",
+								justifyContent: "space-evenly",
+								paddingTop: "30px"
+							}
 						},
 						_react2.default.createElement(
 							"button",
-							{ onClick: this.toggleRef },
-							"Reference Root"
+							{ style: buttonStyle, onClick: this.toggleRef },
+							"Reference: ",
+							this.state.rootReferenceEnabled ? "Scale" : "Numbers"
 						),
 						_react2.default.createElement(
 							"button",
-							{ onClick: this.toggleMode },
+							{ style: buttonStyle, onClick: this.toggleMode },
 							"Mode: ",
-							this.state.mode
+							this.state.mode === "union" ? "Union" : "Intersection"
+						),
+						_react2.default.createElement(
+							"button",
+							{ style: buttonStyle, onClick: this.clearNotes },
+							"Clear"
+						),
+						_react2.default.createElement(
+							"button",
+							{ style: buttonStyle, onClick: this.toggleMute },
+							this.state.mute ? "Unmute" : "Mute"
 						)
 					),
 					_react2.default.createElement(_input2.default, {
@@ -2785,7 +2830,8 @@ var Root = function (_React$Component) {
 						handleClick: this.handleClick,
 						handleGroup: this.handleGroup,
 						rootReferenceEnabled: rootReferenceEnabled,
-						mode: this.state.mode
+						mode: this.state.mode,
+						mute: this.state.mute
 					})
 				)
 			);
@@ -46086,11 +46132,16 @@ var Input = function (_React$Component) {
 								"select",
 								{ onChange: function onChange(e) {
 										return _this4.onNameChange(e, i);
-									} },
+									}, defaultValue: "" },
+								_react2.default.createElement(
+									"option",
+									{ disabled: true, value: "" },
+									"--"
+								),
 								_consts.NOTE_NAMES.map(function (name, j) {
 									return _react2.default.createElement(
 										"option",
-										{ key: j, value: name, defaultValue: j === 0 },
+										{ key: j, value: name },
 										name
 									);
 								})
@@ -46101,8 +46152,14 @@ var Input = function (_React$Component) {
 									onChange: function onChange(e) {
 										return _this4.onChordChange(e, i);
 									},
-									style: { width: 1.2 * scaleSpacing }
+									style: { width: 1.2 * scaleSpacing },
+									defaultValue: ""
 								},
+								_react2.default.createElement(
+									"option",
+									{ disabled: true, value: "" },
+									"--"
+								),
 								Object.keys(_consts.SHAPE).map(function (chordName, j) {
 									return _react2.default.createElement(
 										"option",
@@ -46122,7 +46179,8 @@ var Input = function (_React$Component) {
 							rootReferenceEnabled: _this4.props.rootReferenceEnabled,
 							isInput: true,
 							mode: _this4.props.mode,
-							index: i
+							index: i,
+							mute: _this4.state.mute
 						})
 					);
 				})
