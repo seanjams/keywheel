@@ -1,17 +1,23 @@
-export const SCALE_SPACING = 60;
+export const SCALE_SPACING = () => window.innerWidth / 20;
 
-export const NOTE_RADIUS = 13;
+export const SCALE_RADIUS = () => window.innerWidth / 40;
 
-export const SCALE_RADIUS = 30;
+export const NOTE_RADIUS = () => window.innerWidth * 3 / 290;
 
-export const INPUT_NOTE_RADIUS = 20;
+export const NUM_LABEL_SIZE = () =>
+	parseFloat((window.innerWidth / 2048).toFixed(1));
 
-export const INPUT_SCALE_RADIUS = 50;
+export const TEXT_LABEL_SIZE = () =>
+	parseInt((window.innerWidth / 120).toFixed(0));
 
-export const WHEEL_CENTER = {
-	x: 5.7 * SCALE_SPACING,
-	y: 3.7 * SCALE_SPACING,
-};
+export const INPUT_NOTE_RADIUS = 16;
+
+export const INPUT_SCALE_RADIUS = 40;
+
+export const WHEEL_CENTER = () => ({
+	x: 6 * window.innerWidth / 20,
+	y: 4 * window.innerWidth / 20,
+});
 
 export const DIRS = ["TL", "TR", "BL", "BR"];
 
@@ -77,19 +83,19 @@ export const SHAPE = {
 	dimb7: [0, 3, 6, 10],
 	sus2: [0, 2, 7],
 	sus4: [0, 5, 7],
-	pentatonic: [0, 2, 4, 7, 9],
-	dimPentatonic: [0, 3, 6, 8, 10],
+	penta: [0, 2, 4, 7, 9],
+	dimPenta: [0, 3, 6, 8, 10],
 };
 
 const getX = i => {
-	return i * 1.5 * window.innerWidth / 10 + 100;
+	return (4 * i + 35) * window.innerWidth / 50;
 };
 
 const getY = i => {
-	return [450, 575][i];
+	return [3 * window.innerWidth / 20, 6 * window.innerWidth / 20][i];
 };
 
-export const node = [
+export const getInputNodes = () => [
 	{
 		notes: [...EMPTY],
 		center: {

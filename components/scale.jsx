@@ -13,8 +13,8 @@ import {
 import {
 	NOTE_RADIUS,
 	SCALE_RADIUS,
-	INPUT_NOTE_RADIUS,
-	INPUT_SCALE_RADIUS,
+	NUM_LABEL_SIZE,
+	TEXT_LABEL_SIZE,
 	NOTE_NAMES,
 	EMPTY,
 } from "../consts";
@@ -32,16 +32,50 @@ import {
 class Scale extends React.Component {
 	constructor(props) {
 		super(props);
-		this.scaleRadius = this.props.isInput ? INPUT_SCALE_RADIUS : SCALE_RADIUS;
-		this.noteRadius = this.props.isInput ? INPUT_NOTE_RADIUS : NOTE_RADIUS;
+		this.scaleRadius = this.props.isInput
+			? 1.2 * SCALE_RADIUS()
+			: SCALE_RADIUS();
+		this.noteRadius = this.props.isInput ? 1.3 * NOTE_RADIUS() : NOTE_RADIUS();
+		this.numLabelSize = this.props.isInput
+			? `${0.1 + NUM_LABEL_SIZE()}em`
+			: `${NUM_LABEL_SIZE()}em`;
+		this.textLabelSize = this.props.isInput
+			? `${1 + TEXT_LABEL_SIZE()}px`
+			: `${TEXT_LABEL_SIZE()}px`;
+
+		this.updateRadius = this.updateRadius.bind(this);
+	}
+
+	updateRadius() {
+		let numLabelSize = NUM_LABEL_SIZE();
+		let textLabelSize = TEXT_LABEL_SIZE();
+		let noteRadius = NOTE_RADIUS();
+		let scaleRadius = SCALE_RADIUS();
+
+		if (this.props.isInput) {
+			noteRadius *= 1.3;
+			scaleRadius *= 1.2;
+			numLabelSize += 0.1;
+			textLabelSize += 1;
+		}
+
+		this.noteRadius = noteRadius;
+		this.scaleRadius = scaleRadius;
+		this.numLabelSize = `${numLabelSize}em`;
+		this.textLabelSize = `${textLabelSize}px`;
 	}
 
 	componentDidMount() {
 		this.handleCanvas();
+		window.addEventListener("resize", this.updateRadius);
 	}
 
 	componentDidUpdate() {
 		this.handleCanvas();
+	}
+
+	componentWillUnmount() {
+		window.removeEventListener("resize", this.updateRadius);
 	}
 
 	handleCanvas() {
@@ -109,7 +143,7 @@ class Scale extends React.Component {
 		Tone.Transport.start();
 	}
 
-	handleClick(i, pegs) {
+	handleClick(pegs, i) {
 		if (this.props.handleClick) {
 			this.props.handleClick(i);
 		} else {
@@ -168,7 +202,7 @@ class Scale extends React.Component {
 
 			const onClick = e => {
 				e.stopPropagation();
-				this.handleClick(i, pegs);
+				this.handleClick(pegs, i);
 			};
 
 			const style = {
@@ -184,7 +218,7 @@ class Scale extends React.Component {
 
 			const numLabelStyle = {
 				color,
-				fontSize: "0.5em",
+				fontSize: this.numLabelSize,
 				textAlign: "center",
 				position: "relative",
 				top: "50%",
@@ -241,8 +275,9 @@ class Scale extends React.Component {
 			position: "absolute",
 			top: center.y - 4,
 			left: center.x,
-			fontSize: "10px",
+			fontSize: this.textLabelSize,
 			textAlign: "center",
+			// width: "100%",
 		};
 
 		const canvasStyle = {
@@ -254,7 +289,9 @@ class Scale extends React.Component {
 		return (
 			<div onClick={onClick}>
 				{noteDivs}
-				<div style={textStyle}>{label}</div>
+				<div style={textStyle}>
+					<span style={{ position: "relative", left: "-25%" }}>{label}</span>
+				</div>
 				<canvas
 					ref="canvas"
 					width={2 * this.scaleRadius}

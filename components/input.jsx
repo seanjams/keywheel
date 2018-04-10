@@ -1,6 +1,14 @@
 import React from "react";
 import Scale from "./scale";
-import { EMPTY, SHAPE, NOTE_NAMES, node } from "../consts";
+import {
+	EMPTY,
+	SHAPE,
+	NOTE_NAMES,
+	SCALE_SPACING,
+	TEXT_LABEL_SIZE,
+	node,
+	getInputNodes,
+} from "../consts";
 import { getNotes } from "../util";
 import isEqual from "lodash/isEqual";
 
@@ -34,29 +42,43 @@ class Input extends React.Component {
 
 	render() {
 		const { selected } = this.props;
+		const node = getInputNodes();
 		return (
 			<div>
 				{selected.map((_, i) => {
+					const scaleSpacing = SCALE_SPACING();
 					return (
 						<div key={i}>
-							<select onChange={e => this.onNameChange(e, i)}>
-								{NOTE_NAMES.map((name, j) => {
-									return (
-										<option key={j} value={name} defaultValue={j === 0}>
-											{name}
-										</option>
-									);
-								})}
-							</select>
-							<select onChange={e => this.onChordChange(e, i)}>
-								{Object.keys(SHAPE).map((chordName, j) => {
-									return (
-										<option key={j} value={chordName} defaultValue={j === 0}>
-											{chordName}
-										</option>
-									);
-								})}
-							</select>
+							<div
+								style={{
+									position: "absolute",
+									top: node[i].center.y - scaleSpacing - 10,
+									left: node[i].center.x - 3 * scaleSpacing / 4,
+									fontSize: `${TEXT_LABEL_SIZE()}px`,
+								}}
+							>
+								<select onChange={e => this.onNameChange(e, i)}>
+									{NOTE_NAMES.map((name, j) => {
+										return (
+											<option key={j} value={name} defaultValue={j === 0}>
+												{name}
+											</option>
+										);
+									})}
+								</select>
+								<select
+									onChange={e => this.onChordChange(e, i)}
+									style={{ width: 1.2 * scaleSpacing }}
+								>
+									{Object.keys(SHAPE).map((chordName, j) => {
+										return (
+											<option key={j} value={chordName} defaultValue={j === 0}>
+												{chordName}
+											</option>
+										);
+									})}
+								</select>
+							</div>
 							<Scale
 								notes={[...EMPTY]}
 								center={node[i].center}

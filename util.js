@@ -2,10 +2,6 @@ import isEqual from "lodash/isEqual";
 import { COLORS, CHORD_COLOR, INTERVAL_COLORS, grey } from "./colors";
 import {
 	SCALE_SPACING,
-	SCALE_RADIUS,
-	NOTE_RADIUS,
-	INPUT_SCALE_RADIUS,
-	INPUT_NOTE_RADIUS,
 	WHEEL_CENTER,
 	DIRS,
 	CMAJOR,
@@ -21,7 +17,7 @@ import {
 
 //Scale Node class dynamically holds information about location
 export class ScaleNode {
-	constructor(notes = CMAJOR, center = { x: 800, y: 400 }) {
+	constructor(notes = CMAJOR, center = WHEEL_CENTER) {
 		this.rank = 0;
 		this.notes = notes;
 		this.center = center;
@@ -67,7 +63,7 @@ export const tweek = (notes, idx) => {
 	return { notes: getNotes(pegs), tweekStatus };
 };
 
-export const generateNeighbors = (node, visited) => {
+export const generateNeighbors = (node, visited, delta) => {
 	const { notes, parentCenter, center } = node;
 	const parentNotes = node.parent ? node.parent.notes : null;
 	const adjustedPegs = [];
@@ -99,7 +95,7 @@ export const generateNeighbors = (node, visited) => {
 			neighbors = rotate(neighbors);
 		}
 		neighbors.forEach((neighbor, i) => {
-			neighbor.center = getCenter(center, DIRS[i]);
+			neighbor.center = getCenter(center, DIRS[i], delta);
 		});
 	} else {
 		const deltaX = 2 * center.x - parentCenter.x;
@@ -118,7 +114,7 @@ export const generateNeighbors = (node, visited) => {
 	return { neighbors, adjustedPegs };
 };
 
-export const buildKeyWheel = start => {
+export const buildKeyWheel = (start, delta) => {
 	const queue = [start];
 	const visited = [start];
 	let currentNode, neighbors, newNode;
@@ -126,7 +122,7 @@ export const buildKeyWheel = start => {
 	while (visited.length < 36) {
 		currentNode = queue.shift();
 		if (!currentNode) return start;
-		neighbors = generateNeighbors(currentNode, visited).neighbors;
+		neighbors = generateNeighbors(currentNode, visited, delta).neighbors;
 		neighbors.forEach(neighbor => {
 			if (!neighbor) return;
 			newNode = new ScaleNode(neighbor.notes, neighbor.center);
@@ -218,8 +214,6 @@ export const updateCanvas = (ctx, radius, selectedNotes, colorIdx) => {
 			x: radius * (1 + Math.sin(Math.PI * pegs[0] / 6)),
 			y: radius * (1 - Math.cos(Math.PI * pegs[0] / 6)),
 		};
-
-		console.log(selectedNotes, colorIdx);
 
 		if (selectedNotes.length > 1) {
 			ctx.fillStyle = COLORS(0.5)[i];

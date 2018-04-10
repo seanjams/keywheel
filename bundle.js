@@ -479,19 +479,35 @@ module.exports = emptyObject;
 Object.defineProperty(exports, "__esModule", {
 	value: true
 });
-var SCALE_SPACING = exports.SCALE_SPACING = 60;
+var SCALE_SPACING = exports.SCALE_SPACING = function SCALE_SPACING() {
+	return window.innerWidth / 20;
+};
 
-var NOTE_RADIUS = exports.NOTE_RADIUS = 13;
+var SCALE_RADIUS = exports.SCALE_RADIUS = function SCALE_RADIUS() {
+	return window.innerWidth / 40;
+};
 
-var SCALE_RADIUS = exports.SCALE_RADIUS = 30;
+var NOTE_RADIUS = exports.NOTE_RADIUS = function NOTE_RADIUS() {
+	return window.innerWidth * 3 / 290;
+};
 
-var INPUT_NOTE_RADIUS = exports.INPUT_NOTE_RADIUS = 20;
+var NUM_LABEL_SIZE = exports.NUM_LABEL_SIZE = function NUM_LABEL_SIZE() {
+	return parseFloat((window.innerWidth / 2048).toFixed(1));
+};
 
-var INPUT_SCALE_RADIUS = exports.INPUT_SCALE_RADIUS = 50;
+var TEXT_LABEL_SIZE = exports.TEXT_LABEL_SIZE = function TEXT_LABEL_SIZE() {
+	return parseInt((window.innerWidth / 120).toFixed(0));
+};
 
-var WHEEL_CENTER = exports.WHEEL_CENTER = {
-	x: 5.7 * SCALE_SPACING,
-	y: 3.7 * SCALE_SPACING
+var INPUT_NOTE_RADIUS = exports.INPUT_NOTE_RADIUS = 16;
+
+var INPUT_SCALE_RADIUS = exports.INPUT_SCALE_RADIUS = 40;
+
+var WHEEL_CENTER = exports.WHEEL_CENTER = function WHEEL_CENTER() {
+	return {
+		x: 6 * window.innerWidth / 20,
+		y: 4 * window.innerWidth / 20
+	};
 };
 
 var DIRS = exports.DIRS = ["TL", "TR", "BL", "BR"];
@@ -519,67 +535,69 @@ var SHAPE = exports.SHAPE = {
 	dimb7: [0, 3, 6, 10],
 	sus2: [0, 2, 7],
 	sus4: [0, 5, 7],
-	pentatonic: [0, 2, 4, 7, 9],
-	dimPentatonic: [0, 3, 6, 8, 10]
+	penta: [0, 2, 4, 7, 9],
+	dimPenta: [0, 3, 6, 8, 10]
 };
 
 var getX = function getX(i) {
-	return i * 1.5 * window.innerWidth / 10 + 100;
+	return (4 * i + 35) * window.innerWidth / 50;
 };
 
 var getY = function getY(i) {
-	return [450, 575][i];
+	return [3 * window.innerWidth / 20, 6 * window.innerWidth / 20][i];
 };
 
-var node = exports.node = [{
-	notes: [].concat(EMPTY),
-	center: {
-		x: getX(0),
-		y: getY(0)
-	}
-}, {
-	notes: [].concat(EMPTY),
-	center: {
-		x: getX(1),
-		y: getY(0)
-	}
-}, {
-	notes: [].concat(EMPTY),
-	center: {
-		x: getX(2),
-		y: getY(0)
-	}
-}, {
-	notes: [].concat(EMPTY),
-	center: {
-		x: getX(3),
-		y: getY(0)
-	}
-}, {
-	notes: [].concat(EMPTY),
-	center: {
-		x: getX(0),
-		y: getY(1)
-	}
-}, {
-	notes: [].concat(EMPTY),
-	center: {
-		x: getX(1),
-		y: getY(1)
-	}
-}, {
-	notes: [].concat(EMPTY),
-	center: {
-		x: getX(2),
-		y: getY(1)
-	}
-}, {
-	notes: [].concat(EMPTY),
-	center: {
-		x: getX(3),
-		y: getY(1)
-	}
-}];
+var getInputNodes = exports.getInputNodes = function getInputNodes() {
+	return [{
+		notes: [].concat(EMPTY),
+		center: {
+			x: getX(0),
+			y: getY(0)
+		}
+	}, {
+		notes: [].concat(EMPTY),
+		center: {
+			x: getX(1),
+			y: getY(0)
+		}
+	}, {
+		notes: [].concat(EMPTY),
+		center: {
+			x: getX(2),
+			y: getY(0)
+		}
+	}, {
+		notes: [].concat(EMPTY),
+		center: {
+			x: getX(3),
+			y: getY(0)
+		}
+	}, {
+		notes: [].concat(EMPTY),
+		center: {
+			x: getX(0),
+			y: getY(1)
+		}
+	}, {
+		notes: [].concat(EMPTY),
+		center: {
+			x: getX(1),
+			y: getY(1)
+		}
+	}, {
+		notes: [].concat(EMPTY),
+		center: {
+			x: getX(2),
+			y: getY(1)
+		}
+	}, {
+		notes: [].concat(EMPTY),
+		center: {
+			x: getX(3),
+			y: getY(1)
+		}
+	}];
+};
 
 /***/ }),
 /* 8 */
@@ -1355,20 +1373,50 @@ var Scale = function (_React$Component) {
 
 		var _this = _possibleConstructorReturn(this, (Scale.__proto__ || Object.getPrototypeOf(Scale)).call(this, props));
 
-		_this.scaleRadius = _this.props.isInput ? _consts.INPUT_SCALE_RADIUS : _consts.SCALE_RADIUS;
-		_this.noteRadius = _this.props.isInput ? _consts.INPUT_NOTE_RADIUS : _consts.NOTE_RADIUS;
+		_this.scaleRadius = _this.props.isInput ? 1.2 * (0, _consts.SCALE_RADIUS)() : (0, _consts.SCALE_RADIUS)();
+		_this.noteRadius = _this.props.isInput ? 1.3 * (0, _consts.NOTE_RADIUS)() : (0, _consts.NOTE_RADIUS)();
+		_this.numLabelSize = _this.props.isInput ? 0.1 + (0, _consts.NUM_LABEL_SIZE)() + "em" : (0, _consts.NUM_LABEL_SIZE)() + "em";
+		_this.textLabelSize = _this.props.isInput ? 1 + (0, _consts.TEXT_LABEL_SIZE)() + "px" : (0, _consts.TEXT_LABEL_SIZE)() + "px";
+
+		_this.updateRadius = _this.updateRadius.bind(_this);
 		return _this;
 	}
 
 	_createClass(Scale, [{
+		key: "updateRadius",
+		value: function updateRadius() {
+			var numLabelSize = (0, _consts.NUM_LABEL_SIZE)();
+			var textLabelSize = (0, _consts.TEXT_LABEL_SIZE)();
+			var noteRadius = (0, _consts.NOTE_RADIUS)();
+			var scaleRadius = (0, _consts.SCALE_RADIUS)();
+
+			if (this.props.isInput) {
+				noteRadius *= 1.3;
+				scaleRadius *= 1.2;
+				numLabelSize += 0.1;
+				textLabelSize += 1;
+			}
+
+			this.noteRadius = noteRadius;
+			this.scaleRadius = scaleRadius;
+			this.numLabelSize = numLabelSize + "em";
+			this.textLabelSize = textLabelSize + "px";
+		}
+	}, {
 		key: "componentDidMount",
 		value: function componentDidMount() {
 			this.handleCanvas();
+			window.addEventListener("resize", this.updateRadius);
 		}
 	}, {
 		key: "componentDidUpdate",
 		value: function componentDidUpdate() {
 			this.handleCanvas();
+		}
+	}, {
+		key: "componentWillUnmount",
+		value: function componentWillUnmount() {
+			window.removeEventListener("resize", this.updateRadius);
 		}
 	}, {
 		key: "handleCanvas",
@@ -1447,7 +1495,7 @@ var Scale = function (_React$Component) {
 		}
 	}, {
 		key: "handleClick",
-		value: function handleClick(i, pegs) {
+		value: function handleClick(pegs, i) {
 			if (this.props.handleClick) {
 				this.props.handleClick(i);
 			} else {
@@ -1517,7 +1565,7 @@ var Scale = function (_React$Component) {
 
 				var onClick = function onClick(e) {
 					e.stopPropagation();
-					_this2.handleClick(i, pegs);
+					_this2.handleClick(pegs, i);
 				};
 
 				var style = {
@@ -1533,7 +1581,7 @@ var Scale = function (_React$Component) {
 
 				var numLabelStyle = {
 					color: color,
-					fontSize: "0.5em",
+					fontSize: _this2.numLabelSize,
 					textAlign: "center",
 					position: "relative",
 					top: "50%",
@@ -1605,8 +1653,9 @@ var Scale = function (_React$Component) {
 				position: "absolute",
 				top: center.y - 4,
 				left: center.x,
-				fontSize: "10px",
+				fontSize: this.textLabelSize,
 				textAlign: "center"
+				// width: "100%",
 			};
 
 			var canvasStyle = {
@@ -1622,7 +1671,11 @@ var Scale = function (_React$Component) {
 				_react2.default.createElement(
 					"div",
 					{ style: textStyle },
-					label
+					_react2.default.createElement(
+						"span",
+						{ style: { position: "relative", left: "-25%" } },
+						label
+					)
 				),
 				_react2.default.createElement("canvas", {
 					ref: "canvas",
@@ -1718,7 +1771,7 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 var ScaleNode = exports.ScaleNode = function () {
 	function ScaleNode() {
 		var notes = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : _consts.CMAJOR;
-		var center = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : { x: 800, y: 400 };
+		var center = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : _consts.WHEEL_CENTER;
 
 		_classCallCheck(this, ScaleNode);
 
@@ -1773,7 +1826,7 @@ var tweek = exports.tweek = function tweek(notes, idx) {
 	return { notes: getNotes(pegs), tweekStatus: tweekStatus };
 };
 
-var generateNeighbors = exports.generateNeighbors = function generateNeighbors(node, visited) {
+var generateNeighbors = exports.generateNeighbors = function generateNeighbors(node, visited, delta) {
 	var notes = node.notes,
 	    parentCenter = node.parentCenter,
 	    center = node.center;
@@ -1808,7 +1861,7 @@ var generateNeighbors = exports.generateNeighbors = function generateNeighbors(n
 			neighbors = rotate(neighbors);
 		}
 		neighbors.forEach(function (neighbor, i) {
-			neighbor.center = getCenter(center, _consts.DIRS[i]);
+			neighbor.center = getCenter(center, _consts.DIRS[i], delta);
 		});
 	} else {
 		var deltaX = 2 * center.x - parentCenter.x;
@@ -1827,7 +1880,7 @@ var generateNeighbors = exports.generateNeighbors = function generateNeighbors(n
 	return { neighbors: neighbors, adjustedPegs: adjustedPegs };
 };
 
-var buildKeyWheel = exports.buildKeyWheel = function buildKeyWheel(start) {
+var buildKeyWheel = exports.buildKeyWheel = function buildKeyWheel(start, delta) {
 	var queue = [start];
 	var visited = [start];
 	var currentNode = void 0,
@@ -1837,7 +1890,7 @@ var buildKeyWheel = exports.buildKeyWheel = function buildKeyWheel(start) {
 	while (visited.length < 36) {
 		currentNode = queue.shift();
 		if (!currentNode) return start;
-		neighbors = generateNeighbors(currentNode, visited).neighbors;
+		neighbors = generateNeighbors(currentNode, visited, delta).neighbors;
 		neighbors.forEach(function (neighbor) {
 			if (!neighbor) return;
 			newNode = new ScaleNode(neighbor.notes, neighbor.center);
@@ -1929,8 +1982,6 @@ var updateCanvas = exports.updateCanvas = function updateCanvas(ctx, radius, sel
 			x: radius * (1 + Math.sin(Math.PI * pegs[0] / 6)),
 			y: radius * (1 - Math.cos(Math.PI * pegs[0] / 6))
 		};
-
-		console.log(selectedNotes, colorIdx);
 
 		if (selectedNotes.length > 1) {
 			ctx.fillStyle = (0, _colors.COLORS)(0.5)[i];
@@ -2597,10 +2648,10 @@ var Root = function (_React$Component) {
 
 		var _this = _possibleConstructorReturn(this, (Root.__proto__ || Object.getPrototypeOf(Root)).call(this, props));
 
-		var start = new _util.ScaleNode(initialNotes, _consts.WHEEL_CENTER);
+		var start = new _util.ScaleNode(initialNotes, (0, _consts.WHEEL_CENTER)());
 
 		_this.state = {
-			scales: (0, _util.buildKeyWheel)(start),
+			scales: (0, _util.buildKeyWheel)(start, (0, _consts.SCALE_SPACING)()),
 			selected: [[].concat(_toConsumableArray(_consts.EMPTY)), [].concat(_toConsumableArray(_consts.EMPTY)), [].concat(_toConsumableArray(_consts.EMPTY)), [].concat(_toConsumableArray(_consts.EMPTY)), [].concat(_toConsumableArray(_consts.EMPTY)), [].concat(_toConsumableArray(_consts.EMPTY)), [].concat(_toConsumableArray(_consts.EMPTY)), [].concat(_toConsumableArray(_consts.EMPTY))],
 			mode: "union",
 			rootReferenceEnabled: true
@@ -2610,10 +2661,30 @@ var Root = function (_React$Component) {
 		_this.handleGroup = _this.handleGroup.bind(_this);
 		_this.toggleRef = _this.toggleRef.bind(_this);
 		_this.toggleMode = _this.toggleMode.bind(_this);
+		_this.rebuildKeyWheel = _this.rebuildKeyWheel.bind(_this);
 		return _this;
 	}
 
 	_createClass(Root, [{
+		key: "rebuildKeyWheel",
+		value: function rebuildKeyWheel() {
+			var width = (0, _consts.SCALE_SPACING)();
+			var newCenter = { x: 6 * width, y: 4 * width };
+			var newStart = new _util.ScaleNode(initialNotes, newCenter);
+			var scales = (0, _util.buildKeyWheel)(newStart, width);
+			this.setState({ scales: scales });
+		}
+	}, {
+		key: "componentDidMount",
+		value: function componentDidMount() {
+			window.addEventListener("resize", this.rebuildKeyWheel);
+		}
+	}, {
+		key: "componentWillUnmount",
+		value: function componentWillUnmount() {
+			window.removeEventListener("resize", this.rebuildKeyWheel);
+		}
+	}, {
 		key: "handleClick",
 		value: function handleClick(i, id) {
 			var selected = [];
@@ -2680,12 +2751,18 @@ var Root = function (_React$Component) {
 				null,
 				_react2.default.createElement(
 					"div",
-					{ style: { width: "60%", display: "inline-block" } },
+					{ style: { width: "65%", display: "inline-block" } },
 					scaleDivs
 				),
 				_react2.default.createElement(
 					"div",
-					{ style: { width: "40%", display: "inline-block" } },
+					{
+						style: {
+							width: "35%",
+							display: "inline-block",
+							backgroundColor: "yellow"
+						}
+					},
 					_react2.default.createElement(
 						"div",
 						{
@@ -2702,15 +2779,15 @@ var Root = function (_React$Component) {
 							"Mode: ",
 							this.state.mode
 						)
-					)
-				),
-				_react2.default.createElement(_input2.default, {
-					selected: selected,
-					handleClick: this.handleClick,
-					handleGroup: this.handleGroup,
-					rootReferenceEnabled: rootReferenceEnabled,
-					mode: this.state.mode
-				})
+					),
+					_react2.default.createElement(_input2.default, {
+						selected: selected,
+						handleClick: this.handleClick,
+						handleGroup: this.handleGroup,
+						rootReferenceEnabled: rootReferenceEnabled,
+						mode: this.state.mode
+					})
+				)
 			);
 		}
 	}]);
@@ -45986,42 +46063,58 @@ var Input = function (_React$Component) {
 
 			var selected = this.props.selected;
 
+			var node = (0, _consts.getInputNodes)();
 			return _react2.default.createElement(
 				"div",
 				null,
 				selected.map(function (_, i) {
+					var scaleSpacing = (0, _consts.SCALE_SPACING)();
 					return _react2.default.createElement(
 						"div",
 						{ key: i },
 						_react2.default.createElement(
-							"select",
-							{ onChange: function onChange(e) {
-									return _this4.onNameChange(e, i);
-								} },
-							_consts.NOTE_NAMES.map(function (name, j) {
-								return _react2.default.createElement(
-									"option",
-									{ key: j, value: name, defaultValue: j === 0 },
-									name
-								);
-							})
-						),
-						_react2.default.createElement(
-							"select",
-							{ onChange: function onChange(e) {
-									return _this4.onChordChange(e, i);
-								} },
-							Object.keys(_consts.SHAPE).map(function (chordName, j) {
-								return _react2.default.createElement(
-									"option",
-									{ key: j, value: chordName, defaultValue: j === 0 },
-									chordName
-								);
-							})
+							"div",
+							{
+								style: {
+									position: "absolute",
+									top: node[i].center.y - scaleSpacing - 10,
+									left: node[i].center.x - 3 * scaleSpacing / 4,
+									fontSize: (0, _consts.TEXT_LABEL_SIZE)() + "px"
+								}
+							},
+							_react2.default.createElement(
+								"select",
+								{ onChange: function onChange(e) {
+										return _this4.onNameChange(e, i);
+									} },
+								_consts.NOTE_NAMES.map(function (name, j) {
+									return _react2.default.createElement(
+										"option",
+										{ key: j, value: name, defaultValue: j === 0 },
+										name
+									);
+								})
+							),
+							_react2.default.createElement(
+								"select",
+								{
+									onChange: function onChange(e) {
+										return _this4.onChordChange(e, i);
+									},
+									style: { width: 1.2 * scaleSpacing }
+								},
+								Object.keys(_consts.SHAPE).map(function (chordName, j) {
+									return _react2.default.createElement(
+										"option",
+										{ key: j, value: chordName, defaultValue: j === 0 },
+										chordName
+									);
+								})
+							)
 						),
 						_react2.default.createElement(_scale2.default, {
 							notes: [].concat(_toConsumableArray(_consts.EMPTY)),
-							center: _consts.node[i].center,
+							center: node[i].center,
 							selected: selected,
 							handleClick: function handleClick(k) {
 								return _this4.props.handleClick(k, i);
