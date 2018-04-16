@@ -2650,8 +2650,6 @@ function _possibleConstructorReturn(self, call) { if (!self) { throw new Referen
 
 function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
 
-var initialNotes = _consts.C;
-
 var buttonStyle = {
 	padding: "3px",
 	border: "1px solid brown",
@@ -2669,7 +2667,7 @@ var Root = function (_React$Component) {
 
 		var _this = _possibleConstructorReturn(this, (Root.__proto__ || Object.getPrototypeOf(Root)).call(this, props));
 
-		var start = new _util.ScaleNode(initialNotes, (0, _consts.WHEEL_CENTER)());
+		var start = new _util.ScaleNode(_consts.C, (0, _consts.WHEEL_CENTER)());
 
 		_this.state = {
 			start: 0,
@@ -2721,7 +2719,15 @@ var Root = function (_React$Component) {
 	}, {
 		key: "clearNotes",
 		value: function clearNotes() {
-			this.setState({ selected: (0, _util.getEmptySet)() });
+			var i = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : -1;
+
+			if (i >= 0) {
+				var selected = [].concat(_toConsumableArray(this.state.selected));
+				selected[i] = [].concat(_toConsumableArray(_consts.EMPTY));
+				this.setState({ selected: selected });
+			} else {
+				this.setState({ selected: (0, _util.getEmptySet)() });
+			}
 		}
 	}, {
 		key: "handleClick",
@@ -2913,6 +2919,7 @@ var Root = function (_React$Component) {
 					selected: selected,
 					handleClick: this.handleClick,
 					handleGroup: this.handleGroup,
+					clearNotes: this.clearNotes,
 					rootReferenceEnabled: rootReferenceEnabled,
 					mode: this.state.mode,
 					mute: this.state.mute
@@ -46121,6 +46128,8 @@ var _consts = __webpack_require__(7);
 
 var _util = __webpack_require__(16);
 
+var _colors = __webpack_require__(28);
+
 var _isEqual = __webpack_require__(29);
 
 var _isEqual2 = _interopRequireDefault(_isEqual);
@@ -46135,8 +46144,6 @@ function _possibleConstructorReturn(self, call) { if (!self) { throw new Referen
 
 function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
 
-//make dynamically placed inputs later
-
 var Input = function (_React$Component) {
 	_inherits(Input, _React$Component);
 
@@ -46146,8 +46153,8 @@ var Input = function (_React$Component) {
 		var _this = _possibleConstructorReturn(this, (Input.__proto__ || Object.getPrototypeOf(Input)).call(this, props));
 
 		_this.state = {
-			noteName: "C",
-			chordName: "major"
+			noteNames: Array(8).fill("C"),
+			chordNames: Array(8).fill("major")
 		};
 		return _this;
 	}
@@ -46156,11 +46163,11 @@ var Input = function (_React$Component) {
 		key: "calculateChord",
 		value: function calculateChord(i) {
 			var _state = this.state,
-			    noteName = _state.noteName,
-			    chordName = _state.chordName;
+			    noteNames = _state.noteNames,
+			    chordNames = _state.chordNames;
 
-			var rootIdx = _consts.NOTE_NAMES.indexOf(noteName);
-			var pegs = _consts.SHAPES[chordName].map(function (note) {
+			var rootIdx = _consts.NOTE_NAMES.indexOf(noteNames[i]);
+			var pegs = _consts.SHAPES[chordNames[i]].map(function (note) {
 				return (note + rootIdx) % 12;
 			}).sort();
 			this.props.handleGroup((0, _util.getNotes)(pegs), i);
@@ -46170,8 +46177,9 @@ var Input = function (_React$Component) {
 		value: function onNameChange(e, i) {
 			var _this2 = this;
 
-			var noteName = e.target.value;
-			this.setState({ noteName: noteName }, function () {
+			var noteNames = [].concat(_toConsumableArray(this.state.noteNames));
+			noteNames[i] = e.target.value;
+			this.setState({ noteNames: noteNames }, function () {
 				return _this2.calculateChord(i);
 			});
 		}
@@ -46180,8 +46188,9 @@ var Input = function (_React$Component) {
 		value: function onChordChange(e, i) {
 			var _this3 = this;
 
-			var chordName = e.target.value;
-			this.setState({ chordName: chordName }, function () {
+			var chordNames = [].concat(_toConsumableArray(this.state.chordNames));
+			chordNames[i] = e.target.value;
+			this.setState({ chordNames: chordNames }, function () {
 				return _this3.calculateChord(i);
 			});
 		}
@@ -46198,73 +46207,117 @@ var Input = function (_React$Component) {
 				null,
 				selected.map(function (_, i) {
 					var scaleSpacing = (0, _consts.SCALE_SPACING)();
+
+					var buttonStyle = {
+						padding: "3px",
+						border: "1px solid brown",
+						backgroundColor: _colors.buttonBlue,
+						borderRadius: "5px",
+						textAlign: "center",
+						marginRight: "5px"
+					};
+
+					var buttonContainerStyle = {
+						position: "absolute",
+						top: node[i].center.y - 1.4 * scaleSpacing,
+						left: node[i].center.x - scaleSpacing / 2,
+						fontSize: (0, _consts.TEXT_LABEL_SIZE)() + "px",
+						display: "flex"
+					};
+
+					var selectContainerStyle = {
+						position: "absolute",
+						top: node[i].center.y - scaleSpacing,
+						left: node[i].center.x - 3 * scaleSpacing / 4,
+						fontSize: (0, _consts.TEXT_LABEL_SIZE)() + "px"
+					};
+
 					return _react2.default.createElement(
 						"div",
 						{ key: i },
 						_react2.default.createElement(
 							"div",
-							{
-								style: {
-									position: "absolute",
-									top: node[i].center.y - scaleSpacing - 10,
-									left: node[i].center.x - 3 * scaleSpacing / 4,
-									fontSize: (0, _consts.TEXT_LABEL_SIZE)() + "px"
-								}
-							},
+							{ style: buttonContainerStyle },
 							_react2.default.createElement(
-								"select",
-								{ onChange: function onChange(e) {
-										return _this4.onNameChange(e, i);
-									}, defaultValue: "" },
-								_react2.default.createElement(
-									"option",
-									{ disabled: true, value: "" },
-									"--"
-								),
-								_consts.NOTE_NAMES.map(function (name, j) {
-									return _react2.default.createElement(
-										"option",
-										{ key: j, value: name },
-										name
-									);
-								})
+								"button",
+								{ style: buttonStyle },
+								"Sound"
 							),
 							_react2.default.createElement(
-								"select",
+								"button",
 								{
-									onChange: function onChange(e) {
-										return _this4.onChordChange(e, i);
-									},
-									style: { width: 1.2 * scaleSpacing },
-									defaultValue: ""
+									style: buttonStyle,
+									onClick: function onClick() {
+										return _this4.props.clearNotes(i);
+									}
 								},
-								_react2.default.createElement(
-									"option",
-									{ disabled: true, value: "" },
-									"--"
-								),
-								Object.keys(_consts.SHAPES).map(function (chordName, j) {
-									return _react2.default.createElement(
-										"option",
-										{ key: j, value: chordName, defaultValue: j === 0 },
-										chordName
-									);
-								})
+								"Clear"
 							)
 						),
-						_react2.default.createElement(_scale2.default, {
-							notes: [].concat(_toConsumableArray(_consts.EMPTY)),
-							center: node[i].center,
-							selected: selected,
-							handleClick: function handleClick(k) {
-								return _this4.props.handleClick(k, i);
-							},
-							rootReferenceEnabled: _this4.props.rootReferenceEnabled,
-							isInput: true,
-							mode: _this4.props.mode,
-							index: i,
-							mute: _this4.state.mute
-						})
+						_react2.default.createElement(
+							"div",
+							null,
+							_react2.default.createElement(
+								"div",
+								{ style: selectContainerStyle },
+								_react2.default.createElement(
+									"select",
+									{
+										onChange: function onChange(e) {
+											return _this4.onNameChange(e, i);
+										},
+										defaultValue: ""
+									},
+									_react2.default.createElement(
+										"option",
+										{ disabled: true, value: "" },
+										"--"
+									),
+									_consts.NOTE_NAMES.map(function (name, j) {
+										return _react2.default.createElement(
+											"option",
+											{ key: j, value: name },
+											name
+										);
+									})
+								),
+								_react2.default.createElement(
+									"select",
+									{
+										onChange: function onChange(e) {
+											return _this4.onChordChange(e, i);
+										},
+										style: { width: 1.2 * scaleSpacing },
+										defaultValue: ""
+									},
+									_react2.default.createElement(
+										"option",
+										{ disabled: true, value: "" },
+										"--"
+									),
+									Object.keys(_consts.SHAPES).map(function (chordName, j) {
+										return _react2.default.createElement(
+											"option",
+											{ key: j, value: chordName },
+											chordName
+										);
+									})
+								)
+							),
+							_react2.default.createElement(_scale2.default, {
+								notes: [].concat(_toConsumableArray(_consts.EMPTY)),
+								center: node[i].center,
+								selected: selected,
+								handleClick: function handleClick(k) {
+									return _this4.props.handleClick(k, i);
+								},
+								rootReferenceEnabled: _this4.props.rootReferenceEnabled,
+								isInput: true,
+								mode: _this4.props.mode,
+								index: i,
+								mute: _this4.state.mute
+							})
+						)
 					);
 				})
 			);

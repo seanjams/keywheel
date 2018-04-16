@@ -13,8 +13,6 @@ import {
 import { WHEEL_CENTER, C, EMPTY, SCALE_SPACING, width } from "../consts";
 import { buttonBlue } from "../colors";
 
-const initialNotes = C;
-
 const buttonStyle = {
 	padding: "3px",
 	border: "1px solid brown",
@@ -27,7 +25,7 @@ const buttonStyle = {
 class Root extends React.Component {
 	constructor(props) {
 		super(props);
-		const start = new ScaleNode(initialNotes, WHEEL_CENTER());
+		const start = new ScaleNode(C, WHEEL_CENTER());
 
 		this.state = {
 			start: 0,
@@ -71,8 +69,14 @@ class Root extends React.Component {
 		this.setState({ start }, this.rebuildKeyWheel);
 	}
 
-	clearNotes() {
-		this.setState({ selected: getEmptySet() });
+	clearNotes(i = -1) {
+		if (i >= 0) {
+			const selected = [...this.state.selected];
+			selected[i] = [...EMPTY];
+			this.setState({ selected });
+		} else {
+			this.setState({ selected: getEmptySet() });
+		}
 	}
 
 	handleClick(i, id) {
@@ -201,6 +205,7 @@ class Root extends React.Component {
 					selected={selected}
 					handleClick={this.handleClick}
 					handleGroup={this.handleGroup}
+					clearNotes={this.clearNotes}
 					rootReferenceEnabled={rootReferenceEnabled}
 					mode={this.state.mode}
 					mute={this.state.mute}
