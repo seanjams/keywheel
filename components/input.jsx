@@ -20,6 +20,21 @@ class Input extends React.Component {
 			noteNames: Array(8).fill("C"),
 			chordNames: Array(8).fill("major"),
 		};
+
+		this.handleKeyPress = this.handleKeyPress.bind(this);
+	}
+
+	componentDidMount() {
+		window.addEventListener("keypress", this.handleKeyPress);
+	}
+
+	componentWillUnmount() {
+		window.removeEventListener("keypress", this.handleKeyPress);
+	}
+
+	handleKeyPress(e) {
+		const i = parseInt(e.key);
+		if (i > 0 && i < 9) this.soundChord(i - 1);
 	}
 
 	calculateChord(i) {
@@ -70,7 +85,7 @@ class Input extends React.Component {
 					const buttonContainerStyle = {
 						position: "absolute",
 						top: node[i].center.y - 1.4 * scaleSpacing,
-						left: node[i].center.x - scaleSpacing / 2,
+						left: node[i].center.x - 2 * scaleSpacing / 5,
 						fontSize: `${TEXT_LABEL_SIZE()}px`,
 						display: "flex",
 					};
@@ -78,7 +93,7 @@ class Input extends React.Component {
 					const selectContainerStyle = {
 						position: "absolute",
 						top: node[i].center.y - scaleSpacing,
-						left: node[i].center.x - 3 * scaleSpacing / 4,
+						left: node[i].center.x - 5 * scaleSpacing / 8,
 						fontSize: `${TEXT_LABEL_SIZE()}px`,
 					};
 

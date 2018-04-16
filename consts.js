@@ -81,8 +81,7 @@ export const SHAPES = {
 	dim: [0, 3, 6],
 	dimbb7: [0, 3, 6, 9],
 	dimb7: [0, 3, 6, 10],
-	sus2: [0, 2, 7],
-	sus4: [0, 5, 7],
+	sus: [0, 2, 7],
 	penta: [0, 2, 4, 7, 9],
 	dimPenta: [0, 3, 6, 8, 10],
 };

@@ -19,7 +19,7 @@ const buttonStyle = {
 	backgroundColor: buttonBlue,
 	borderRadius: "5px",
 	textAlign: "center",
-	minWidth: "100px",
+	minWidth: "60px",
 };
 
 class Root extends React.Component {
@@ -33,7 +33,7 @@ class Root extends React.Component {
 			selected: getEmptySet(),
 			mode: "union",
 			rootReferenceEnabled: true,
-			mute: true,
+			mute: false,
 		};
 
 		this.handleClick = this.handleClick.bind(this);
@@ -44,14 +44,25 @@ class Root extends React.Component {
 		this.rebuildKeyWheel = this.rebuildKeyWheel.bind(this);
 		this.clearNotes = this.clearNotes.bind(this);
 		this.shiftScale = this.shiftScale.bind(this);
+		this.handleKeyPress = this.handleKeyPress.bind(this);
 	}
 
 	componentDidMount() {
 		window.addEventListener("resize", this.rebuildKeyWheel);
+		window.addEventListener("keydown", this.handleKeyPress);
 	}
 
 	componentWillUnmount() {
 		window.removeEventListener("resize", this.rebuildKeyWheel);
+		window.removeEventListener("keydown", this.handleKeyPress);
+	}
+
+	handleKeyPress(e) {
+		if (e.key === "ArrowLeft") {
+			this.shiftScale(2);
+		} else if (e.key === "ArrowRight") {
+			this.shiftScale(-2);
+		}
 	}
 
 	rebuildKeyWheel() {
@@ -135,7 +146,7 @@ class Root extends React.Component {
 		const { selected, rootReferenceEnabled } = this.state;
 		const scaleDivs = this.scaleComponents();
 		return (
-			<div>
+			<div style={{ fontSize: "14px" }}>
 				<div
 					style={{ width: "65%", display: "inline-block", textAlign: "center" }}
 				>
@@ -174,17 +185,17 @@ class Root extends React.Component {
 								paddingTop: "30px",
 							}}
 						>
+							<button style={buttonStyle} onClick={this.toggleMute}>
+								{this.state.mute ? "Unmute" : "Mute"}
+							</button>
+							<button style={buttonStyle} onClick={this.clearNotes}>
+								Clear All
+							</button>
 							<button style={buttonStyle} onClick={this.toggleRef}>
 								View: {this.state.rootReferenceEnabled ? "Scale" : "Arbitrary"}
 							</button>
 							<button style={buttonStyle} onClick={this.toggleMode}>
 								Mode: {this.state.mode === "union" ? "Union" : "Intersection"}
-							</button>
-							<button style={buttonStyle} onClick={this.clearNotes}>
-								Clear
-							</button>
-							<button style={buttonStyle} onClick={this.toggleMute}>
-								{this.state.mute ? "Unmute" : "Mute"}
 							</button>
 						</div>
 						<div

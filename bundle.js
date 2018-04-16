@@ -537,8 +537,7 @@ var SHAPES = exports.SHAPES = {
 	dim: [0, 3, 6],
 	dimbb7: [0, 3, 6, 9],
 	dimb7: [0, 3, 6, 10],
-	sus2: [0, 2, 7],
-	sus4: [0, 5, 7],
+	sus: [0, 2, 7],
 	penta: [0, 2, 4, 7, 9],
 	dimPenta: [0, 3, 6, 8, 10]
 };
@@ -2661,7 +2660,7 @@ var buttonStyle = {
 	backgroundColor: _colors.buttonBlue,
 	borderRadius: "5px",
 	textAlign: "center",
-	minWidth: "100px"
+	minWidth: "60px"
 };
 
 var Root = function (_React$Component) {
@@ -2680,7 +2679,7 @@ var Root = function (_React$Component) {
 			selected: (0, _util.getEmptySet)(),
 			mode: "union",
 			rootReferenceEnabled: true,
-			mute: true
+			mute: false
 		};
 
 		_this.handleClick = _this.handleClick.bind(_this);
@@ -2691,6 +2690,7 @@ var Root = function (_React$Component) {
 		_this.rebuildKeyWheel = _this.rebuildKeyWheel.bind(_this);
 		_this.clearNotes = _this.clearNotes.bind(_this);
 		_this.shiftScale = _this.shiftScale.bind(_this);
+		_this.handleKeyPress = _this.handleKeyPress.bind(_this);
 		return _this;
 	}
 
@@ -2698,11 +2698,22 @@ var Root = function (_React$Component) {
 		key: "componentDidMount",
 		value: function componentDidMount() {
 			window.addEventListener("resize", this.rebuildKeyWheel);
+			window.addEventListener("keydown", this.handleKeyPress);
 		}
 	}, {
 		key: "componentWillUnmount",
 		value: function componentWillUnmount() {
 			window.removeEventListener("resize", this.rebuildKeyWheel);
+			window.removeEventListener("keydown", this.handleKeyPress);
+		}
+	}, {
+		key: "handleKeyPress",
+		value: function handleKeyPress(e) {
+			if (e.key === "ArrowLeft") {
+				this.shiftScale(2);
+			} else if (e.key === "ArrowRight") {
+				this.shiftScale(-2);
+			}
 		}
 	}, {
 		key: "rebuildKeyWheel",
@@ -2809,7 +2820,7 @@ var Root = function (_React$Component) {
 			var scaleDivs = this.scaleComponents();
 			return _react2.default.createElement(
 				"div",
-				null,
+				{ style: { fontSize: "14px" } },
 				_react2.default.createElement(
 					"div",
 					{
@@ -2867,6 +2878,16 @@ var Root = function (_React$Component) {
 							},
 							_react2.default.createElement(
 								"button",
+								{ style: buttonStyle, onClick: this.toggleMute },
+								this.state.mute ? "Unmute" : "Mute"
+							),
+							_react2.default.createElement(
+								"button",
+								{ style: buttonStyle, onClick: this.clearNotes },
+								"Clear All"
+							),
+							_react2.default.createElement(
+								"button",
 								{ style: buttonStyle, onClick: this.toggleRef },
 								"View: ",
 								this.state.rootReferenceEnabled ? "Scale" : "Arbitrary"
@@ -2876,16 +2897,6 @@ var Root = function (_React$Component) {
 								{ style: buttonStyle, onClick: this.toggleMode },
 								"Mode: ",
 								this.state.mode === "union" ? "Union" : "Intersection"
-							),
-							_react2.default.createElement(
-								"button",
-								{ style: buttonStyle, onClick: this.clearNotes },
-								"Clear"
-							),
-							_react2.default.createElement(
-								"button",
-								{ style: buttonStyle, onClick: this.toggleMute },
-								this.state.mute ? "Unmute" : "Mute"
 							)
 						),
 						_react2.default.createElement(
@@ -46161,10 +46172,28 @@ var Input = function (_React$Component) {
 			noteNames: Array(8).fill("C"),
 			chordNames: Array(8).fill("major")
 		};
+
+		_this.handleKeyPress = _this.handleKeyPress.bind(_this);
 		return _this;
 	}
 
 	_createClass(Input, [{
+		key: "componentDidMount",
+		value: function componentDidMount() {
+			window.addEventListener("keypress", this.handleKeyPress);
+		}
+	}, {
+		key: "componentWillUnmount",
+		value: function componentWillUnmount() {
+			window.removeEventListener("keypress", this.handleKeyPress);
+		}
+	}, {
+		key: "handleKeyPress",
+		value: function handleKeyPress(e) {
+			var i = parseInt(e.key);
+			if (i > 0 && i < 9) this.soundChord(i - 1);
+		}
+	}, {
 		key: "calculateChord",
 		value: function calculateChord(i) {
 			var _state = this.state,
@@ -46233,7 +46262,7 @@ var Input = function (_React$Component) {
 					var buttonContainerStyle = {
 						position: "absolute",
 						top: node[i].center.y - 1.4 * scaleSpacing,
-						left: node[i].center.x - scaleSpacing / 2,
+						left: node[i].center.x - 2 * scaleSpacing / 5,
 						fontSize: (0, _consts.TEXT_LABEL_SIZE)() + "px",
 						display: "flex"
 					};
@@ -46241,7 +46270,7 @@ var Input = function (_React$Component) {
 					var selectContainerStyle = {
 						position: "absolute",
 						top: node[i].center.y - scaleSpacing,
-						left: node[i].center.x - 3 * scaleSpacing / 4,
+						left: node[i].center.x - 5 * scaleSpacing / 8,
 						fontSize: (0, _consts.TEXT_LABEL_SIZE)() + "px"
 					};
 
