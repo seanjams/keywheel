@@ -4,6 +4,8 @@ export const grey = "#BBB";
 
 export const offWhite = "#EEE";
 
+export const buttonBlue = "rgba(100,100,255,0.5)";
+
 export const gold = "gold";
 
 export const brown = "brown";

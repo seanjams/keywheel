@@ -8,15 +8,17 @@ import {
 	getNotes,
 	getPegs,
 	getEmptySet,
+	getMajor,
 } from "../util";
-import { WHEEL_CENTER, CMAJOR, EMPTY, SCALE_SPACING } from "../consts";
+import { WHEEL_CENTER, C, EMPTY, SCALE_SPACING, width } from "../consts";
+import { buttonBlue } from "../colors";
 
-const initialNotes = getNotes([0, 2, 4, 5, 7, 9, 11]);
+const initialNotes = C;
 
 const buttonStyle = {
-	padding: "10px",
+	padding: "3px",
 	border: "1px solid brown",
-	backgroundColor: "rgba(100,100,255,0.5)",
+	backgroundColor: buttonBlue,
 	borderRadius: "5px",
 	textAlign: "center",
 };
@@ -27,7 +29,8 @@ class Root extends React.Component {
 		const start = new ScaleNode(initialNotes, WHEEL_CENTER());
 
 		this.state = {
-			scales: buildKeyWheel(start, SCALE_SPACING()),
+			start: 0,
+			scales: buildKeyWheel(start, SCALE_SPACING(), false),
 			selected: getEmptySet(),
 			mode: "union",
 			rootReferenceEnabled: true,
@@ -41,18 +44,7 @@ class Root extends React.Component {
 		this.toggleMute = this.toggleMute.bind(this);
 		this.rebuildKeyWheel = this.rebuildKeyWheel.bind(this);
 		this.clearNotes = this.clearNotes.bind(this);
-	}
-
-	rebuildKeyWheel() {
-		const width = SCALE_SPACING();
-		const newCenter = { x: 6 * width, y: 4 * width };
-		const newStart = new ScaleNode(initialNotes, newCenter);
-		const scales = buildKeyWheel(newStart, width);
-		this.setState({ scales });
-	}
-
-	clearNotes() {
-		this.setState({ selected: getEmptySet() });
+		this.shiftScale = this.shiftScale.bind(this);
 	}
 
 	componentDidMount() {
@@ -61,6 +53,25 @@ class Root extends React.Component {
 
 	componentWillUnmount() {
 		window.removeEventListener("resize", this.rebuildKeyWheel);
+	}
+
+	rebuildKeyWheel() {
+		const width = SCALE_SPACING();
+		const newCenter = WHEEL_CENTER();
+		const newNotes = getNotes(getMajor(this.state.start));
+		const newStart = new ScaleNode(newNotes, newCenter);
+		const flip = this.state.start > 6;
+		const scales = buildKeyWheel(newStart, width, flip);
+		this.setState({ scales });
+	}
+
+	shiftScale(inc) {
+		const start = ((this.state.start + inc) % 12 + 12) % 12;
+		this.setState({ start }, this.rebuildKeyWheel);
+	}
+
+	clearNotes() {
+		this.setState({ selected: getEmptySet() });
 	}
 
 	handleClick(i, id) {
@@ -120,42 +131,79 @@ class Root extends React.Component {
 		const scaleDivs = this.scaleComponents();
 		return (
 			<div>
-				<div style={{ width: "65%", display: "inline-block" }}>{scaleDivs}</div>
+				<div
+					style={{ width: "65%", display: "inline-block", textAlign: "center" }}
+				>
+					{scaleDivs}
+					<div
+						style={{
+							position: "relative",
+							top: 6 * width() / 20,
+						}}
+					>
+						<button
+							onClick={() => this.shiftScale(2)}
+							style={Object.assign({ marginRight: "50px" }, buttonStyle)}
+						>
+							Left
+						</button>
+						<button onClick={() => this.shiftScale(-2)} style={buttonStyle}>
+							Right
+						</button>
+					</div>
+				</div>
+
 				<div
 					style={{
 						width: "35%",
 						display: "inline-block",
+						position: "relative",
+						top: 6 * width() / 20,
 					}}
 				>
-					<div
-						style={{
-							display: "flex",
-							justifyContent: "space-evenly",
-							paddingTop: "30px",
-						}}
-					>
-						<button style={buttonStyle} onClick={this.toggleRef}>
-							Reference: {this.state.rootReferenceEnabled ? "Scale" : "Numbers"}
-						</button>
-						<button style={buttonStyle} onClick={this.toggleMode}>
-							Mode: {this.state.mode === "union" ? "Union" : "Intersection"}
-						</button>
-						<button style={buttonStyle} onClick={this.clearNotes}>
-							Clear
-						</button>
-						<button style={buttonStyle} onClick={this.toggleMute}>
-							{this.state.mute ? "Unmute" : "Mute"}
-						</button>
+					<div>
+						<div
+							style={{
+								display: "flex",
+								justifyContent: "space-evenly",
+								paddingTop: "30px",
+							}}
+						>
+							<button style={buttonStyle} onClick={this.toggleRef}>
+								View: {this.state.rootReferenceEnabled ? "Scale" : "Arbitrary"}
+							</button>
+							<button style={buttonStyle} onClick={this.toggleMode}>
+								Mode: {this.state.mode === "union" ? "Union" : "Intersection"}
+							</button>
+							<button style={buttonStyle} onClick={this.clearNotes}>
+								Clear
+							</button>
+							<button style={buttonStyle} onClick={this.toggleMute}>
+								{this.state.mute ? "Unmute" : "Mute"}
+							</button>
+						</div>
+						<div
+							style={{
+								display: "flex",
+								justifyContent: "space-evenly",
+								paddingTop: "30px",
+							}}
+						>
+							<button style={buttonStyle}>Blank</button>
+							<button style={buttonStyle}>Blank</button>
+							<button style={buttonStyle}>Blank</button>
+							<button style={buttonStyle}>Blank</button>
+						</div>
 					</div>
-					<Input
-						selected={selected}
-						handleClick={this.handleClick}
-						handleGroup={this.handleGroup}
-						rootReferenceEnabled={rootReferenceEnabled}
-						mode={this.state.mode}
-						mute={this.state.mute}
-					/>
 				</div>
+				<Input
+					selected={selected}
+					handleClick={this.handleClick}
+					handleGroup={this.handleGroup}
+					rootReferenceEnabled={rootReferenceEnabled}
+					mode={this.state.mode}
+					mute={this.state.mute}
+				/>
 			</div>
 		);
 	}

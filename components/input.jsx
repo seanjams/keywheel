@@ -2,7 +2,7 @@ import React from "react";
 import Scale from "./scale";
 import {
 	EMPTY,
-	SHAPE,
+	SHAPES,
 	NOTE_NAMES,
 	SCALE_SPACING,
 	TEXT_LABEL_SIZE,
@@ -26,7 +26,7 @@ class Input extends React.Component {
 	calculateChord(i) {
 		const { noteName, chordName } = this.state;
 		const rootIdx = NOTE_NAMES.indexOf(noteName);
-		const pegs = SHAPE[chordName].map(note => (note + rootIdx) % 12).sort();
+		const pegs = SHAPES[chordName].map(note => (note + rootIdx) % 12).sort();
 		this.props.handleGroup(getNotes(pegs), i);
 	}
 
@@ -77,7 +77,7 @@ class Input extends React.Component {
 									<option disabled value="">
 										--
 									</option>
-									{Object.keys(SHAPE).map((chordName, j) => {
+									{Object.keys(SHAPES).map((chordName, j) => {
 										return (
 											<option key={j} value={chordName} defaultValue={j === 0}>
 												{chordName}

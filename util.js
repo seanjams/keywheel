@@ -4,20 +4,20 @@ import {
 	SCALE_SPACING,
 	WHEEL_CENTER,
 	DIRS,
-	CMAJOR,
+	C,
 	EMPTY,
 	NOTE_NAMES,
 	MAJOR,
 	MELMINOR,
 	NEAPOLITAN,
-	SHAPE,
+	SHAPES,
 } from "./consts";
 
 //keywheel size control
 
 //Scale Node class dynamically holds information about location
 export class ScaleNode {
-	constructor(notes = CMAJOR, center = WHEEL_CENTER) {
+	constructor(notes = C, center = WHEEL_CENTER) {
 		this.rank = 0;
 		this.notes = notes;
 		this.center = center;
@@ -63,7 +63,7 @@ export const tweek = (notes, idx) => {
 	return { notes: getNotes(pegs), tweekStatus };
 };
 
-export const generateNeighbors = (node, visited, delta) => {
+export const generateNeighbors = (node, visited, delta, flip) => {
 	const { notes, parentCenter, center } = node;
 	const parentNotes = node.parent ? node.parent.notes : null;
 	const adjustedPegs = [];
@@ -73,7 +73,7 @@ export const generateNeighbors = (node, visited, delta) => {
 
 	// Checks if tweek changes the key, then checks to see if
 	// changed key is either parent or other visited neighbor,
-	// then collects the neighbor if so
+	// then collects the neighbor and which peg was adjusted if so
 
 	for (var i = 0; i < 7; i++) {
 		temp = tweek(notes, i);
@@ -95,7 +95,7 @@ export const generateNeighbors = (node, visited, delta) => {
 			neighbors = rotate(neighbors);
 		}
 		neighbors.forEach((neighbor, i) => {
-			neighbor.center = getCenter(center, DIRS[i], delta);
+			neighbor.center = getCenter(center, DIRS[i], delta, flip);
 		});
 	} else {
 		const deltaX = 2 * center.x - parentCenter.x;
@@ -114,7 +114,7 @@ export const generateNeighbors = (node, visited, delta) => {
 	return { neighbors, adjustedPegs };
 };
 
-export const buildKeyWheel = (start, delta) => {
+export const buildKeyWheel = (start, delta, flip) => {
 	const queue = [start];
 	const visited = [start];
 	let currentNode, neighbors, newNode;
@@ -122,7 +122,8 @@ export const buildKeyWheel = (start, delta) => {
 	while (visited.length < 36) {
 		currentNode = queue.shift();
 		if (!currentNode) return start;
-		neighbors = generateNeighbors(currentNode, visited, delta).neighbors;
+		neighbors = generateNeighbors(currentNode, visited, delta, flip).neighbors;
+
 		neighbors.forEach(neighbor => {
 			if (!neighbor) return;
 			newNode = new ScaleNode(neighbor.notes, neighbor.center);
@@ -177,13 +178,13 @@ export const keyReader = notes => {
 
 //returns chord color, name, and rootIdx from dictionary
 export const chordReader = notes => {
-	const chords = Object.keys(SHAPE);
+	const chords = Object.keys(SHAPES);
 	let color = "transparent";
 	let rootIdx = 0;
 	let chordShape;
 
 	for (let i = 0; i < chords.length; i++) {
-		chordShape = getNotes(SHAPE[chords[i]]);
+		chordShape = getNotes(SHAPES[chords[i]]);
 		if (isSameType(notes, chordShape)) {
 			let temp = [...notes];
 			while (!isEqual(temp, chordShape)) {
@@ -243,7 +244,7 @@ export const updateCanvas = (ctx, radius, selectedNotes, colorIdx) => {
 	});
 };
 
-//private helper methods
+//helper methods
 //////////////////////////////////////////////////////////////////
 
 export const includesKey = (nodes, notes) => {
@@ -267,8 +268,7 @@ export const getPegs = notes => {
 export const getNotes = pegs => {
 	const notes = Array(...EMPTY);
 	pegs.forEach(peg => {
-		if (peg < 0) peg += 12;
-		if (peg > 11) peg -= 12;
+		peg = (peg % 12 + 12) % 12;
 		notes[peg] = true;
 	});
 
@@ -311,12 +311,18 @@ export const rotate = arr => {
 	return rotated;
 };
 
-export const getCenter = (center, parentDirection, d = SCALE_SPACING) => {
+export const getCenter = (
+	center,
+	parentDirection,
+	d = SCALE_SPACING,
+	flip = false
+) => {
+	flip = flip ? -1 : 1;
 	const deltas = {
-		TL: { x: center.x + d, y: center.y + d },
-		BL: { x: center.x + d, y: center.y - d },
-		TR: { x: center.x - d, y: center.y + d },
-		BR: { x: center.x - d, y: center.y - d },
+		TL: { x: center.x + d, y: center.y + d * flip },
+		BL: { x: center.x + d, y: center.y - d * flip },
+		TR: { x: center.x - d, y: center.y + d * flip },
+		BR: { x: center.x - d, y: center.y - d * flip },
 	};
 
 	return deltas[parentDirection];

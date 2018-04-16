@@ -32,19 +32,8 @@ import {
 class Scale extends React.Component {
 	constructor(props) {
 		super(props);
-		if (this.props.isInput) {
-			this.scaleRadius = 1.2 * SCALE_RADIUS();
-			this.noteRadius = 1.3 * NOTE_RADIUS();
-			this.numLabelSize = `${0.1 + NUM_LABEL_SIZE()}em`;
-			this.textLabelSize = `${1 + TEXT_LABEL_SIZE()}px`;
-		} else {
-			this.scaleRadius = SCALE_RADIUS();
-			this.noteRadius = NOTE_RADIUS();
-			this.numLabelSize = `${NUM_LABEL_SIZE()}em`;
-			this.textLabelSize = `${TEXT_LABEL_SIZE()}px`;
-		}
-
 		this.updateRadius = this.updateRadius.bind(this);
+		this.updateRadius();
 	}
 
 	updateRadius() {
@@ -144,7 +133,11 @@ class Scale extends React.Component {
 		if (this.props.handleClick) {
 			this.props.handleClick(i);
 		} else {
-			const idx = pegs.indexOf(i);
+			if (i === "root") {
+				this.soundScale(pegs, 0);
+				return;
+			}
+			let idx = pegs.indexOf(i);
 			if (idx >= 0) this.soundScale(pegs, idx);
 		}
 	}
@@ -239,6 +232,7 @@ class Scale extends React.Component {
 		const relMajor = getMajor(keyRootIdx);
 		let pegs = getPegs(notes);
 		let label;
+		let onClick;
 
 		while (pegs[0] !== keyRootIdx) pegs = rotate(pegs);
 
@@ -248,12 +242,16 @@ class Scale extends React.Component {
 				chordName.split(" ").map((piece, i) => {
 					return <p key={i}>{piece}</p>;
 				});
+
+			onClick = () => {};
 		} else {
 			label =
 				keyName &&
 				keyName.split(" ").map((piece, i) => {
 					return <p key={i}>{piece}</p>;
 				});
+
+			onClick = () => this.handleClick(pegs, "root");
 		}
 
 		const noteDivs = this.noteComponents(
@@ -263,10 +261,6 @@ class Scale extends React.Component {
 			relMajor,
 			chordRootIdx
 		);
-
-		const onClick = this.props.handleClick
-			? () => {}
-			: () => this.handleClick(pegs);
 
 		const textStyle = {
 			position: "absolute",
