@@ -9,7 +9,7 @@ import {
 	node,
 	getInputNodes,
 } from "../consts";
-import { getNotes } from "../util";
+import { getNotes, getPegs, soundNotes } from "../util";
 import { buttonBlue } from "../colors";
 import isEqual from "lodash/isEqual";
 
@@ -41,6 +41,13 @@ class Input extends React.Component {
 		const chordNames = [...this.state.chordNames];
 		chordNames[i] = e.target.value;
 		this.setState({ chordNames }, () => this.calculateChord(i));
+	}
+
+	soundChord(i) {
+		if (!this.props.mute) {
+			const chord = getPegs(this.props.selected[i]);
+			soundNotes(chord, 0, true);
+		}
 	}
 
 	render() {
@@ -78,7 +85,9 @@ class Input extends React.Component {
 					return (
 						<div key={i}>
 							<div style={buttonContainerStyle}>
-								<button style={buttonStyle}>Sound</button>
+								<button style={buttonStyle} onClick={() => this.soundChord(i)}>
+									Sound
+								</button>
 								<button
 									style={buttonStyle}
 									onClick={() => this.props.clearNotes(i)}
@@ -123,12 +132,12 @@ class Input extends React.Component {
 								<Scale
 									notes={[...EMPTY]}
 									center={node[i].center}
+									index={i}
 									selected={selected}
 									handleClick={k => this.props.handleClick(k, i)}
 									rootReferenceEnabled={this.props.rootReferenceEnabled}
 									isInput={true}
 									mode={this.props.mode}
-									index={i}
 									mute={this.state.mute}
 								/>
 							</div>

@@ -912,13 +912,17 @@ module.exports = warning;
 Object.defineProperty(exports, "__esModule", {
 	value: true
 });
-exports.getEmptySet = exports.getMajor = exports.getIntervals = exports.getCenter = exports.rotate = exports.isSameType = exports.collectNotes = exports.getNotes = exports.getPegs = exports.includesKey = exports.updateCanvas = exports.chordReader = exports.keyReader = exports.buildKeyWheel = exports.generateNeighbors = exports.tweek = exports.ScaleNode = undefined;
+exports.getEmptySet = exports.getMajor = exports.getIntervals = exports.getCenter = exports.rotate = exports.isSameType = exports.collectNotes = exports.getNotes = exports.getPegs = exports.includesKey = exports.soundNotes = exports.updateCanvas = exports.chordReader = exports.keyReader = exports.buildKeyWheel = exports.generateNeighbors = exports.tweek = exports.ScaleNode = undefined;
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
 var _isEqual = __webpack_require__(29);
 
 var _isEqual2 = _interopRequireDefault(_isEqual);
+
+var _tone = __webpack_require__(54);
+
+var _tone2 = _interopRequireDefault(_tone);
 
 var _colors = __webpack_require__(28);
 
@@ -1175,6 +1179,39 @@ var updateCanvas = exports.updateCanvas = function updateCanvas(ctx, radius, sel
 		ctx.stroke();
 		ctx.fill();
 	});
+};
+
+var soundNotes = exports.soundNotes = function soundNotes(pegs) {
+	var modeIdx = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 0;
+	var poly = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : false;
+
+	_tone2.default.Transport.cancel(0);
+
+	var synth = new _tone2.default.PolySynth().toMaster();
+	var scale = [].concat(_toConsumableArray(pegs));
+	for (var i = 0; i < modeIdx; i++) {
+		scale = rotate(scale);
+	}var freqs = [];
+	for (var _i = 0; _i < scale.length; _i++) {
+		if (scale[_i + 1] < scale[_i]) scale[_i + 1] += 12;
+		freqs.push(_tone2.default.Frequency().midiToFrequency(60 + scale[_i]));
+	}
+	if (!poly) freqs.push(freqs[0] * 2);
+	var pattern = void 0;
+
+	if (poly) {
+		pattern = new _tone2.default.Event(function (time, chord) {
+			synth.triggerAttackRelease(chord, "4t", time);
+		}, freqs);
+	} else {
+		pattern = new _tone2.default.Sequence(function (time, note) {
+			synth.triggerAttackRelease(note, "8n", time);
+		}, freqs, "8n");
+	}
+
+	pattern.loop = 0;
+	pattern.start();
+	_tone2.default.Transport.start();
 };
 
 //helper methods
@@ -1736,10 +1773,6 @@ var _react = __webpack_require__(4);
 
 var _react2 = _interopRequireDefault(_react);
 
-var _tone = __webpack_require__(54);
-
-var _tone2 = _interopRequireDefault(_tone);
-
 var _colors = __webpack_require__(28);
 
 var _consts = __webpack_require__(7);
@@ -1747,8 +1780,6 @@ var _consts = __webpack_require__(7);
 var _util = __webpack_require__(16);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } }
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
@@ -1851,43 +1882,17 @@ var Scale = function (_React$Component) {
 			(0, _util.updateCanvas)(ctx, radius, result, colorIdx);
 		}
 	}, {
-		key: "soundScale",
-		value: function soundScale(pegs) {
-			var modeIdx = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 0;
-
-			_tone2.default.Transport.cancel(0);
-			if (this.props.mute) return;
-
-			var synth = new _tone2.default.Synth().toMaster();
-			var scale = [].concat(_toConsumableArray(pegs));
-			for (var i = 0; i < modeIdx; i++) {
-				scale = (0, _util.rotate)(scale);
-			}var freqs = [];
-			for (var _i = 0; _i < scale.length; _i++) {
-				if (scale[_i + 1] < scale[_i]) scale[_i + 1] += 12;
-				freqs.push(_tone2.default.Frequency().midiToFrequency(60 + scale[_i]));
-			}
-			freqs.push(freqs[0] * 2);
-
-			var pattern = new _tone2.default.Sequence(function (time, note) {
-				synth.triggerAttackRelease(note, "8n", time);
-			}, freqs, "8n").start();
-
-			pattern.loop = 0;
-			_tone2.default.Transport.start();
-		}
-	}, {
 		key: "handleClick",
 		value: function handleClick(pegs, i) {
 			if (this.props.handleClick) {
 				this.props.handleClick(i);
-			} else {
+			} else if (!this.props.mute) {
 				if (i === "root") {
-					this.soundScale(pegs, 0);
+					(0, _util.soundNotes)(pegs, 0, false);
 					return;
 				}
 				var idx = pegs.indexOf(i);
-				if (idx >= 0) this.soundScale(pegs, idx);
+				if (idx >= 0) (0, _util.soundNotes)(pegs, idx, false);
 			}
 		}
 	}, {
@@ -46195,6 +46200,14 @@ var Input = function (_React$Component) {
 			});
 		}
 	}, {
+		key: "soundChord",
+		value: function soundChord(i) {
+			if (!this.props.mute) {
+				var chord = (0, _util.getPegs)(this.props.selected[i]);
+				(0, _util.soundNotes)(chord, 0, true);
+			}
+		}
+	}, {
 		key: "render",
 		value: function render() {
 			var _this4 = this;
@@ -46240,7 +46253,9 @@ var Input = function (_React$Component) {
 							{ style: buttonContainerStyle },
 							_react2.default.createElement(
 								"button",
-								{ style: buttonStyle },
+								{ style: buttonStyle, onClick: function onClick() {
+										return _this4.soundChord(i);
+									} },
 								"Sound"
 							),
 							_react2.default.createElement(
@@ -46307,6 +46322,7 @@ var Input = function (_React$Component) {
 							_react2.default.createElement(_scale2.default, {
 								notes: [].concat(_toConsumableArray(_consts.EMPTY)),
 								center: node[i].center,
+								index: i,
 								selected: selected,
 								handleClick: function handleClick(k) {
 									return _this4.props.handleClick(k, i);
@@ -46314,7 +46330,6 @@ var Input = function (_React$Component) {
 								rootReferenceEnabled: _this4.props.rootReferenceEnabled,
 								isInput: true,
 								mode: _this4.props.mode,
-								index: i,
 								mute: _this4.state.mute
 							})
 						)

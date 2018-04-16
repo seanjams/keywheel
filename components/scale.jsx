@@ -1,5 +1,4 @@
 import React from "react";
-import Tone from "tone";
 import {
 	darkGrey,
 	grey,
@@ -26,6 +25,7 @@ import {
 	chordReader,
 	rotate,
 	updateCanvas,
+	soundNotes,
 	getMajor,
 } from "../util";
 
@@ -102,43 +102,16 @@ class Scale extends React.Component {
 		updateCanvas(ctx, radius, result, colorIdx);
 	}
 
-	soundScale(pegs, modeIdx = 0) {
-		Tone.Transport.cancel(0);
-		if (this.props.mute) return;
-
-		let synth = new Tone.Synth().toMaster();
-		let scale = [...pegs];
-		for (let i = 0; i < modeIdx; i++) scale = rotate(scale);
-
-		const freqs = [];
-		for (let i = 0; i < scale.length; i++) {
-			if (scale[i + 1] < scale[i]) scale[i + 1] += 12;
-			freqs.push(Tone.Frequency().midiToFrequency(60 + scale[i]));
-		}
-		freqs.push(freqs[0] * 2);
-
-		const pattern = new Tone.Sequence(
-			(time, note) => {
-				synth.triggerAttackRelease(note, "8n", time);
-			},
-			freqs,
-			"8n"
-		).start();
-
-		pattern.loop = 0;
-		Tone.Transport.start();
-	}
-
 	handleClick(pegs, i) {
 		if (this.props.handleClick) {
 			this.props.handleClick(i);
-		} else {
+		} else if (!this.props.mute) {
 			if (i === "root") {
-				this.soundScale(pegs, 0);
+				soundNotes(pegs, 0, false);
 				return;
 			}
 			let idx = pegs.indexOf(i);
-			if (idx >= 0) this.soundScale(pegs, idx);
+			if (idx >= 0) soundNotes(pegs, idx, false);
 		}
 	}
 

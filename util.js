@@ -1,4 +1,5 @@
 import isEqual from "lodash/isEqual";
+import Tone from "tone";
 import { COLORS, CHORD_COLOR, INTERVAL_COLORS, grey } from "./colors";
 import {
 	SCALE_SPACING,
@@ -242,6 +243,40 @@ export const updateCanvas = (ctx, radius, selectedNotes, colorIdx) => {
 		ctx.stroke();
 		ctx.fill();
 	});
+};
+
+export const soundNotes = (pegs, modeIdx = 0, poly = false) => {
+	Tone.Transport.cancel(0);
+
+	let synth = new Tone.PolySynth().toMaster();
+	let scale = [...pegs];
+	for (let i = 0; i < modeIdx; i++) scale = rotate(scale);
+
+	const freqs = [];
+	for (let i = 0; i < scale.length; i++) {
+		if (scale[i + 1] < scale[i]) scale[i + 1] += 12;
+		freqs.push(Tone.Frequency().midiToFrequency(60 + scale[i]));
+	}
+	if (!poly) freqs.push(freqs[0] * 2);
+	let pattern;
+
+	if (poly) {
+		pattern = new Tone.Event((time, chord) => {
+			synth.triggerAttackRelease(chord, "4t", time);
+		}, freqs);
+	} else {
+		pattern = new Tone.Sequence(
+			(time, note) => {
+				synth.triggerAttackRelease(note, "8n", time);
+			},
+			freqs,
+			"8n"
+		);
+	}
+
+	pattern.loop = 0;
+	pattern.start();
+	Tone.Transport.start();
 };
 
 //helper methods
