@@ -2657,7 +2657,8 @@ var buttonStyle = {
 	border: "1px solid brown",
 	backgroundColor: _colors.buttonBlue,
 	borderRadius: "5px",
-	textAlign: "center"
+	textAlign: "center",
+	minWidth: "100px"
 };
 
 var Root = function (_React$Component) {

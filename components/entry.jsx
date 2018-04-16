@@ -21,6 +21,7 @@ const buttonStyle = {
 	backgroundColor: buttonBlue,
 	borderRadius: "5px",
 	textAlign: "center",
+	minWidth: "100px",
 };
 
 class Root extends React.Component {
