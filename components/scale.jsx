@@ -1,4 +1,5 @@
 import React from "react";
+import isEqual from "lodash/isEqual";
 import {
 	darkGrey,
 	grey,
@@ -21,7 +22,7 @@ import {
 import {
 	keyReader,
 	getPegs,
-	collectNotes,
+	mergeNotes,
 	chordReader,
 	rotate,
 	updateCanvas,
@@ -67,27 +68,20 @@ class Scale extends React.Component {
 		const ctx = this.refs.canvas.getContext("2d");
 		const radius = this.scaleRadius;
 		const { notes, selected, mode, index, isInput } = this.props;
-		let result;
+		let result = [];
 		let colorIdx;
 
 		if (isInput) {
-			result = index >= 0 ? [selected[index]] : [];
-			colorIdx = index >= 0 ? index : 8;
+			if (index >= 0) {
+				result.push(selected[index]);
+				colorIdx = index;
+			}
 		} else if (mode === "intersection") {
-			const collected = collectNotes(selected);
+			const collected = mergeNotes(selected);
 			const pegs = getPegs(collected);
 			const isMatch = pegs.every(i => notes[i]);
-			colorIdx = 8;
-
-			if (isMatch && pegs.length > 0) {
-				result = [collected];
-			} else {
-				result = [];
-			}
+			if (isMatch && pegs.length > 0) result.push(collected);
 		} else if (mode === "union") {
-			result = [];
-			colorIdx = null;
-
 			selected.forEach((arr, i) => {
 				const pegs = getPegs(arr);
 				const isMatch = pegs.every(i => notes[i]);
@@ -198,7 +192,7 @@ class Scale extends React.Component {
 
 	render() {
 		const { notes, center, selected, isInput, index } = this.props;
-		const { name: keyName, rootIdx: keyRootIdx } = keyReader(notes);
+		const { name: keyName, rootIdx: keyRootIdx } = chordReader(notes);
 		const { name: chordName, rootIdx: chordRootIdx } = chordReader(
 			selected[index]
 		);
@@ -207,7 +201,9 @@ class Scale extends React.Component {
 		let label;
 		let onClick;
 
-		while (pegs[0] !== keyRootIdx) pegs = rotate(pegs);
+		for (let i = 0; i < pegs.length; i++) {
+			if (pegs[0] !== keyRootIdx) pegs = rotate(pegs);
+		}
 
 		if (isInput) {
 			label =

@@ -137,46 +137,6 @@ export const buildKeyWheel = (start, delta, flip) => {
 	return visited;
 };
 
-//returns name and rootIdx of key in Major, melMinor, or Neo
-export const keyReader = notes => {
-	const pegs = getPegs(notes);
-	let intervals = getIntervals(pegs);
-	let name;
-	let rootIdx = pegs[0];
-
-	let isMajorMatch;
-	let isMinorMatch;
-	let isNeaMatch;
-
-	for (let i = 0; i < 7; i++) {
-		isMajorMatch = true;
-		isMinorMatch = true;
-		isNeaMatch = true;
-
-		for (let j = 0; j < intervals.length; j++) {
-			if (intervals[j] !== MAJOR[j]) isMajorMatch = false;
-			if (intervals[j] !== MELMINOR[j]) isMinorMatch = false;
-			if (intervals[j] !== NEAPOLITAN[j]) isNeaMatch = false;
-		}
-
-		if (isMajorMatch) {
-			name = `${NOTE_NAMES[rootIdx]} Maj`;
-			break;
-		} else if (isMinorMatch) {
-			name = `${NOTE_NAMES[rootIdx]} mel`;
-			break;
-		} else if (isNeaMatch) {
-			name = `${NOTE_NAMES[rootIdx]} neo`;
-			break;
-		}
-
-		rootIdx += intervals[0];
-		intervals = rotate(intervals);
-	}
-
-	return { name, rootIdx };
-};
-
 //returns chord color, name, and rootIdx from dictionary
 export const chordReader = notes => {
 	const chords = Object.keys(SHAPES);
@@ -195,7 +155,7 @@ export const chordReader = notes => {
 			color = CHORD_COLOR[chords[i]];
 			name = `${NOTE_NAMES[rootIdx]} ${chords[i]}`;
 			break;
-		}
+		} // else if here to add dynamic chord inclusion
 	}
 
 	if (color === "transparent") {
@@ -206,7 +166,7 @@ export const chordReader = notes => {
 	return { color, name, rootIdx };
 };
 
-export const updateCanvas = (ctx, radius, selectedNotes, colorIdx) => {
+export const updateCanvas = (ctx, radius, selectedNotes, colorIdx = 8) => {
 	ctx.clearRect(0, 0, 2 * radius, 2 * radius);
 	selectedNotes.forEach((notes, i) => {
 		if (notes.length === 0) return;
@@ -219,10 +179,8 @@ export const updateCanvas = (ctx, radius, selectedNotes, colorIdx) => {
 
 		if (selectedNotes.length > 1) {
 			ctx.fillStyle = COLORS(0.5)[i];
-		} else if (colorIdx !== null) {
-			ctx.fillStyle = COLORS(0.5)[colorIdx];
 		} else {
-			ctx.fillStyle = COLORS(0.5)[8];
+			ctx.fillStyle = COLORS(0.5)[colorIdx];
 		}
 
 		ctx.strokeStyle = grey;
@@ -248,7 +206,33 @@ export const updateCanvas = (ctx, radius, selectedNotes, colorIdx) => {
 export const soundNotes = (pegs, modeIdx = 0, poly = false) => {
 	Tone.Transport.cancel(0);
 
-	let synth = new Tone.PolySynth().toMaster();
+	let synth = new Tone.PolySynth(pegs.length).toMaster();
+	// synth.set({
+	// 	oscillator: {
+	// 		type: "amtriangle",
+	// 	},
+	// 	// filter: {
+	// 	// 	Q: 6,
+	// 	// 	type: "lowpass",
+	// 	// 	rolloff: -24,
+	// 	// },
+	// 	envelope: {
+	// 		attack: 0.1,
+	// 		decay: 0.2,
+	// 		sustain: 1,
+	// 		release: 0.8,
+	// 	},
+	// 	// filterEnvelope: {
+	// 	// 	attack: 0.06,
+	// 	// 	decay: 0.2,
+	// 	// 	sustain: 0.5,
+	// 	// 	release: 2,
+	// 	// 	baseFrequency: 200,
+	// 	// 	octaves: 7,
+	// 	// 	exponent: 2,
+	// 	// },
+	// });
+
 	let scale = [...pegs];
 	for (let i = 0; i < modeIdx; i++) scale = rotate(scale);
 
@@ -262,12 +246,12 @@ export const soundNotes = (pegs, modeIdx = 0, poly = false) => {
 
 	if (poly) {
 		pattern = new Tone.Event((time, chord) => {
-			synth.triggerAttackRelease(chord, "4t", time);
+			synth.triggerAttackRelease(chord, "4t", time, 0.3);
 		}, freqs);
 	} else {
 		pattern = new Tone.Sequence(
 			(time, note) => {
-				synth.triggerAttackRelease(note, "8n", time);
+				synth.triggerAttackRelease(note, "8n", time, 0.3);
 			},
 			freqs,
 			"8n"
@@ -310,7 +294,7 @@ export const getNotes = pegs => {
 	return notes;
 };
 
-export const collectNotes = notesArr => {
+export const mergeNotes = notesArr => {
 	const result = [...EMPTY];
 	notesArr.forEach(notes => {
 		notes.forEach((note, i) => {
@@ -321,7 +305,7 @@ export const collectNotes = notesArr => {
 };
 
 export const isSameType = (notes1, notes2) => {
-	let temp = notes2;
+	let temp = [...notes2];
 	for (let i = 0; i < notes2.length; i++) {
 		if (isEqual(notes1, temp)) {
 			return true;
@@ -377,6 +361,7 @@ export const getIntervals = pegs => {
 };
 
 export const getMajor = rootIdx => {
+	if (!(0 <= rootIdx <= 11)) return;
 	let temp = rootIdx;
 	const pegs = [temp];
 	for (let i = 0; i + 1 < MAJOR.length; i++) {

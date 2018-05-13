@@ -37,6 +37,7 @@ export const CHORD_COLOR = {
 	major: "rgba(100,100,255,0.5)",
 	minor: "rgba(255,100,100,0.5)",
 	major7: "rgba(155,0,255,0.5)",
+	major9: "rgba(255,0,255,0.5)",
 	minor7: "rgba(255,0,155,0.5)",
 	dom: "rgba(255,100,0,0.5)",
 	dom5: "rgba(255,100,0,0.5)",
@@ -48,4 +49,7 @@ export const CHORD_COLOR = {
 	sus4: "rgba(255,255,0,0.5)",
 	pentatonic: "rgba(255,0,0,0.5)",
 	dimPentatonic: "rgba(0,200,0,0.5)",
+	Maj: "rgba(0,100,255,0.5)",
+	Melmin: "rgba(0,200,255,0.5)",
+	Neo: "rgba(155,100,255,0.5)",
 };

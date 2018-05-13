@@ -9,7 +9,7 @@ import {
 	node,
 	getInputNodes,
 } from "../consts";
-import { getNotes, getPegs, soundNotes } from "../util";
+import { getNotes, getPegs, soundNotes, chordReader } from "../util";
 import { buttonBlue } from "../colors";
 import isEqual from "lodash/isEqual";
 
@@ -60,8 +60,10 @@ class Input extends React.Component {
 
 	soundChord(i) {
 		if (!this.props.mute) {
+			const { rootIdx } = chordReader(this.props.selected[i]);
 			const chord = getPegs(this.props.selected[i]);
-			soundNotes(chord, 0, true);
+			const modeIdx = chord.indexOf(rootIdx);
+			soundNotes(chord, modeIdx, true);
 		}
 	}
 

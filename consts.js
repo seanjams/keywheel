@@ -74,6 +74,7 @@ export const SHAPES = {
 	minor: [0, 3, 7],
 	major7: [0, 4, 7, 11],
 	minor7: [0, 3, 7, 10],
+	major9: [0, 2, 4, 7],
 	aug: [0, 4, 8],
 	dom: [0, 4, 10],
 	dom5: [0, 4, 7, 10],
@@ -84,6 +85,9 @@ export const SHAPES = {
 	sus: [0, 2, 7],
 	penta: [0, 2, 4, 7, 9],
 	dimPenta: [0, 3, 6, 8, 10],
+	Maj: [0, 2, 4, 5, 7, 9, 11],
+	Melmin: [0, 2, 3, 5, 7, 9, 11],
+	Neo: [0, 1, 3, 5, 7, 9, 11],
 };
 
 const getX = i => {
