@@ -205,7 +205,7 @@ export const updateCanvas = (ctx, radius, selectedNotes, colorIdx = 8) => {
 
 export const soundNotes = (pegs, modeIdx = 0, poly = false) => {
 	Tone.Transport.cancel(0);
-
+	if (Tone.context.state !== "running") Tone.context.resume();
 	let synth = new Tone.PolySynth(pegs.length).toMaster();
 	// synth.set({
 	// 	oscillator: {
@@ -301,6 +301,7 @@ export const mergeNotes = notesArr => {
 			if (note) result[i] = true;
 		});
 	});
+
 	return result;
 };
 

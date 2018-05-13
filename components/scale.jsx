@@ -202,7 +202,8 @@ class Scale extends React.Component {
 		let onClick;
 
 		for (let i = 0; i < pegs.length; i++) {
-			if (pegs[0] !== keyRootIdx) pegs = rotate(pegs);
+			if (pegs[0] === keyRootIdx) break;
+			pegs = rotate(pegs);
 		}
 
 		if (isInput) {
