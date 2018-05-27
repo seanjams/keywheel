@@ -10,66 +10,40 @@ import {
 	COLORS,
 } from "../colors";
 
-import {
-	NOTE_RADIUS,
-	SCALE_RADIUS,
-	NUM_LABEL_SIZE,
-	TEXT_LABEL_SIZE,
-	NOTE_NAMES,
-	EMPTY,
-} from "../consts";
+import { NOTE_RADIUS, SCALE_RADIUS, NOTE_NAMES, EMPTY } from "../consts";
 
 import {
-	keyReader,
 	getPegs,
 	mergeNotes,
 	chordReader,
 	rotate,
-	updateCanvas,
 	soundNotes,
 	getMajor,
 } from "../util";
 
+const textStyle = {
+	position: "relative",
+	top: "30%",
+	textAlign: "center",
+	height: 0,
+	fontSize: "1vw",
+};
+
+const svgContainerStyle = {
+	position: "absolute",
+	top: 0,
+	left: 0,
+};
+
 class Scale extends React.Component {
 	constructor(props) {
 		super(props);
-		this.updateRadius = this.updateRadius.bind(this);
-		this.updateRadius();
 	}
 
-	updateRadius() {
-		if (this.props.isInput) {
-			this.scaleRadius = 1.2 * SCALE_RADIUS();
-			this.noteRadius = 1.3 * NOTE_RADIUS();
-			this.numLabelSize = `${0.1 + NUM_LABEL_SIZE()}em`;
-			this.textLabelSize = `${1 + TEXT_LABEL_SIZE()}px`;
-		} else {
-			this.scaleRadius = SCALE_RADIUS();
-			this.noteRadius = NOTE_RADIUS();
-			this.numLabelSize = `${NUM_LABEL_SIZE()}em`;
-			this.textLabelSize = `${TEXT_LABEL_SIZE()}px`;
-		}
-	}
-
-	componentDidMount() {
-		this.handleCanvas();
-		window.addEventListener("resize", this.updateRadius);
-	}
-
-	componentDidUpdate() {
-		this.handleCanvas();
-	}
-
-	componentWillUnmount() {
-		window.removeEventListener("resize", this.updateRadius);
-	}
-
-	handleCanvas() {
-		const ctx = this.refs.canvas.getContext("2d");
-		const radius = this.scaleRadius;
+	getSVG() {
 		const { notes, selected, mode, index, isInput } = this.props;
 		let result = [];
-		let colorIdx;
+		let colorIdx = 8;
 
 		if (isInput) {
 			if (index >= 0) {
@@ -85,15 +59,31 @@ class Scale extends React.Component {
 			selected.forEach((arr, i) => {
 				const pegs = getPegs(arr);
 				const isMatch = pegs.every(i => notes[i]);
-				if (isMatch && pegs.length > 0) {
-					result.push(arr);
-				} else {
-					result.push([]);
-				}
+				result.push(isMatch && pegs.length > 0 ? arr : []);
 			});
 		}
 
-		updateCanvas(ctx, radius, result, colorIdx);
+		return result.map((arr, i) => {
+			if (arr.length === 0) return null;
+			const pegs = getPegs(arr);
+			if (pegs.length < 3) return null;
+
+			const style = { stroke: grey, strokeWidth: 1 };
+			style.fill = result.length > 1 ? COLORS(0.5)[i] : COLORS(0.5)[colorIdx];
+
+			const points = pegs.map((peg, i) => {
+				const x =
+					SCALE_RADIUS * (1 + Math.sin(Math.PI * peg / 6)) + NOTE_RADIUS;
+				const y =
+					SCALE_RADIUS * (1 - Math.cos(Math.PI * peg / 6)) + NOTE_RADIUS;
+				return `${x},${y}`;
+			});
+
+			return {
+				points: points.join(" "),
+				style: style,
+			};
+		});
 	}
 
 	handleClick(pegs, i) {
@@ -109,40 +99,35 @@ class Scale extends React.Component {
 		}
 	}
 
-	noteComponents(notes, pegs, center, relMajor, rootIdx = -1) {
+	noteComponents(notes, pegs, relMajor, rootIdx = -1) {
 		const { selected, rootReferenceEnabled, isInput, index } = this.props;
 
 		return notes.map((note, i) => {
 			let color = darkGrey;
 			let borderColor = darkGrey;
 			let backgroundColor = transparent;
-			let noteColor;
+			let noteColor = null;
 			let numLabel = null;
 
 			const isMatch = () =>
 				selected.some((arr, j) => {
 					const arrPegs = getPegs(arr);
-					let match =
+					const match =
 						arr[i] && arrPegs.length > 0 && arrPegs.every(k => notes[k]);
-
-					if (match) {
-						noteColor = noteColor || COLORS(1)[j];
-					}
+					if (match && !noteColor) noteColor = COLORS(1)[j];
 					return match;
 				});
 
 			if (isInput) {
+				numLabel = NOTE_NAMES[i];
 				if (selected[index][i]) {
 					backgroundColor = COLORS(1)[index];
-					if (rootIdx >= 0 && i === rootIdx) {
+					color = offWhite;
+					if (i === rootIdx) {
 						color = gold;
 						borderColor = brown;
-					} else {
-						color = offWhite;
 					}
 				}
-
-				numLabel = NOTE_NAMES[i];
 			} else {
 				if (isMatch()) {
 					backgroundColor = noteColor;
@@ -152,8 +137,9 @@ class Scale extends React.Component {
 				}
 
 				if (pegs.includes(i)) {
-					numLabel = i === relMajor[pegs.indexOf(i)] ? "" : "b";
-					numLabel += `${pegs.indexOf(i) + 1}`;
+					const idx = pegs.indexOf(i);
+					numLabel = i === relMajor[idx] ? "" : "b";
+					numLabel += `${idx + 1}`;
 				}
 			}
 
@@ -163,19 +149,22 @@ class Scale extends React.Component {
 			};
 
 			const style = {
-				position: "absolute",
-				width: this.noteRadius,
-				height: this.noteRadius,
-				borderRadius: this.noteRadius,
+				position: "relative",
+				display: "float",
+				width: `${2 * NOTE_RADIUS}%`,
+				height: `${2 * NOTE_RADIUS}%`,
+				borderRadius: "50%",
 				backgroundColor,
+				boxSizing: "border-box",
 				border: `1px solid ${borderColor}`,
-				top: center.y - this.scaleRadius * Math.cos(Math.PI * i / 6),
-				left: center.x + this.scaleRadius * Math.sin(Math.PI * i / 6),
+				top: `${SCALE_RADIUS * (1 - Math.cos(Math.PI * i / 6)) -
+					2 * NOTE_RADIUS * i}%`,
+				left: `${SCALE_RADIUS * (1 + Math.sin(Math.PI * i / 6))}%`,
 			};
 
 			const numLabelStyle = {
 				color,
-				fontSize: this.numLabelSize,
+				fontSize: "0.8vw",
 				textAlign: "center",
 				position: "relative",
 				top: "50%",
@@ -191,7 +180,7 @@ class Scale extends React.Component {
 	}
 
 	render() {
-		const { notes, center, selected, isInput, index } = this.props;
+		const { notes, selected, isInput, index } = this.props;
 		const { name: keyName, rootIdx: keyRootIdx } = chordReader(notes);
 		const { name: chordName, rootIdx: chordRootIdx } = chordReader(
 			selected[index]
@@ -224,40 +213,29 @@ class Scale extends React.Component {
 			onClick = () => this.handleClick(pegs, "root");
 		}
 
-		const noteDivs = this.noteComponents(
-			notes,
-			pegs,
-			center,
-			relMajor,
-			chordRootIdx
-		);
-
-		const textStyle = {
-			position: "absolute",
-			top: center.y - 4,
-			left: center.x,
-			fontSize: this.textLabelSize,
-			textAlign: "center",
-		};
-
-		const canvasStyle = {
-			position: "absolute",
-			top: center.y - this.scaleRadius + this.noteRadius / 2,
-			left: center.x - this.scaleRadius + this.noteRadius / 2,
-		};
+		const noteDivs = this.noteComponents(notes, pegs, relMajor, chordRootIdx);
+		const svg = this.getSVG();
 
 		return (
-			<div onClick={onClick}>
-				{noteDivs}
-				<div style={textStyle}>
-					<span style={{ position: "relative", left: "-25%" }}>{label}</span>
+			<div onClick={onClick} style={Object.assign({}, this.props.style)}>
+				<div style={svgContainerStyle}>
+					<svg width="100%" height="100%" viewBox="0 0 100 100">
+						{Array(selected.length)
+							.fill(0)
+							.map((_, i) => {
+								if (svg[i])
+									return (
+										<polygon
+											points={svg[i].points}
+											style={svg[i].style}
+											key={i}
+										/>
+									);
+							})}
+					</svg>
 				</div>
-				<canvas
-					ref="canvas"
-					width={2 * this.scaleRadius}
-					height={2 * this.scaleRadius}
-					style={canvasStyle}
-				/>
+				<div style={textStyle}>{label}</div>
+				{noteDivs}
 			</div>
 		);
 	}

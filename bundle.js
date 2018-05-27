@@ -473,6 +473,176 @@ module.exports = emptyObject;
 /* 7 */
 /***/ (function(module, exports, __webpack_require__) {
 
+var listCacheClear = __webpack_require__(57),
+    listCacheDelete = __webpack_require__(58),
+    listCacheGet = __webpack_require__(59),
+    listCacheHas = __webpack_require__(60),
+    listCacheSet = __webpack_require__(61);
+
+/**
+ * Creates an list cache object.
+ *
+ * @private
+ * @constructor
+ * @param {Array} [entries] The key-value pairs to cache.
+ */
+function ListCache(entries) {
+  var index = -1,
+      length = entries == null ? 0 : entries.length;
+
+  this.clear();
+  while (++index < length) {
+    var entry = entries[index];
+    this.set(entry[0], entry[1]);
+  }
+}
+
+// Add methods to `ListCache`.
+ListCache.prototype.clear = listCacheClear;
+ListCache.prototype['delete'] = listCacheDelete;
+ListCache.prototype.get = listCacheGet;
+ListCache.prototype.has = listCacheHas;
+ListCache.prototype.set = listCacheSet;
+
+module.exports = ListCache;
+
+
+/***/ }),
+/* 8 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var eq = __webpack_require__(30);
+
+/**
+ * Gets the index at which the `key` is found in `array` of key-value pairs.
+ *
+ * @private
+ * @param {Array} array The array to inspect.
+ * @param {*} key The key to search for.
+ * @returns {number} Returns the index of the matched value, else `-1`.
+ */
+function assocIndexOf(array, key) {
+  var length = array.length;
+  while (length--) {
+    if (eq(array[length][0], key)) {
+      return length;
+    }
+  }
+  return -1;
+}
+
+module.exports = assocIndexOf;
+
+
+/***/ }),
+/* 9 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var Symbol = __webpack_require__(19),
+    getRawTag = __webpack_require__(69),
+    objectToString = __webpack_require__(70);
+
+/** `Object#toString` result references. */
+var nullTag = '[object Null]',
+    undefinedTag = '[object Undefined]';
+
+/** Built-in value references. */
+var symToStringTag = Symbol ? Symbol.toStringTag : undefined;
+
+/**
+ * The base implementation of `getTag` without fallbacks for buggy environments.
+ *
+ * @private
+ * @param {*} value The value to query.
+ * @returns {string} Returns the `toStringTag`.
+ */
+function baseGetTag(value) {
+  if (value == null) {
+    return value === undefined ? undefinedTag : nullTag;
+  }
+  return (symToStringTag && symToStringTag in Object(value))
+    ? getRawTag(value)
+    : objectToString(value);
+}
+
+module.exports = baseGetTag;
+
+
+/***/ }),
+/* 10 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var getNative = __webpack_require__(3);
+
+/* Built-in method references that are verified to be native. */
+var nativeCreate = getNative(Object, 'create');
+
+module.exports = nativeCreate;
+
+
+/***/ }),
+/* 11 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var isKeyable = __webpack_require__(82);
+
+/**
+ * Gets the data for `map`.
+ *
+ * @private
+ * @param {Object} map The map to query.
+ * @param {string} key The reference key.
+ * @returns {*} Returns the map data.
+ */
+function getMapData(map, key) {
+  var data = map.__data__;
+  return isKeyable(key)
+    ? data[typeof key == 'string' ? 'string' : 'hash']
+    : data.map;
+}
+
+module.exports = getMapData;
+
+
+/***/ }),
+/* 12 */
+/***/ (function(module, exports) {
+
+/**
+ * Checks if `value` is object-like. A value is object-like if it's not `null`
+ * and has a `typeof` result of "object".
+ *
+ * @static
+ * @memberOf _
+ * @since 4.0.0
+ * @category Lang
+ * @param {*} value The value to check.
+ * @returns {boolean} Returns `true` if `value` is object-like, else `false`.
+ * @example
+ *
+ * _.isObjectLike({});
+ * // => true
+ *
+ * _.isObjectLike([1, 2, 3]);
+ * // => true
+ *
+ * _.isObjectLike(_.noop);
+ * // => false
+ *
+ * _.isObjectLike(null);
+ * // => false
+ */
+function isObjectLike(value) {
+  return value != null && typeof value == 'object';
+}
+
+module.exports = isObjectLike;
+
+
+/***/ }),
+/* 13 */
+/***/ (function(module, exports, __webpack_require__) {
+
 "use strict";
 
 
@@ -521,7 +691,7 @@ var CHORD_COLOR = exports.CHORD_COLOR = {
 };
 
 /***/ }),
-/* 8 */
+/* 14 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -530,40 +700,9 @@ var CHORD_COLOR = exports.CHORD_COLOR = {
 Object.defineProperty(exports, "__esModule", {
 	value: true
 });
-var width = exports.width = function width() {
-	return window.innerWidth;
-};
+var SCALE_RADIUS = exports.SCALE_RADIUS = 41;
 
-var SCALE_SPACING = exports.SCALE_SPACING = function SCALE_SPACING() {
-	return width() / 20;
-};
-
-var SCALE_RADIUS = exports.SCALE_RADIUS = function SCALE_RADIUS() {
-	return width() / 40;
-};
-
-var NOTE_RADIUS = exports.NOTE_RADIUS = function NOTE_RADIUS() {
-	return width() * 3 / 290;
-};
-
-var NUM_LABEL_SIZE = exports.NUM_LABEL_SIZE = function NUM_LABEL_SIZE() {
-	return parseFloat((width() / 2048).toFixed(1));
-};
-
-var TEXT_LABEL_SIZE = exports.TEXT_LABEL_SIZE = function TEXT_LABEL_SIZE() {
-	return parseInt((width() / 120).toFixed(0));
-};
-
-var INPUT_NOTE_RADIUS = exports.INPUT_NOTE_RADIUS = 16;
-
-var INPUT_SCALE_RADIUS = exports.INPUT_SCALE_RADIUS = 40;
-
-var WHEEL_CENTER = exports.WHEEL_CENTER = function WHEEL_CENTER() {
-	return {
-		x: 6 * width() / 20,
-		y: 4 * width() / 20
-	};
-};
+var NOTE_RADIUS = exports.NOTE_RADIUS = 9;
 
 var DIRS = exports.DIRS = ["TL", "TR", "BL", "BR"];
 
@@ -596,236 +735,6 @@ var SHAPES = exports.SHAPES = {
 	Melmin: [0, 2, 3, 5, 7, 9, 11],
 	Neo: [0, 1, 3, 5, 7, 9, 11]
 };
-
-var getX = function getX(i) {
-	return (4 * i + 35) * width() / 50;
-};
-
-var getY = function getY(i) {
-	return [2 * width() / 20, 5 * width() / 20][i];
-};
-
-var getInputNodes = exports.getInputNodes = function getInputNodes() {
-	return [{
-		notes: [].concat(EMPTY),
-		center: {
-			x: getX(0),
-			y: getY(0)
-		}
-	}, {
-		notes: [].concat(EMPTY),
-		center: {
-			x: getX(1),
-			y: getY(0)
-		}
-	}, {
-		notes: [].concat(EMPTY),
-		center: {
-			x: getX(2),
-			y: getY(0)
-		}
-	}, {
-		notes: [].concat(EMPTY),
-		center: {
-			x: getX(3),
-			y: getY(0)
-		}
-	}, {
-		notes: [].concat(EMPTY),
-		center: {
-			x: getX(0),
-			y: getY(1)
-		}
-	}, {
-		notes: [].concat(EMPTY),
-		center: {
-			x: getX(1),
-			y: getY(1)
-		}
-	}, {
-		notes: [].concat(EMPTY),
-		center: {
-			x: getX(2),
-			y: getY(1)
-		}
-	}, {
-		notes: [].concat(EMPTY),
-		center: {
-			x: getX(3),
-			y: getY(1)
-		}
-	}];
-};
-
-/***/ }),
-/* 9 */
-/***/ (function(module, exports, __webpack_require__) {
-
-var listCacheClear = __webpack_require__(57),
-    listCacheDelete = __webpack_require__(58),
-    listCacheGet = __webpack_require__(59),
-    listCacheHas = __webpack_require__(60),
-    listCacheSet = __webpack_require__(61);
-
-/**
- * Creates an list cache object.
- *
- * @private
- * @constructor
- * @param {Array} [entries] The key-value pairs to cache.
- */
-function ListCache(entries) {
-  var index = -1,
-      length = entries == null ? 0 : entries.length;
-
-  this.clear();
-  while (++index < length) {
-    var entry = entries[index];
-    this.set(entry[0], entry[1]);
-  }
-}
-
-// Add methods to `ListCache`.
-ListCache.prototype.clear = listCacheClear;
-ListCache.prototype['delete'] = listCacheDelete;
-ListCache.prototype.get = listCacheGet;
-ListCache.prototype.has = listCacheHas;
-ListCache.prototype.set = listCacheSet;
-
-module.exports = ListCache;
-
-
-/***/ }),
-/* 10 */
-/***/ (function(module, exports, __webpack_require__) {
-
-var eq = __webpack_require__(30);
-
-/**
- * Gets the index at which the `key` is found in `array` of key-value pairs.
- *
- * @private
- * @param {Array} array The array to inspect.
- * @param {*} key The key to search for.
- * @returns {number} Returns the index of the matched value, else `-1`.
- */
-function assocIndexOf(array, key) {
-  var length = array.length;
-  while (length--) {
-    if (eq(array[length][0], key)) {
-      return length;
-    }
-  }
-  return -1;
-}
-
-module.exports = assocIndexOf;
-
-
-/***/ }),
-/* 11 */
-/***/ (function(module, exports, __webpack_require__) {
-
-var Symbol = __webpack_require__(19),
-    getRawTag = __webpack_require__(69),
-    objectToString = __webpack_require__(70);
-
-/** `Object#toString` result references. */
-var nullTag = '[object Null]',
-    undefinedTag = '[object Undefined]';
-
-/** Built-in value references. */
-var symToStringTag = Symbol ? Symbol.toStringTag : undefined;
-
-/**
- * The base implementation of `getTag` without fallbacks for buggy environments.
- *
- * @private
- * @param {*} value The value to query.
- * @returns {string} Returns the `toStringTag`.
- */
-function baseGetTag(value) {
-  if (value == null) {
-    return value === undefined ? undefinedTag : nullTag;
-  }
-  return (symToStringTag && symToStringTag in Object(value))
-    ? getRawTag(value)
-    : objectToString(value);
-}
-
-module.exports = baseGetTag;
-
-
-/***/ }),
-/* 12 */
-/***/ (function(module, exports, __webpack_require__) {
-
-var getNative = __webpack_require__(3);
-
-/* Built-in method references that are verified to be native. */
-var nativeCreate = getNative(Object, 'create');
-
-module.exports = nativeCreate;
-
-
-/***/ }),
-/* 13 */
-/***/ (function(module, exports, __webpack_require__) {
-
-var isKeyable = __webpack_require__(82);
-
-/**
- * Gets the data for `map`.
- *
- * @private
- * @param {Object} map The map to query.
- * @param {string} key The reference key.
- * @returns {*} Returns the map data.
- */
-function getMapData(map, key) {
-  var data = map.__data__;
-  return isKeyable(key)
-    ? data[typeof key == 'string' ? 'string' : 'hash']
-    : data.map;
-}
-
-module.exports = getMapData;
-
-
-/***/ }),
-/* 14 */
-/***/ (function(module, exports) {
-
-/**
- * Checks if `value` is object-like. A value is object-like if it's not `null`
- * and has a `typeof` result of "object".
- *
- * @static
- * @memberOf _
- * @since 4.0.0
- * @category Lang
- * @param {*} value The value to check.
- * @returns {boolean} Returns `true` if `value` is object-like, else `false`.
- * @example
- *
- * _.isObjectLike({});
- * // => true
- *
- * _.isObjectLike([1, 2, 3]);
- * // => true
- *
- * _.isObjectLike(_.noop);
- * // => false
- *
- * _.isObjectLike(null);
- * // => false
- */
-function isObjectLike(value) {
-  return value != null && typeof value == 'object';
-}
-
-module.exports = isObjectLike;
-
 
 /***/ }),
 /* 15 */
@@ -960,17 +869,115 @@ module.exports = warning;
 /* 17 */
 /***/ (function(module, exports, __webpack_require__) {
 
+var baseIsEqual = __webpack_require__(54);
+
+/**
+ * Performs a deep comparison between two values to determine if they are
+ * equivalent.
+ *
+ * **Note:** This method supports comparing arrays, array buffers, booleans,
+ * date objects, error objects, maps, numbers, `Object` objects, regexes,
+ * sets, strings, symbols, and typed arrays. `Object` objects are compared
+ * by their own, not inherited, enumerable properties. Functions and DOM
+ * nodes are compared by strict equality, i.e. `===`.
+ *
+ * @static
+ * @memberOf _
+ * @since 0.1.0
+ * @category Lang
+ * @param {*} value The value to compare.
+ * @param {*} other The other value to compare.
+ * @returns {boolean} Returns `true` if the values are equivalent, else `false`.
+ * @example
+ *
+ * var object = { 'a': 1 };
+ * var other = { 'a': 1 };
+ *
+ * _.isEqual(object, other);
+ * // => true
+ *
+ * object === other;
+ * // => false
+ */
+function isEqual(value, other) {
+  return baseIsEqual(value, other);
+}
+
+module.exports = isEqual;
+
+
+/***/ }),
+/* 18 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var getNative = __webpack_require__(3),
+    root = __webpack_require__(1);
+
+/* Built-in method references that are verified to be native. */
+var Map = getNative(root, 'Map');
+
+module.exports = Map;
+
+
+/***/ }),
+/* 19 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var root = __webpack_require__(1);
+
+/** Built-in value references. */
+var Symbol = root.Symbol;
+
+module.exports = Symbol;
+
+
+/***/ }),
+/* 20 */
+/***/ (function(module, exports) {
+
+/**
+ * Checks if `value` is classified as an `Array` object.
+ *
+ * @static
+ * @memberOf _
+ * @since 0.1.0
+ * @category Lang
+ * @param {*} value The value to check.
+ * @returns {boolean} Returns `true` if `value` is an array, else `false`.
+ * @example
+ *
+ * _.isArray([1, 2, 3]);
+ * // => true
+ *
+ * _.isArray(document.body.children);
+ * // => false
+ *
+ * _.isArray('abc');
+ * // => false
+ *
+ * _.isArray(_.noop);
+ * // => false
+ */
+var isArray = Array.isArray;
+
+module.exports = isArray;
+
+
+/***/ }),
+/* 21 */
+/***/ (function(module, exports, __webpack_require__) {
+
 "use strict";
 
 
 Object.defineProperty(exports, "__esModule", {
 	value: true
 });
-exports.getEmptySet = exports.getMajor = exports.getIntervals = exports.getCenter = exports.rotate = exports.isSameType = exports.mergeNotes = exports.getNotes = exports.getPegs = exports.includesKey = exports.soundNotes = exports.updateCanvas = exports.chordReader = exports.buildKeyWheel = exports.generateNeighbors = exports.tweek = exports.ScaleNode = undefined;
+exports.getEmptySet = exports.getMajor = exports.getIntervals = exports.getCenter = exports.rotate = exports.isSameType = exports.mergeNotes = exports.getNotes = exports.getPegs = exports.includesKey = exports.soundNotes = exports.chordReader = exports.buildKeyWheel = exports.generateNeighbors = exports.tweek = exports.ScaleNode = undefined;
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
-var _isEqual = __webpack_require__(29);
+var _isEqual = __webpack_require__(17);
 
 var _isEqual2 = _interopRequireDefault(_isEqual);
 
@@ -978,9 +985,9 @@ var _tone = __webpack_require__(122);
 
 var _tone2 = _interopRequireDefault(_tone);
 
-var _colors = __webpack_require__(7);
+var _colors = __webpack_require__(13);
 
-var _consts = __webpack_require__(8);
+var _consts = __webpack_require__(14);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
@@ -988,13 +995,11 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-//keywheel size control
-
 //Scale Node class dynamically holds information about location
 var ScaleNode = exports.ScaleNode = function () {
 	function ScaleNode() {
 		var notes = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : _consts.C;
-		var center = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : _consts.WHEEL_CENTER;
+		var center = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : { x: 0, y: 0 };
 
 		_classCallCheck(this, ScaleNode);
 
@@ -1002,7 +1007,6 @@ var ScaleNode = exports.ScaleNode = function () {
 		this.notes = notes;
 		this.center = center;
 		this.parent = null;
-		this.parentCenter = null;
 		this.children = [];
 	}
 
@@ -1010,7 +1014,6 @@ var ScaleNode = exports.ScaleNode = function () {
 		key: "addChild",
 		value: function addChild(node) {
 			node.parent = this;
-			node.parentCenter = this.center;
 			node.rank = this.rank + 1;
 			this.children.push(node);
 		}
@@ -1018,7 +1021,6 @@ var ScaleNode = exports.ScaleNode = function () {
 		key: "removeChild",
 		value: function removeChild(node) {
 			node.parent = null;
-			node.parentCenter = null;
 			node.rank = 0;
 			this.children.splice(this.children.indexOf(node), 1);
 		}
@@ -1049,12 +1051,12 @@ var tweek = exports.tweek = function tweek(notes, idx) {
 	return { notes: getNotes(pegs), tweekStatus: tweekStatus };
 };
 
-var generateNeighbors = exports.generateNeighbors = function generateNeighbors(node, visited, delta, flip) {
+var generateNeighbors = exports.generateNeighbors = function generateNeighbors(node, visited, flip) {
 	var notes = node.notes,
-	    parentCenter = node.parentCenter,
+	    parent = node.parent,
 	    center = node.center;
 
-	var parentNotes = node.parent ? node.parent.notes : null;
+	var parentNotes = parent ? parent.notes : null;
 	var adjustedPegs = [];
 	var neighbors = [];
 	var parentTweekStatus = void 0;
@@ -1084,16 +1086,16 @@ var generateNeighbors = exports.generateNeighbors = function generateNeighbors(n
 			neighbors = rotate(neighbors);
 		}
 		neighbors.forEach(function (neighbor, i) {
-			neighbor.center = getCenter(center, _consts.DIRS[i], delta, flip);
+			neighbor.center = getCenter(center, _consts.DIRS[i], flip);
 		});
 	} else {
-		var deltaX = 2 * center.x - parentCenter.x;
-		var deltaY = 2 * center.y - parentCenter.y;
+		var deltaX = 2 * center.x - parent.center.x;
+		var deltaY = 2 * center.y - parent.center.y;
 		neighbors.forEach(function (neighbor) {
 			if (isSameType(parentNotes, neighbor.notes)) {
-				neighbor.center = { x: deltaX, y: parentCenter.y };
+				neighbor.center = { x: deltaX, y: parent.center.y };
 			} else if (neighbor.tweekStatus === parentTweekStatus) {
-				neighbor.center = { x: parentCenter.x, y: deltaY };
+				neighbor.center = { x: parent.center.x, y: deltaY };
 			} else {
 				neighbor.center = { x: deltaX, y: deltaY };
 			}
@@ -1103,7 +1105,9 @@ var generateNeighbors = exports.generateNeighbors = function generateNeighbors(n
 	return { neighbors: neighbors, adjustedPegs: adjustedPegs };
 };
 
-var buildKeyWheel = exports.buildKeyWheel = function buildKeyWheel(start, delta, flip) {
+var buildKeyWheel = exports.buildKeyWheel = function buildKeyWheel(start) {
+	var flip = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 1;
+
 	var queue = [start];
 	var visited = [start];
 	var currentNode = void 0,
@@ -1113,7 +1117,7 @@ var buildKeyWheel = exports.buildKeyWheel = function buildKeyWheel(start, delta,
 	while (visited.length < 36) {
 		currentNode = queue.shift();
 		if (!currentNode) return start;
-		neighbors = generateNeighbors(currentNode, visited, delta, flip).neighbors;
+		neighbors = generateNeighbors(currentNode, visited, flip).neighbors;
 
 		neighbors.forEach(function (neighbor) {
 			if (!neighbor) return;
@@ -1124,7 +1128,9 @@ var buildKeyWheel = exports.buildKeyWheel = function buildKeyWheel(start, delta,
 		});
 	}
 
-	return visited;
+	return visited.sort(function (a, b) {
+		return a.center.y === b.center.y ? a.center.x - b.center.x : a.center.y - b.center.y;
+	});
 };
 
 //returns chord color, name, and rootIdx from dictionary
@@ -1156,51 +1162,12 @@ var chordReader = exports.chordReader = function chordReader(notes) {
 	return { color: color, name: name, rootIdx: rootIdx };
 };
 
-var updateCanvas = exports.updateCanvas = function updateCanvas(ctx, radius, selectedNotes) {
-	var colorIdx = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : 8;
-
-	ctx.clearRect(0, 0, 2 * radius, 2 * radius);
-	selectedNotes.forEach(function (notes, i) {
-		if (notes.length === 0) return;
-		var pegs = getPegs(notes);
-		if (pegs.length < 3) return;
-		var start = {
-			x: radius * (1 + Math.sin(Math.PI * pegs[0] / 6)),
-			y: radius * (1 - Math.cos(Math.PI * pegs[0] / 6))
-		};
-
-		if (selectedNotes.length > 1) {
-			ctx.fillStyle = (0, _colors.COLORS)(0.5)[i];
-		} else {
-			ctx.fillStyle = (0, _colors.COLORS)(0.5)[colorIdx];
-		}
-
-		ctx.strokeStyle = _colors.grey;
-
-		//draw chord
-		ctx.beginPath();
-		ctx.moveTo(start.x, start.y);
-		pegs.forEach(function (peg, i) {
-			if (i === 0) return;
-			var delta = peg - peg[i - 1];
-			var newPos = {
-				x: radius * (1 + Math.sin(Math.PI * peg / 6)),
-				y: radius * (1 - Math.cos(Math.PI * peg / 6))
-			};
-			ctx.lineTo(newPos.x, newPos.y);
-		});
-		ctx.closePath();
-		ctx.stroke();
-		ctx.fill();
-	});
-};
-
 var soundNotes = exports.soundNotes = function soundNotes(pegs) {
 	var modeIdx = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 0;
 	var poly = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : false;
 
 	_tone2.default.Transport.cancel(0);
-
+	if (_tone2.default.context.state !== "running") _tone2.default.context.resume();
 	var synth = new _tone2.default.PolySynth(pegs.length).toMaster();
 	// synth.set({
 	// 	oscillator: {
@@ -1294,6 +1261,7 @@ var mergeNotes = exports.mergeNotes = function mergeNotes(notesArr) {
 			if (note) result[i] = true;
 		});
 	});
+
 	return result;
 };
 
@@ -1311,28 +1279,22 @@ var isSameType = exports.isSameType = function isSameType(notes1, notes2) {
 };
 
 var rotate = exports.rotate = function rotate(arr) {
-	var rotated = [];
-	for (var i = 0; i < arr.length; i++) {
-		if (i === arr.length - 1) {
-			rotated.push(arr[0]);
-		} else {
-			rotated.push(arr[i + 1]);
-		}
+	var times = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 1;
+
+	var rotated = [].concat(_toConsumableArray(arr));
+	for (var i = 0; i < times; i++) {
+		rotated = rotated.slice(1).concat(rotated[0]);
 	}
 
 	return rotated;
 };
 
-var getCenter = exports.getCenter = function getCenter(center, parentDirection) {
-	var d = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : _consts.SCALE_SPACING;
-	var flip = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : false;
-
-	flip = flip ? -1 : 1;
+var getCenter = exports.getCenter = function getCenter(center, parentDirection, dy) {
 	var deltas = {
-		TL: { x: center.x + d, y: center.y + d * flip },
-		BL: { x: center.x + d, y: center.y - d * flip },
-		TR: { x: center.x - d, y: center.y + d * flip },
-		BR: { x: center.x - d, y: center.y - d * flip }
+		TL: { x: center.x + 1, y: center.y + dy },
+		BL: { x: center.x + 1, y: center.y - dy },
+		TR: { x: center.x - 1, y: center.y + dy },
+		BR: { x: center.x - 1, y: center.y - dy }
 	};
 
 	return deltas[parentDirection];
@@ -1368,64 +1330,7 @@ var getEmptySet = exports.getEmptySet = function getEmptySet() {
 };
 
 /***/ }),
-/* 18 */
-/***/ (function(module, exports, __webpack_require__) {
-
-var getNative = __webpack_require__(3),
-    root = __webpack_require__(1);
-
-/* Built-in method references that are verified to be native. */
-var Map = getNative(root, 'Map');
-
-module.exports = Map;
-
-
-/***/ }),
-/* 19 */
-/***/ (function(module, exports, __webpack_require__) {
-
-var root = __webpack_require__(1);
-
-/** Built-in value references. */
-var Symbol = root.Symbol;
-
-module.exports = Symbol;
-
-
-/***/ }),
-/* 20 */
-/***/ (function(module, exports) {
-
-/**
- * Checks if `value` is classified as an `Array` object.
- *
- * @static
- * @memberOf _
- * @since 0.1.0
- * @category Lang
- * @param {*} value The value to check.
- * @returns {boolean} Returns `true` if `value` is an array, else `false`.
- * @example
- *
- * _.isArray([1, 2, 3]);
- * // => true
- *
- * _.isArray(document.body.children);
- * // => false
- *
- * _.isArray('abc');
- * // => false
- *
- * _.isArray(_.noop);
- * // => false
- */
-var isArray = Array.isArray;
-
-module.exports = isArray;
-
-
-/***/ }),
-/* 21 */
+/* 22 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -1492,7 +1397,7 @@ module.exports = checkPropTypes;
 /* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(0)))
 
 /***/ }),
-/* 22 */
+/* 23 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -1531,7 +1436,7 @@ var ExecutionEnvironment = {
 module.exports = ExecutionEnvironment;
 
 /***/ }),
-/* 23 */
+/* 24 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -1612,7 +1517,7 @@ module.exports = EventListener;
 /* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(0)))
 
 /***/ }),
-/* 24 */
+/* 25 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -1654,7 +1559,7 @@ function getActiveElement(doc) /*?DOMElement*/{
 module.exports = getActiveElement;
 
 /***/ }),
-/* 25 */
+/* 26 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -1725,7 +1630,7 @@ function shallowEqual(objA, objB) {
 module.exports = shallowEqual;
 
 /***/ }),
-/* 26 */
+/* 27 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -1768,7 +1673,7 @@ function containsNode(outerNode, innerNode) {
 module.exports = containsNode;
 
 /***/ }),
-/* 27 */
+/* 28 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -1798,7 +1703,7 @@ function focusNode(node) {
 module.exports = focusNode;
 
 /***/ }),
-/* 28 */
+/* 29 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -1814,15 +1719,15 @@ var _react = __webpack_require__(4);
 
 var _react2 = _interopRequireDefault(_react);
 
-var _isEqual = __webpack_require__(29);
+var _isEqual = __webpack_require__(17);
 
 var _isEqual2 = _interopRequireDefault(_isEqual);
 
-var _colors = __webpack_require__(7);
+var _colors = __webpack_require__(13);
 
-var _consts = __webpack_require__(8);
+var _consts = __webpack_require__(14);
 
-var _util = __webpack_require__(17);
+var _util = __webpack_require__(21);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
@@ -1832,55 +1737,32 @@ function _possibleConstructorReturn(self, call) { if (!self) { throw new Referen
 
 function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
 
+var textStyle = {
+	position: "relative",
+	top: "30%",
+	textAlign: "center",
+	height: 0,
+	fontSize: "1vw"
+};
+
+var svgContainerStyle = {
+	position: "absolute",
+	top: 0,
+	left: 0
+};
+
 var Scale = function (_React$Component) {
 	_inherits(Scale, _React$Component);
 
 	function Scale(props) {
 		_classCallCheck(this, Scale);
 
-		var _this = _possibleConstructorReturn(this, (Scale.__proto__ || Object.getPrototypeOf(Scale)).call(this, props));
-
-		_this.updateRadius = _this.updateRadius.bind(_this);
-		_this.updateRadius();
-		return _this;
+		return _possibleConstructorReturn(this, (Scale.__proto__ || Object.getPrototypeOf(Scale)).call(this, props));
 	}
 
 	_createClass(Scale, [{
-		key: "updateRadius",
-		value: function updateRadius() {
-			if (this.props.isInput) {
-				this.scaleRadius = 1.2 * (0, _consts.SCALE_RADIUS)();
-				this.noteRadius = 1.3 * (0, _consts.NOTE_RADIUS)();
-				this.numLabelSize = 0.1 + (0, _consts.NUM_LABEL_SIZE)() + "em";
-				this.textLabelSize = 1 + (0, _consts.TEXT_LABEL_SIZE)() + "px";
-			} else {
-				this.scaleRadius = (0, _consts.SCALE_RADIUS)();
-				this.noteRadius = (0, _consts.NOTE_RADIUS)();
-				this.numLabelSize = (0, _consts.NUM_LABEL_SIZE)() + "em";
-				this.textLabelSize = (0, _consts.TEXT_LABEL_SIZE)() + "px";
-			}
-		}
-	}, {
-		key: "componentDidMount",
-		value: function componentDidMount() {
-			this.handleCanvas();
-			window.addEventListener("resize", this.updateRadius);
-		}
-	}, {
-		key: "componentDidUpdate",
-		value: function componentDidUpdate() {
-			this.handleCanvas();
-		}
-	}, {
-		key: "componentWillUnmount",
-		value: function componentWillUnmount() {
-			window.removeEventListener("resize", this.updateRadius);
-		}
-	}, {
-		key: "handleCanvas",
-		value: function handleCanvas() {
-			var ctx = this.refs.canvas.getContext("2d");
-			var radius = this.scaleRadius;
+		key: "getSVG",
+		value: function getSVG() {
 			var _props = this.props,
 			    notes = _props.notes,
 			    selected = _props.selected,
@@ -1889,7 +1771,7 @@ var Scale = function (_React$Component) {
 			    isInput = _props.isInput;
 
 			var result = [];
-			var colorIdx = void 0;
+			var colorIdx = 8;
 
 			if (isInput) {
 				if (index >= 0) {
@@ -1909,15 +1791,29 @@ var Scale = function (_React$Component) {
 					var isMatch = pegs.every(function (i) {
 						return notes[i];
 					});
-					if (isMatch && pegs.length > 0) {
-						result.push(arr);
-					} else {
-						result.push([]);
-					}
+					result.push(isMatch && pegs.length > 0 ? arr : []);
 				});
 			}
 
-			(0, _util.updateCanvas)(ctx, radius, result, colorIdx);
+			return result.map(function (arr, i) {
+				if (arr.length === 0) return null;
+				var pegs = (0, _util.getPegs)(arr);
+				if (pegs.length < 3) return null;
+
+				var style = { stroke: _colors.grey, strokeWidth: 1 };
+				style.fill = result.length > 1 ? (0, _colors.COLORS)(0.5)[i] : (0, _colors.COLORS)(0.5)[colorIdx];
+
+				var points = pegs.map(function (peg, i) {
+					var x = _consts.SCALE_RADIUS * (1 + Math.sin(Math.PI * peg / 6)) + _consts.NOTE_RADIUS;
+					var y = _consts.SCALE_RADIUS * (1 - Math.cos(Math.PI * peg / 6)) + _consts.NOTE_RADIUS;
+					return x + "," + y;
+				});
+
+				return {
+					points: points.join(" "),
+					style: style
+				};
+			});
 		}
 	}, {
 		key: "handleClick",
@@ -1935,10 +1831,10 @@ var Scale = function (_React$Component) {
 		}
 	}, {
 		key: "noteComponents",
-		value: function noteComponents(notes, pegs, center, relMajor) {
+		value: function noteComponents(notes, pegs, relMajor) {
 			var _this2 = this;
 
-			var rootIdx = arguments.length > 4 && arguments[4] !== undefined ? arguments[4] : -1;
+			var rootIdx = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : -1;
 			var _props2 = this.props,
 			    selected = _props2.selected,
 			    rootReferenceEnabled = _props2.rootReferenceEnabled,
@@ -1950,7 +1846,7 @@ var Scale = function (_React$Component) {
 				var color = _colors.darkGrey;
 				var borderColor = _colors.darkGrey;
 				var backgroundColor = _colors.transparent;
-				var noteColor = void 0;
+				var noteColor = null;
 				var numLabel = null;
 
 				var isMatch = function isMatch() {
@@ -1959,26 +1855,21 @@ var Scale = function (_React$Component) {
 						var match = arr[i] && arrPegs.length > 0 && arrPegs.every(function (k) {
 							return notes[k];
 						});
-
-						if (match) {
-							noteColor = noteColor || (0, _colors.COLORS)(1)[j];
-						}
+						if (match && !noteColor) noteColor = (0, _colors.COLORS)(1)[j];
 						return match;
 					});
 				};
 
 				if (isInput) {
+					numLabel = _consts.NOTE_NAMES[i];
 					if (selected[index][i]) {
 						backgroundColor = (0, _colors.COLORS)(1)[index];
-						if (rootIdx >= 0 && i === rootIdx) {
+						color = _colors.offWhite;
+						if (i === rootIdx) {
 							color = _colors.gold;
 							borderColor = _colors.brown;
-						} else {
-							color = _colors.offWhite;
 						}
 					}
-
-					numLabel = _consts.NOTE_NAMES[i];
 				} else {
 					if (isMatch()) {
 						backgroundColor = noteColor;
@@ -1988,8 +1879,9 @@ var Scale = function (_React$Component) {
 					}
 
 					if (pegs.includes(i)) {
-						numLabel = i === relMajor[pegs.indexOf(i)] ? "" : "b";
-						numLabel += "" + (pegs.indexOf(i) + 1);
+						var idx = pegs.indexOf(i);
+						numLabel = i === relMajor[idx] ? "" : "b";
+						numLabel += "" + (idx + 1);
 					}
 				}
 
@@ -1999,19 +1891,21 @@ var Scale = function (_React$Component) {
 				};
 
 				var style = {
-					position: "absolute",
-					width: _this2.noteRadius,
-					height: _this2.noteRadius,
-					borderRadius: _this2.noteRadius,
+					position: "relative",
+					display: "float",
+					width: 2 * _consts.NOTE_RADIUS + "%",
+					height: 2 * _consts.NOTE_RADIUS + "%",
+					borderRadius: "50%",
 					backgroundColor: backgroundColor,
+					boxSizing: "border-box",
 					border: "1px solid " + borderColor,
-					top: center.y - _this2.scaleRadius * Math.cos(Math.PI * i / 6),
-					left: center.x + _this2.scaleRadius * Math.sin(Math.PI * i / 6)
+					top: _consts.SCALE_RADIUS * (1 - Math.cos(Math.PI * i / 6)) - 2 * _consts.NOTE_RADIUS * i + "%",
+					left: _consts.SCALE_RADIUS * (1 + Math.sin(Math.PI * i / 6)) + "%"
 				};
 
 				var numLabelStyle = {
 					color: color,
-					fontSize: _this2.numLabelSize,
+					fontSize: "0.8vw",
 					textAlign: "center",
 					position: "relative",
 					top: "50%",
@@ -2036,7 +1930,6 @@ var Scale = function (_React$Component) {
 
 			var _props3 = this.props,
 			    notes = _props3.notes,
-			    center = _props3.center,
 			    selected = _props3.selected,
 			    isInput = _props3.isInput,
 			    index = _props3.index;
@@ -2055,7 +1948,8 @@ var Scale = function (_React$Component) {
 			var onClick = void 0;
 
 			for (var i = 0; i < pegs.length; i++) {
-				if (pegs[0] !== keyRootIdx) pegs = (0, _util.rotate)(pegs);
+				if (pegs[0] === keyRootIdx) break;
+				pegs = (0, _util.rotate)(pegs);
 			}
 
 			if (isInput) {
@@ -2082,41 +1976,33 @@ var Scale = function (_React$Component) {
 				};
 			}
 
-			var noteDivs = this.noteComponents(notes, pegs, center, relMajor, chordRootIdx);
-
-			var textStyle = {
-				position: "absolute",
-				top: center.y - 4,
-				left: center.x,
-				fontSize: this.textLabelSize,
-				textAlign: "center"
-			};
-
-			var canvasStyle = {
-				position: "absolute",
-				top: center.y - this.scaleRadius + this.noteRadius / 2,
-				left: center.x - this.scaleRadius + this.noteRadius / 2
-			};
+			var noteDivs = this.noteComponents(notes, pegs, relMajor, chordRootIdx);
+			var svg = this.getSVG();
 
 			return _react2.default.createElement(
 				"div",
-				{ onClick: onClick },
-				noteDivs,
+				{ onClick: onClick, style: Object.assign({}, this.props.style) },
+				_react2.default.createElement(
+					"div",
+					{ style: svgContainerStyle },
+					_react2.default.createElement(
+						"svg",
+						{ width: "100%", height: "100%", viewBox: "0 0 100 100" },
+						Array(selected.length).fill(0).map(function (_, i) {
+							if (svg[i]) return _react2.default.createElement("polygon", {
+								points: svg[i].points,
+								style: svg[i].style,
+								key: i
+							});
+						})
+					)
+				),
 				_react2.default.createElement(
 					"div",
 					{ style: textStyle },
-					_react2.default.createElement(
-						"span",
-						{ style: { position: "relative", left: "-25%" } },
-						label
-					)
+					label
 				),
-				_react2.default.createElement("canvas", {
-					ref: "canvas",
-					width: 2 * this.scaleRadius,
-					height: 2 * this.scaleRadius,
-					style: canvasStyle
-				})
+				noteDivs
 			);
 		}
 	}]);
@@ -2125,47 +2011,6 @@ var Scale = function (_React$Component) {
 }(_react2.default.Component);
 
 exports.default = Scale;
-
-/***/ }),
-/* 29 */
-/***/ (function(module, exports, __webpack_require__) {
-
-var baseIsEqual = __webpack_require__(54);
-
-/**
- * Performs a deep comparison between two values to determine if they are
- * equivalent.
- *
- * **Note:** This method supports comparing arrays, array buffers, booleans,
- * date objects, error objects, maps, numbers, `Object` objects, regexes,
- * sets, strings, symbols, and typed arrays. `Object` objects are compared
- * by their own, not inherited, enumerable properties. Functions and DOM
- * nodes are compared by strict equality, i.e. `===`.
- *
- * @static
- * @memberOf _
- * @since 0.1.0
- * @category Lang
- * @param {*} value The value to compare.
- * @param {*} other The other value to compare.
- * @returns {boolean} Returns `true` if the values are equivalent, else `false`.
- * @example
- *
- * var object = { 'a': 1 };
- * var other = { 'a': 1 };
- *
- * _.isEqual(object, other);
- * // => true
- *
- * object === other;
- * // => false
- */
-function isEqual(value, other) {
-  return baseIsEqual(value, other);
-}
-
-module.exports = isEqual;
-
 
 /***/ }),
 /* 30 */
@@ -2214,7 +2059,7 @@ module.exports = eq;
 /* 31 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var baseGetTag = __webpack_require__(11),
+var baseGetTag = __webpack_require__(9),
     isObject = __webpack_require__(33);
 
 /** `Object#toString` result references. */
@@ -2624,7 +2469,7 @@ var _reactDom = __webpack_require__(45);
 
 var _reactDom2 = _interopRequireDefault(_reactDom);
 
-var _scale = __webpack_require__(28);
+var _scale = __webpack_require__(29);
 
 var _scale2 = _interopRequireDefault(_scale);
 
@@ -2632,11 +2477,15 @@ var _input = __webpack_require__(123);
 
 var _input2 = _interopRequireDefault(_input);
 
-var _util = __webpack_require__(17);
+var _fretboard = __webpack_require__(124);
 
-var _consts = __webpack_require__(8);
+var _fretboard2 = _interopRequireDefault(_fretboard);
 
-var _colors = __webpack_require__(7);
+var _util = __webpack_require__(21);
+
+var _consts = __webpack_require__(14);
+
+var _colors = __webpack_require__(13);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
@@ -2647,6 +2496,10 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
 
 function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
+var mainStyle = {
+	boxSizing: "border-box"
+};
 
 var buttonStyle = {
 	padding: "3px",
@@ -2665,11 +2518,11 @@ var Root = function (_React$Component) {
 
 		var _this = _possibleConstructorReturn(this, (Root.__proto__ || Object.getPrototypeOf(Root)).call(this, props));
 
-		var start = new _util.ScaleNode(_consts.C, (0, _consts.WHEEL_CENTER)());
+		var start = new _util.ScaleNode(_consts.C);
 
 		_this.state = {
 			start: 0,
-			scales: (0, _util.buildKeyWheel)(start, (0, _consts.SCALE_SPACING)(), false),
+			scales: (0, _util.buildKeyWheel)(start),
 			selected: (0, _util.getEmptySet)(),
 			mode: "union",
 			rootReferenceEnabled: true,
@@ -2691,13 +2544,13 @@ var Root = function (_React$Component) {
 	_createClass(Root, [{
 		key: "componentDidMount",
 		value: function componentDidMount() {
-			window.addEventListener("resize", this.rebuildKeyWheel);
+			// window.addEventListener("resize", this.rebuildKeyWheel);
 			window.addEventListener("keydown", this.handleKeyPress);
 		}
 	}, {
 		key: "componentWillUnmount",
 		value: function componentWillUnmount() {
-			window.removeEventListener("resize", this.rebuildKeyWheel);
+			// window.removeEventListener("resize", this.rebuildKeyWheel);
 			window.removeEventListener("keydown", this.handleKeyPress);
 		}
 	}, {
@@ -2712,12 +2565,10 @@ var Root = function (_React$Component) {
 	}, {
 		key: "rebuildKeyWheel",
 		value: function rebuildKeyWheel() {
-			var width = (0, _consts.SCALE_SPACING)();
-			var newCenter = (0, _consts.WHEEL_CENTER)();
 			var newNotes = (0, _util.getNotes)((0, _util.getMajor)(this.state.start));
-			var newStart = new _util.ScaleNode(newNotes, newCenter);
-			var flip = this.state.start > 6;
-			var scales = (0, _util.buildKeyWheel)(newStart, width, flip);
+			var newStart = new _util.ScaleNode(newNotes);
+			var flip = this.state.start > 6 ? -1 : 1;
+			var scales = (0, _util.buildKeyWheel)(newStart, flip);
 			this.setState({ scales: scales });
 		}
 	}, {
@@ -2789,24 +2640,32 @@ var Root = function (_React$Component) {
 			    mode = _state.mode;
 
 			return scales.map(function (node, i) {
+				var rowShift = i % 12 > 5 ? 1 : 0;
+				var colStart = 4 * (i % 6) + 2 * rowShift + 1;
+				var rowStart = 2 * Math.floor(6 * (i / 36)) + 1;
+
+				var style = {
+					position: "relative",
+					gridColumn: colStart + "/ span 3",
+					gridRow: rowStart + "/ span 3"
+				};
+
 				return _react2.default.createElement(_scale2.default, {
 					key: i,
-					notes: node.notes,
-					center: node.center,
-					selected: selected,
-					isInput: false,
-					mode: mode,
-					rootReferenceEnabled: rootReferenceEnabled,
-					index: -1,
-					mute: _this2.state.mute
+					notes: node.notes //array of 12 bools, the notes that are part of the scale
+					, selected: selected //array of 8 separate notes objects for svg and coloring
+					, isInput: false //bool for styling svg and event handlers of input type scales
+					, mode: mode //string for deciding how to render svg
+					, rootReferenceEnabled: rootReferenceEnabled //bool for labeling notes or numbers
+					, index: -1 //int for color index of input type scales
+					, mute: _this2.state.mute //bool for volume
+					, style: style
 				});
 			});
 		}
 	}, {
 		key: "render",
 		value: function render() {
-			var _this3 = this;
-
 			var _state2 = this.state,
 			    selected = _state2.selected,
 			    rootReferenceEnabled = _state2.rootReferenceEnabled;
@@ -2814,126 +2673,90 @@ var Root = function (_React$Component) {
 			var scaleDivs = this.scaleComponents();
 			return _react2.default.createElement(
 				"div",
-				{ style: { fontSize: "14px" } },
+				{ style: mainStyle },
 				_react2.default.createElement(
 					"div",
 					{
-						style: { width: "65%", display: "inline-block", textAlign: "center" }
+						style: {
+							display: "inline-block",
+							margin: "auto",
+							width: "fit-content"
+						}
 					},
-					scaleDivs,
 					_react2.default.createElement(
 						"div",
 						{
 							style: {
-								position: "relative",
-								top: 6 * (0, _consts.width)() / 20
+								display: "grid",
+								height: "30vw",
+								width: "60vw",
+								gridTemplateColumns: "2fr repeat(12, 5fr 2fr) 2fr",
+								gridTemplateRows: "2fr repeat(6, 5fr 2fr)"
 							}
 						},
-						_react2.default.createElement(
-							"button",
-							{
-								onClick: function onClick() {
-									return _this3.shiftScale(2);
-								},
-								style: Object.assign({ marginRight: "50px" }, buttonStyle)
-							},
-							"Left"
-						),
-						_react2.default.createElement(
-							"button",
-							{ onClick: function onClick() {
-									return _this3.shiftScale(-2);
-								}, style: buttonStyle },
-							"Right"
-						)
+						scaleDivs
 					)
 				),
 				_react2.default.createElement(
 					"div",
 					{
 						style: {
-							width: "35%",
 							display: "inline-block",
-							position: "relative",
-							top: 6 * (0, _consts.width)() / 20
+							margin: "auto",
+							width: "fit-content"
 						}
 					},
+					_react2.default.createElement(_input2.default, {
+						selected: selected,
+						handleClick: this.handleClick,
+						handleGroup: this.handleGroup,
+						clearNotes: this.clearNotes,
+						rootReferenceEnabled: rootReferenceEnabled,
+						mode: this.state.mode,
+						mute: this.state.mute
+					})
+				),
+				_react2.default.createElement(
+					"div",
+					{ style: { margin: "50px auto", width: "fit-content" } },
+					_react2.default.createElement(_fretboard2.default, {
+						selected: selected,
+						style: {
+							width: "80vw",
+							height: "10vw"
+						}
+					})
+				),
+				_react2.default.createElement(
+					"div",
+					null,
 					_react2.default.createElement(
 						"div",
-						null,
+						{ style: { display: "flex" } },
 						_react2.default.createElement(
-							"div",
-							{
-								style: {
-									display: "flex",
-									justifyContent: "space-evenly",
-									paddingTop: "30px"
-								}
-							},
-							_react2.default.createElement(
-								"button",
-								{ style: buttonStyle, onClick: this.toggleMute },
-								this.state.mute ? "Unmute" : "Mute"
-							),
-							_react2.default.createElement(
-								"button",
-								{ style: buttonStyle, onClick: this.clearNotes },
-								"Clear All"
-							),
-							_react2.default.createElement(
-								"button",
-								{ style: buttonStyle, onClick: this.toggleRef },
-								"View: ",
-								this.state.rootReferenceEnabled ? "Scale" : "Arbitrary"
-							),
-							_react2.default.createElement(
-								"button",
-								{ style: buttonStyle, onClick: this.toggleMode },
-								"Mode: ",
-								this.state.mode === "union" ? "Union" : "Intersection"
-							)
+							"button",
+							{ style: buttonStyle, onClick: this.toggleMute },
+							this.state.mute ? "Unmute" : "Mute"
 						),
 						_react2.default.createElement(
-							"div",
-							{
-								style: {
-									display: "flex",
-									justifyContent: "space-evenly",
-									paddingTop: "30px"
-								}
-							},
-							_react2.default.createElement(
-								"button",
-								{ style: buttonStyle },
-								"Blank"
-							),
-							_react2.default.createElement(
-								"button",
-								{ style: buttonStyle },
-								"Blank"
-							),
-							_react2.default.createElement(
-								"button",
-								{ style: buttonStyle },
-								"Blank"
-							),
-							_react2.default.createElement(
-								"button",
-								{ style: buttonStyle },
-								"Blank"
-							)
+							"button",
+							{ style: buttonStyle, onClick: this.clearNotes },
+							"Clear All"
+						),
+						_react2.default.createElement(
+							"button",
+							{ style: buttonStyle, onClick: this.toggleRef },
+							"View: ",
+							this.state.rootReferenceEnabled ? "Scale" : "Arbitrary"
+						),
+						_react2.default.createElement(
+							"button",
+							{ style: buttonStyle, onClick: this.toggleMode },
+							"Mode: ",
+							this.state.mode === "union" ? "Union" : "Intersection"
 						)
 					)
-				),
-				_react2.default.createElement(_input2.default, {
-					selected: selected,
-					handleClick: this.handleClick,
-					handleGroup: this.handleGroup,
-					clearNotes: this.clearNotes,
-					rootReferenceEnabled: rootReferenceEnabled,
-					mode: this.state.mode,
-					mute: this.state.mute
-				})
+				)
 			);
 		}
 	}]);
@@ -3001,7 +2824,7 @@ var emptyObject = __webpack_require__(6);
 var invariant = __webpack_require__(15);
 var warning = __webpack_require__(16);
 var emptyFunction = __webpack_require__(2);
-var checkPropTypes = __webpack_require__(21);
+var checkPropTypes = __webpack_require__(22);
 
 // TODO: this is special because it gets imported during build.
 
@@ -4421,7 +4244,7 @@ if (process.env.NODE_ENV === 'production') {
 /*
  Modernizr 3.0.0pre (Custom Build) | MIT
 */
-var aa=__webpack_require__(4),l=__webpack_require__(22),B=__webpack_require__(5),C=__webpack_require__(2),ba=__webpack_require__(23),da=__webpack_require__(24),ea=__webpack_require__(25),fa=__webpack_require__(26),ia=__webpack_require__(27),D=__webpack_require__(6);
+var aa=__webpack_require__(4),l=__webpack_require__(23),B=__webpack_require__(5),C=__webpack_require__(2),ba=__webpack_require__(24),da=__webpack_require__(25),ea=__webpack_require__(26),fa=__webpack_require__(27),ia=__webpack_require__(28),D=__webpack_require__(6);
 function E(a){for(var b=arguments.length-1,c="Minified React error #"+a+"; visit http://facebook.github.io/react/docs/error-decoder.html?invariant\x3d"+a,d=0;d<b;d++)c+="\x26args[]\x3d"+encodeURIComponent(arguments[d+1]);b=Error(c+" for the full message or use the non-minified dev environment for full errors and additional helpful warnings.");b.name="Invariant Violation";b.framesToPop=1;throw b;}aa?void 0:E("227");
 var oa={children:!0,dangerouslySetInnerHTML:!0,defaultValue:!0,defaultChecked:!0,innerHTML:!0,suppressContentEditableWarning:!0,suppressHydrationWarning:!0,style:!0};function pa(a,b){return(a&b)===b}
 var ta={MUST_USE_PROPERTY:1,HAS_BOOLEAN_VALUE:4,HAS_NUMERIC_VALUE:8,HAS_POSITIVE_NUMERIC_VALUE:24,HAS_OVERLOADED_BOOLEAN_VALUE:32,HAS_STRING_BOOLEAN_VALUE:64,injectDOMPropertyConfig:function(a){var b=ta,c=a.Properties||{},d=a.DOMAttributeNamespaces||{},e=a.DOMAttributeNames||{};a=a.DOMMutationMethods||{};for(var f in c){ua.hasOwnProperty(f)?E("48",f):void 0;var g=f.toLowerCase(),h=c[f];g={attributeName:g,attributeNamespace:null,propertyName:f,mutationMethod:null,mustUseProperty:pa(h,b.MUST_USE_PROPERTY),
@@ -4721,16 +4544,16 @@ if (process.env.NODE_ENV !== "production") {
 var React = __webpack_require__(4);
 var invariant = __webpack_require__(15);
 var warning = __webpack_require__(16);
-var ExecutionEnvironment = __webpack_require__(22);
+var ExecutionEnvironment = __webpack_require__(23);
 var _assign = __webpack_require__(5);
 var emptyFunction = __webpack_require__(2);
-var EventListener = __webpack_require__(23);
-var getActiveElement = __webpack_require__(24);
-var shallowEqual = __webpack_require__(25);
-var containsNode = __webpack_require__(26);
-var focusNode = __webpack_require__(27);
+var EventListener = __webpack_require__(24);
+var getActiveElement = __webpack_require__(25);
+var shallowEqual = __webpack_require__(26);
+var containsNode = __webpack_require__(27);
+var focusNode = __webpack_require__(28);
 var emptyObject = __webpack_require__(6);
-var checkPropTypes = __webpack_require__(21);
+var checkPropTypes = __webpack_require__(22);
 var hyphenateStyleName = __webpack_require__(50);
 var camelizeStyleName = __webpack_require__(52);
 
@@ -20259,7 +20082,7 @@ module.exports = camelize;
 /***/ (function(module, exports, __webpack_require__) {
 
 var baseIsEqualDeep = __webpack_require__(55),
-    isObjectLike = __webpack_require__(14);
+    isObjectLike = __webpack_require__(12);
 
 /**
  * The base implementation of `_.isEqual` which supports partial comparisons
@@ -20381,7 +20204,7 @@ module.exports = baseIsEqualDeep;
 /* 56 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var ListCache = __webpack_require__(9),
+var ListCache = __webpack_require__(7),
     stackClear = __webpack_require__(62),
     stackDelete = __webpack_require__(63),
     stackGet = __webpack_require__(64),
@@ -20433,7 +20256,7 @@ module.exports = listCacheClear;
 /* 58 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var assocIndexOf = __webpack_require__(10);
+var assocIndexOf = __webpack_require__(8);
 
 /** Used for built-in method references. */
 var arrayProto = Array.prototype;
@@ -20474,7 +20297,7 @@ module.exports = listCacheDelete;
 /* 59 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var assocIndexOf = __webpack_require__(10);
+var assocIndexOf = __webpack_require__(8);
 
 /**
  * Gets the list cache value for `key`.
@@ -20499,7 +20322,7 @@ module.exports = listCacheGet;
 /* 60 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var assocIndexOf = __webpack_require__(10);
+var assocIndexOf = __webpack_require__(8);
 
 /**
  * Checks if a list cache value for `key` exists.
@@ -20521,7 +20344,7 @@ module.exports = listCacheHas;
 /* 61 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var assocIndexOf = __webpack_require__(10);
+var assocIndexOf = __webpack_require__(8);
 
 /**
  * Sets the list cache `key` to `value`.
@@ -20553,7 +20376,7 @@ module.exports = listCacheSet;
 /* 62 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var ListCache = __webpack_require__(9);
+var ListCache = __webpack_require__(7);
 
 /**
  * Removes all key-value entries from the stack.
@@ -20638,7 +20461,7 @@ module.exports = stackHas;
 /* 66 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var ListCache = __webpack_require__(9),
+var ListCache = __webpack_require__(7),
     Map = __webpack_require__(18),
     MapCache = __webpack_require__(35);
 
@@ -20896,7 +20719,7 @@ module.exports = getValue;
 /***/ (function(module, exports, __webpack_require__) {
 
 var Hash = __webpack_require__(75),
-    ListCache = __webpack_require__(9),
+    ListCache = __webpack_require__(7),
     Map = __webpack_require__(18);
 
 /**
@@ -20960,7 +20783,7 @@ module.exports = Hash;
 /* 76 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var nativeCreate = __webpack_require__(12);
+var nativeCreate = __webpack_require__(10);
 
 /**
  * Removes all key-value entries from the hash.
@@ -21004,7 +20827,7 @@ module.exports = hashDelete;
 /* 78 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var nativeCreate = __webpack_require__(12);
+var nativeCreate = __webpack_require__(10);
 
 /** Used to stand-in for `undefined` hash values. */
 var HASH_UNDEFINED = '__lodash_hash_undefined__';
@@ -21040,7 +20863,7 @@ module.exports = hashGet;
 /* 79 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var nativeCreate = __webpack_require__(12);
+var nativeCreate = __webpack_require__(10);
 
 /** Used for built-in method references. */
 var objectProto = Object.prototype;
@@ -21069,7 +20892,7 @@ module.exports = hashHas;
 /* 80 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var nativeCreate = __webpack_require__(12);
+var nativeCreate = __webpack_require__(10);
 
 /** Used to stand-in for `undefined` hash values. */
 var HASH_UNDEFINED = '__lodash_hash_undefined__';
@@ -21098,7 +20921,7 @@ module.exports = hashSet;
 /* 81 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var getMapData = __webpack_require__(13);
+var getMapData = __webpack_require__(11);
 
 /**
  * Removes `key` and its value from the map.
@@ -21143,7 +20966,7 @@ module.exports = isKeyable;
 /* 83 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var getMapData = __webpack_require__(13);
+var getMapData = __webpack_require__(11);
 
 /**
  * Gets the map value for `key`.
@@ -21165,7 +20988,7 @@ module.exports = mapCacheGet;
 /* 84 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var getMapData = __webpack_require__(13);
+var getMapData = __webpack_require__(11);
 
 /**
  * Checks if a map value for `key` exists.
@@ -21187,7 +21010,7 @@ module.exports = mapCacheHas;
 /* 85 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var getMapData = __webpack_require__(13);
+var getMapData = __webpack_require__(11);
 
 /**
  * Sets the map `key` to `value`.
@@ -21909,7 +21732,7 @@ module.exports = baseTimes;
 /***/ (function(module, exports, __webpack_require__) {
 
 var baseIsArguments = __webpack_require__(106),
-    isObjectLike = __webpack_require__(14);
+    isObjectLike = __webpack_require__(12);
 
 /** Used for built-in method references. */
 var objectProto = Object.prototype;
@@ -21950,8 +21773,8 @@ module.exports = isArguments;
 /* 106 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var baseGetTag = __webpack_require__(11),
-    isObjectLike = __webpack_require__(14);
+var baseGetTag = __webpack_require__(9),
+    isObjectLike = __webpack_require__(12);
 
 /** `Object#toString` result references. */
 var argsTag = '[object Arguments]';
@@ -22026,9 +21849,9 @@ module.exports = isIndex;
 /* 109 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var baseGetTag = __webpack_require__(11),
+var baseGetTag = __webpack_require__(9),
     isLength = __webpack_require__(40),
-    isObjectLike = __webpack_require__(14);
+    isObjectLike = __webpack_require__(12);
 
 /** `Object#toString` result references. */
 var argsTag = '[object Arguments]',
@@ -22278,7 +22101,7 @@ var DataView = __webpack_require__(118),
     Promise = __webpack_require__(119),
     Set = __webpack_require__(120),
     WeakMap = __webpack_require__(121),
-    baseGetTag = __webpack_require__(11),
+    baseGetTag = __webpack_require__(9),
     toSource = __webpack_require__(34);
 
 /** `Object#toString` result references. */
@@ -46130,17 +45953,17 @@ var _react = __webpack_require__(4);
 
 var _react2 = _interopRequireDefault(_react);
 
-var _scale = __webpack_require__(28);
+var _scale = __webpack_require__(29);
 
 var _scale2 = _interopRequireDefault(_scale);
 
-var _consts = __webpack_require__(8);
+var _consts = __webpack_require__(14);
 
-var _util = __webpack_require__(17);
+var _util = __webpack_require__(21);
 
-var _colors = __webpack_require__(7);
+var _colors = __webpack_require__(13);
 
-var _isEqual = __webpack_require__(29);
+var _isEqual = __webpack_require__(17);
 
 var _isEqual2 = _interopRequireDefault(_isEqual);
 
@@ -46153,6 +45976,42 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
 
 function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
+var containerStyle = {
+	display: "grid",
+	gridTemplateColumns: "repeat(4, 1fr)",
+	gridAutoRows: "2.5vw 2.5vw 10vw 2.5vw 2.5vw 10vw",
+	justifyItems: "center",
+	alignItems: "center",
+	width: "40vw",
+	height: "30vw"
+};
+
+var buttonStyle = {
+	padding: "3px",
+	border: "1px solid brown",
+	backgroundColor: _colors.buttonBlue,
+	borderRadius: "5px",
+	textAlign: "center",
+	fontSize: "1vw"
+};
+
+var buttonContainerStyle = {
+	display: "flex",
+	justifyContent: "center"
+};
+
+var optionContainerStyle = {
+	height: "100%",
+	display: "flex",
+	flexDirection: "column"
+};
+
+var selectContainerStyle = {
+	display: "flex",
+	justifyContent: "center",
+	fontSize: "1vw"
+};
 
 var Input = function (_React$Component) {
 	_inherits(Input, _React$Component);
@@ -46241,127 +46100,97 @@ var Input = function (_React$Component) {
 
 			var selected = this.props.selected;
 
-			var node = (0, _consts.getInputNodes)();
+			var buttonDivs = [];
+			var scaleDivs = [];
+			var selectDivs = [];
+
+			selected.forEach(function (_, i) {
+				buttonDivs.push(_react2.default.createElement(
+					"div",
+					{ style: buttonContainerStyle, key: 3 * i },
+					_react2.default.createElement(
+						"button",
+						{ style: buttonStyle, onClick: function onClick() {
+								return _this4.soundChord(i);
+							} },
+						"Sound"
+					),
+					_react2.default.createElement(
+						"button",
+						{ style: buttonStyle, onClick: function onClick() {
+								return _this4.props.clearNotes(i);
+							} },
+						"Clear"
+					)
+				));
+
+				selectDivs.push(_react2.default.createElement(
+					"div",
+					{ style: selectContainerStyle, key: 3 * i + 1 },
+					_react2.default.createElement(
+						"select",
+						{ onChange: function onChange(e) {
+								return _this4.onNameChange(e, i);
+							}, defaultValue: "" },
+						_react2.default.createElement(
+							"option",
+							{ disabled: true, value: "" },
+							"--"
+						),
+						_consts.NOTE_NAMES.map(function (name, j) {
+							return _react2.default.createElement(
+								"option",
+								{ key: j, value: name },
+								name
+							);
+						})
+					),
+					_react2.default.createElement(
+						"select",
+						{ onChange: function onChange(e) {
+								return _this4.onChordChange(e, i);
+							}, defaultValue: "" },
+						_react2.default.createElement(
+							"option",
+							{ disabled: true, value: "" },
+							"--"
+						),
+						Object.keys(_consts.SHAPES).map(function (chordName, j) {
+							return _react2.default.createElement(
+								"option",
+								{ key: j, value: chordName },
+								chordName
+							);
+						})
+					)
+				));
+
+				scaleDivs.push(_react2.default.createElement(_scale2.default, {
+					notes: [].concat(_toConsumableArray(_consts.EMPTY)),
+					index: i,
+					selected: selected,
+					handleClick: function handleClick(k) {
+						return _this4.props.handleClick(k, i);
+					},
+					rootReferenceEnabled: _this4.props.rootReferenceEnabled,
+					isInput: true,
+					mode: _this4.props.mode,
+					mute: _this4.state.mute,
+					key: 3 * i + 2,
+					style: {
+						width: "100%",
+						height: "100%",
+						position: "relative"
+					}
+				}));
+			});
+
+			var domNodes = buttonDivs.slice(0, 4).concat(selectDivs.slice(0, 4)).concat(scaleDivs.slice(0, 4)).concat(buttonDivs.slice(4)).concat(selectDivs.slice(4)).concat(scaleDivs.slice(4));
+
 			return _react2.default.createElement(
 				"div",
-				null,
-				selected.map(function (_, i) {
-					var scaleSpacing = (0, _consts.SCALE_SPACING)();
-
-					var buttonStyle = {
-						padding: "3px",
-						border: "1px solid brown",
-						backgroundColor: _colors.buttonBlue,
-						borderRadius: "5px",
-						textAlign: "center",
-						marginRight: "5px"
-					};
-
-					var buttonContainerStyle = {
-						position: "absolute",
-						top: node[i].center.y - 1.4 * scaleSpacing,
-						left: node[i].center.x - 2 * scaleSpacing / 5,
-						fontSize: (0, _consts.TEXT_LABEL_SIZE)() + "px",
-						display: "flex"
-					};
-
-					var selectContainerStyle = {
-						position: "absolute",
-						top: node[i].center.y - scaleSpacing,
-						left: node[i].center.x - 5 * scaleSpacing / 8,
-						fontSize: (0, _consts.TEXT_LABEL_SIZE)() + "px"
-					};
-
-					return _react2.default.createElement(
-						"div",
-						{ key: i },
-						_react2.default.createElement(
-							"div",
-							{ style: buttonContainerStyle },
-							_react2.default.createElement(
-								"button",
-								{ style: buttonStyle, onClick: function onClick() {
-										return _this4.soundChord(i);
-									} },
-								"Sound"
-							),
-							_react2.default.createElement(
-								"button",
-								{
-									style: buttonStyle,
-									onClick: function onClick() {
-										return _this4.props.clearNotes(i);
-									}
-								},
-								"Clear"
-							)
-						),
-						_react2.default.createElement(
-							"div",
-							null,
-							_react2.default.createElement(
-								"div",
-								{ style: selectContainerStyle },
-								_react2.default.createElement(
-									"select",
-									{
-										onChange: function onChange(e) {
-											return _this4.onNameChange(e, i);
-										},
-										defaultValue: ""
-									},
-									_react2.default.createElement(
-										"option",
-										{ disabled: true, value: "" },
-										"--"
-									),
-									_consts.NOTE_NAMES.map(function (name, j) {
-										return _react2.default.createElement(
-											"option",
-											{ key: j, value: name },
-											name
-										);
-									})
-								),
-								_react2.default.createElement(
-									"select",
-									{
-										onChange: function onChange(e) {
-											return _this4.onChordChange(e, i);
-										},
-										style: { width: 1.2 * scaleSpacing },
-										defaultValue: ""
-									},
-									_react2.default.createElement(
-										"option",
-										{ disabled: true, value: "" },
-										"--"
-									),
-									Object.keys(_consts.SHAPES).map(function (chordName, j) {
-										return _react2.default.createElement(
-											"option",
-											{ key: j, value: chordName },
-											chordName
-										);
-									})
-								)
-							),
-							_react2.default.createElement(_scale2.default, {
-								notes: [].concat(_toConsumableArray(_consts.EMPTY)),
-								center: node[i].center,
-								index: i,
-								selected: selected,
-								handleClick: function handleClick(k) {
-									return _this4.props.handleClick(k, i);
-								},
-								rootReferenceEnabled: _this4.props.rootReferenceEnabled,
-								isInput: true,
-								mode: _this4.props.mode,
-								mute: _this4.state.mute
-							})
-						)
-					);
-				})
+				{ style: containerStyle },
+				domNodes
 			);
 		}
 	}]);
@@ -46370,6 +46199,170 @@ var Input = function (_React$Component) {
 }(_react2.default.Component);
 
 exports.default = Input;
+
+/***/ }),
+/* 124 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+	value: true
+});
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+var _react = __webpack_require__(4);
+
+var _react2 = _interopRequireDefault(_react);
+
+var _consts = __webpack_require__(14);
+
+var _colors = __webpack_require__(13);
+
+var _util = __webpack_require__(21);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } }
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
+var FretBoard = function (_React$Component) {
+	_inherits(FretBoard, _React$Component);
+
+	function FretBoard() {
+		_classCallCheck(this, FretBoard);
+
+		return _possibleConstructorReturn(this, (FretBoard.__proto__ || Object.getPrototypeOf(FretBoard)).apply(this, arguments));
+	}
+
+	_createClass(FretBoard, [{
+		key: "getLabelColors",
+		value: function getLabelColors() {
+			var selectedDict = {};
+			var result = {};
+			_consts.NOTE_NAMES.forEach(function (name) {
+				selectedDict[name] = [];
+			});
+
+			this.props.selected.forEach(function (notes, i) {
+				notes.forEach(function (note, j) {
+					if (note) selectedDict[_consts.NOTE_NAMES[j]].push(i);
+				});
+			});
+
+			_consts.NOTE_NAMES.forEach(function (name) {
+				var colors = selectedDict[name].map(function (i) {
+					return (0, _colors.COLORS)(1)[i];
+				});
+
+				if (colors.length > 1) {
+					var stripes = [];
+					for (var i = 0; i < colors.length; i++) {
+						stripes.push(colors[i] + " " + 100 * i / colors.length + "%");
+						if (colors[i + 1]) stripes.push(colors[i] + " " + 100 * (i + 1) / colors.length + "%");
+					}
+
+					stripes.join(", ");
+
+					result[name] = {
+						background: "linear-gradient(45deg, " + stripes + ")",
+						color: _colors.offWhite
+					};
+				} else if (colors.length === 1) {
+					result[name] = {
+						background: colors[0],
+						color: _colors.offWhite
+					};
+				} else {
+					result[name] = {
+						background: "#ccc",
+						color: "#444"
+					};
+				}
+			});
+
+			return result;
+		}
+	}, {
+		key: "fretComponents",
+		value: function fretComponents() {
+			var fretDivs = [];
+			var colors = this.getLabelColors();
+			var eString = (0, _util.rotate)([].concat(_toConsumableArray(_consts.NOTE_NAMES)), 5);
+
+			var strings = Array(6).fill(0).map(function (_, i) {
+				var times = i > 3 ? 5 * i - 1 : 5 * i;
+				var string = (0, _util.rotate)([].concat(_toConsumableArray(eString)), times);
+				string = string.concat(string.slice(0, 4));
+				return string;
+			}).reverse();
+
+			strings.forEach(function (noteNames, i) {
+				noteNames.forEach(function (name, j) {
+					var fretStyle = {
+						boxShadow: "0px 0px 0px 2px #333",
+						height: "100%",
+						color: colors[name].color,
+						background: colors[name].background,
+						display: "flex",
+						justifyContent: "center",
+						alignItems: "center"
+					};
+
+					fretDivs.push(_react2.default.createElement(
+						"div",
+						{ key: noteNames.length * i + j, style: fretStyle },
+						name
+					));
+				});
+			});
+
+			return fretDivs;
+		}
+	}, {
+		key: "render",
+		value: function render() {
+			var style = Object.assign({}, this.props.style, {
+				position: "relative",
+				display: "grid",
+				gridTemplateColumns: "repeat(16, 1fr)"
+			});
+
+			var fretDivs = this.fretComponents();
+
+			// const svgContainerStyle = {
+			// 	position: "absolute",
+			// 	height: "100%",
+			// 	width: "100%",
+			// 	zIndex: 50,
+			// 	top: 0,
+			// 	left: 0,
+			// };
+
+			// const lineStyle = {
+			// 	stroke: "red",
+			// 	strokeWidth: "1",
+			// };
+
+			return _react2.default.createElement(
+				"div",
+				{ style: style },
+				fretDivs
+			);
+		}
+	}]);
+
+	return FretBoard;
+}(_react2.default.Component);
+
+exports.default = FretBoard;
 
 /***/ })
 /******/ ]);

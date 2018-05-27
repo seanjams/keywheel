@@ -14,29 +14,24 @@ import {
 	SHAPES,
 } from "./consts";
 
-//keywheel size control
-
 //Scale Node class dynamically holds information about location
 export class ScaleNode {
-	constructor(notes = C, center = WHEEL_CENTER) {
+	constructor(notes = C, center = { x: 0, y: 0 }) {
 		this.rank = 0;
 		this.notes = notes;
 		this.center = center;
 		this.parent = null;
-		this.parentCenter = null;
 		this.children = [];
 	}
 
 	addChild(node) {
 		node.parent = this;
-		node.parentCenter = this.center;
 		node.rank = this.rank + 1;
 		this.children.push(node);
 	}
 
 	removeChild(node) {
 		node.parent = null;
-		node.parentCenter = null;
 		node.rank = 0;
 		this.children.splice(this.children.indexOf(node), 1);
 	}
@@ -64,9 +59,9 @@ export const tweek = (notes, idx) => {
 	return { notes: getNotes(pegs), tweekStatus };
 };
 
-export const generateNeighbors = (node, visited, delta, flip) => {
-	const { notes, parentCenter, center } = node;
-	const parentNotes = node.parent ? node.parent.notes : null;
+export const generateNeighbors = (node, visited, flip) => {
+	const { notes, parent, center } = node;
+	const parentNotes = parent ? parent.notes : null;
 	const adjustedPegs = [];
 	let neighbors = [];
 	let parentTweekStatus;
@@ -96,16 +91,16 @@ export const generateNeighbors = (node, visited, delta, flip) => {
 			neighbors = rotate(neighbors);
 		}
 		neighbors.forEach((neighbor, i) => {
-			neighbor.center = getCenter(center, DIRS[i], delta, flip);
+			neighbor.center = getCenter(center, DIRS[i], flip);
 		});
 	} else {
-		const deltaX = 2 * center.x - parentCenter.x;
-		const deltaY = 2 * center.y - parentCenter.y;
+		const deltaX = 2 * center.x - parent.center.x;
+		const deltaY = 2 * center.y - parent.center.y;
 		neighbors.forEach(neighbor => {
 			if (isSameType(parentNotes, neighbor.notes)) {
-				neighbor.center = { x: deltaX, y: parentCenter.y };
+				neighbor.center = { x: deltaX, y: parent.center.y };
 			} else if (neighbor.tweekStatus === parentTweekStatus) {
-				neighbor.center = { x: parentCenter.x, y: deltaY };
+				neighbor.center = { x: parent.center.x, y: deltaY };
 			} else {
 				neighbor.center = { x: deltaX, y: deltaY };
 			}
@@ -115,7 +110,7 @@ export const generateNeighbors = (node, visited, delta, flip) => {
 	return { neighbors, adjustedPegs };
 };
 
-export const buildKeyWheel = (start, delta, flip) => {
+export const buildKeyWheel = (start, flip = 1) => {
 	const queue = [start];
 	const visited = [start];
 	let currentNode, neighbors, newNode;
@@ -123,7 +118,7 @@ export const buildKeyWheel = (start, delta, flip) => {
 	while (visited.length < 36) {
 		currentNode = queue.shift();
 		if (!currentNode) return start;
-		neighbors = generateNeighbors(currentNode, visited, delta, flip).neighbors;
+		neighbors = generateNeighbors(currentNode, visited, flip).neighbors;
 
 		neighbors.forEach(neighbor => {
 			if (!neighbor) return;
@@ -134,7 +129,11 @@ export const buildKeyWheel = (start, delta, flip) => {
 		});
 	}
 
-	return visited;
+	return visited.sort((a, b) => {
+		return a.center.y === b.center.y
+			? a.center.x - b.center.x
+			: a.center.y - b.center.y;
+	});
 };
 
 //returns chord color, name, and rootIdx from dictionary
@@ -164,43 +163,6 @@ export const chordReader = notes => {
 	}
 
 	return { color, name, rootIdx };
-};
-
-export const updateCanvas = (ctx, radius, selectedNotes, colorIdx = 8) => {
-	ctx.clearRect(0, 0, 2 * radius, 2 * radius);
-	selectedNotes.forEach((notes, i) => {
-		if (notes.length === 0) return;
-		const pegs = getPegs(notes);
-		if (pegs.length < 3) return;
-		const start = {
-			x: radius * (1 + Math.sin(Math.PI * pegs[0] / 6)),
-			y: radius * (1 - Math.cos(Math.PI * pegs[0] / 6)),
-		};
-
-		if (selectedNotes.length > 1) {
-			ctx.fillStyle = COLORS(0.5)[i];
-		} else {
-			ctx.fillStyle = COLORS(0.5)[colorIdx];
-		}
-
-		ctx.strokeStyle = grey;
-
-		//draw chord
-		ctx.beginPath();
-		ctx.moveTo(start.x, start.y);
-		pegs.forEach((peg, i) => {
-			if (i === 0) return;
-			let delta = peg - peg[i - 1];
-			const newPos = {
-				x: radius * (1 + Math.sin(Math.PI * peg / 6)),
-				y: radius * (1 - Math.cos(Math.PI * peg / 6)),
-			};
-			ctx.lineTo(newPos.x, newPos.y);
-		});
-		ctx.closePath();
-		ctx.stroke();
-		ctx.fill();
-	});
 };
 
 export const soundNotes = (pegs, modeIdx = 0, poly = false) => {
@@ -318,31 +280,21 @@ export const isSameType = (notes1, notes2) => {
 	return false;
 };
 
-export const rotate = arr => {
-	const rotated = [];
-	for (let i = 0; i < arr.length; i++) {
-		if (i === arr.length - 1) {
-			rotated.push(arr[0]);
-		} else {
-			rotated.push(arr[i + 1]);
-		}
+export const rotate = (arr, times = 1) => {
+	let rotated = [...arr];
+	for (let i = 0; i < times; i++) {
+		rotated = rotated.slice(1).concat(rotated[0]);
 	}
 
 	return rotated;
 };
 
-export const getCenter = (
-	center,
-	parentDirection,
-	d = SCALE_SPACING,
-	flip = false
-) => {
-	flip = flip ? -1 : 1;
+export const getCenter = (center, parentDirection, dy) => {
 	const deltas = {
-		TL: { x: center.x + d, y: center.y + d * flip },
-		BL: { x: center.x + d, y: center.y - d * flip },
-		TR: { x: center.x - d, y: center.y + d * flip },
-		BR: { x: center.x - d, y: center.y - d * flip },
+		TL: { x: center.x + 1, y: center.y + dy },
+		BL: { x: center.x + 1, y: center.y - dy },
+		TR: { x: center.x - 1, y: center.y + dy },
+		BR: { x: center.x - 1, y: center.y - dy },
 	};
 
 	return deltas[parentDirection];

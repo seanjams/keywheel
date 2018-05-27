@@ -1,17 +1,45 @@
 import React from "react";
 import Scale from "./scale";
-import {
-	EMPTY,
-	SHAPES,
-	NOTE_NAMES,
-	SCALE_SPACING,
-	TEXT_LABEL_SIZE,
-	node,
-	getInputNodes,
-} from "../consts";
+import { EMPTY, SHAPES, NOTE_NAMES } from "../consts";
 import { getNotes, getPegs, soundNotes, chordReader } from "../util";
 import { buttonBlue } from "../colors";
 import isEqual from "lodash/isEqual";
+
+const containerStyle = {
+	display: "grid",
+	gridTemplateColumns: "repeat(4, 1fr)",
+	gridAutoRows: "2.5vw 2.5vw 10vw 2.5vw 2.5vw 10vw",
+	justifyItems: "center",
+	alignItems: "center",
+	width: "40vw",
+	height: "30vw",
+};
+
+const buttonStyle = {
+	padding: "3px",
+	border: "1px solid brown",
+	backgroundColor: buttonBlue,
+	borderRadius: "5px",
+	textAlign: "center",
+	fontSize: "1vw",
+};
+
+const buttonContainerStyle = {
+	display: "flex",
+	justifyContent: "center",
+};
+
+const optionContainerStyle = {
+	height: "100%",
+	display: "flex",
+	flexDirection: "column",
+};
+
+const selectContainerStyle = {
+	display: "flex",
+	justifyContent: "center",
+	fontSize: "1vw",
+};
 
 class Input extends React.Component {
 	constructor(props) {
@@ -69,100 +97,80 @@ class Input extends React.Component {
 
 	render() {
 		const { selected } = this.props;
-		const node = getInputNodes();
-		return (
-			<div>
-				{selected.map((_, i) => {
-					const scaleSpacing = SCALE_SPACING();
+		const buttonDivs = [];
+		const scaleDivs = [];
+		const selectDivs = [];
 
-					const buttonStyle = {
-						padding: "3px",
-						border: "1px solid brown",
-						backgroundColor: buttonBlue,
-						borderRadius: "5px",
-						textAlign: "center",
-						marginRight: "5px",
-					};
+		selected.forEach((_, i) => {
+			buttonDivs.push(
+				<div style={buttonContainerStyle} key={3 * i}>
+					<button style={buttonStyle} onClick={() => this.soundChord(i)}>
+						Sound
+					</button>
+					<button style={buttonStyle} onClick={() => this.props.clearNotes(i)}>
+						Clear
+					</button>
+				</div>
+			);
 
-					const buttonContainerStyle = {
-						position: "absolute",
-						top: node[i].center.y - 1.4 * scaleSpacing,
-						left: node[i].center.x - 2 * scaleSpacing / 5,
-						fontSize: `${TEXT_LABEL_SIZE()}px`,
-						display: "flex",
-					};
+			selectDivs.push(
+				<div style={selectContainerStyle} key={3 * i + 1}>
+					<select onChange={e => this.onNameChange(e, i)} defaultValue="">
+						<option disabled value="">
+							--
+						</option>
+						{NOTE_NAMES.map((name, j) => {
+							return (
+								<option key={j} value={name}>
+									{name}
+								</option>
+							);
+						})}
+					</select>
+					<select onChange={e => this.onChordChange(e, i)} defaultValue="">
+						<option disabled value="">
+							--
+						</option>
+						{Object.keys(SHAPES).map((chordName, j) => {
+							return (
+								<option key={j} value={chordName}>
+									{chordName}
+								</option>
+							);
+						})}
+					</select>
+				</div>
+			);
 
-					const selectContainerStyle = {
-						position: "absolute",
-						top: node[i].center.y - scaleSpacing,
-						left: node[i].center.x - 5 * scaleSpacing / 8,
-						fontSize: `${TEXT_LABEL_SIZE()}px`,
-					};
+			scaleDivs.push(
+				<Scale
+					notes={[...EMPTY]}
+					index={i}
+					selected={selected}
+					handleClick={k => this.props.handleClick(k, i)}
+					rootReferenceEnabled={this.props.rootReferenceEnabled}
+					isInput={true}
+					mode={this.props.mode}
+					mute={this.state.mute}
+					key={3 * i + 2}
+					style={{
+						width: "100%",
+						height: "100%",
+						position: "relative",
+					}}
+				/>
+			);
+		});
 
-					return (
-						<div key={i}>
-							<div style={buttonContainerStyle}>
-								<button style={buttonStyle} onClick={() => this.soundChord(i)}>
-									Sound
-								</button>
-								<button
-									style={buttonStyle}
-									onClick={() => this.props.clearNotes(i)}
-								>
-									Clear
-								</button>
-							</div>
-							<div>
-								<div style={selectContainerStyle}>
-									<select
-										onChange={e => this.onNameChange(e, i)}
-										defaultValue=""
-									>
-										<option disabled value="">
-											--
-										</option>
-										{NOTE_NAMES.map((name, j) => {
-											return (
-												<option key={j} value={name}>
-													{name}
-												</option>
-											);
-										})}
-									</select>
-									<select
-										onChange={e => this.onChordChange(e, i)}
-										style={{ width: 1.2 * scaleSpacing }}
-										defaultValue=""
-									>
-										<option disabled value="">
-											--
-										</option>
-										{Object.keys(SHAPES).map((chordName, j) => {
-											return (
-												<option key={j} value={chordName}>
-													{chordName}
-												</option>
-											);
-										})}
-									</select>
-								</div>
-								<Scale
-									notes={[...EMPTY]}
-									center={node[i].center}
-									index={i}
-									selected={selected}
-									handleClick={k => this.props.handleClick(k, i)}
-									rootReferenceEnabled={this.props.rootReferenceEnabled}
-									isInput={true}
-									mode={this.props.mode}
-									mute={this.state.mute}
-								/>
-							</div>
-						</div>
-					);
-				})}
-			</div>
-		);
+		const domNodes = buttonDivs
+			.slice(0, 4)
+			.concat(selectDivs.slice(0, 4))
+			.concat(scaleDivs.slice(0, 4))
+			.concat(buttonDivs.slice(4))
+			.concat(selectDivs.slice(4))
+			.concat(scaleDivs.slice(4));
+
+		return <div style={containerStyle}>{domNodes}</div>;
 	}
 }
 

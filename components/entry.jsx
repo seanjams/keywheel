@@ -2,6 +2,7 @@ import React from "react";
 import ReactDOM from "react-dom";
 import Scale from "./scale";
 import Input from "./input";
+import FretBoard from "./fretboard";
 import {
 	ScaleNode,
 	buildKeyWheel,
@@ -10,8 +11,12 @@ import {
 	getEmptySet,
 	getMajor,
 } from "../util";
-import { WHEEL_CENTER, C, EMPTY, SCALE_SPACING, width } from "../consts";
+import { C, EMPTY } from "../consts";
 import { buttonBlue } from "../colors";
+
+const mainStyle = {
+	boxSizing: "border-box",
+};
 
 const buttonStyle = {
 	padding: "3px",
@@ -25,11 +30,11 @@ const buttonStyle = {
 class Root extends React.Component {
 	constructor(props) {
 		super(props);
-		const start = new ScaleNode(C, WHEEL_CENTER());
+		const start = new ScaleNode(C);
 
 		this.state = {
 			start: 0,
-			scales: buildKeyWheel(start, SCALE_SPACING(), false),
+			scales: buildKeyWheel(start),
 			selected: getEmptySet(),
 			mode: "union",
 			rootReferenceEnabled: true,
@@ -48,12 +53,12 @@ class Root extends React.Component {
 	}
 
 	componentDidMount() {
-		window.addEventListener("resize", this.rebuildKeyWheel);
+		// window.addEventListener("resize", this.rebuildKeyWheel);
 		window.addEventListener("keydown", this.handleKeyPress);
 	}
 
 	componentWillUnmount() {
-		window.removeEventListener("resize", this.rebuildKeyWheel);
+		// window.removeEventListener("resize", this.rebuildKeyWheel);
 		window.removeEventListener("keydown", this.handleKeyPress);
 	}
 
@@ -66,12 +71,10 @@ class Root extends React.Component {
 	}
 
 	rebuildKeyWheel() {
-		const width = SCALE_SPACING();
-		const newCenter = WHEEL_CENTER();
 		const newNotes = getNotes(getMajor(this.state.start));
-		const newStart = new ScaleNode(newNotes, newCenter);
-		const flip = this.state.start > 6;
-		const scales = buildKeyWheel(newStart, width, flip);
+		const newStart = new ScaleNode(newNotes);
+		const flip = this.state.start > 6 ? -1 : 1;
+		const scales = buildKeyWheel(newStart, flip);
 		this.setState({ scales });
 	}
 
@@ -126,17 +129,27 @@ class Root extends React.Component {
 	scaleComponents() {
 		const { selected, scales, rootReferenceEnabled, mode } = this.state;
 		return scales.map((node, i) => {
+			const rowShift = i % 12 > 5 ? 1 : 0;
+			const colStart = 4 * (i % 6) + 2 * rowShift + 1;
+			const rowStart = 2 * Math.floor(6 * (i / 36)) + 1;
+
+			const style = {
+				position: "relative",
+				gridColumn: `${colStart}/ span 3`,
+				gridRow: `${rowStart}/ span 3`,
+			};
+
 			return (
 				<Scale
 					key={i}
-					notes={node.notes}
-					center={node.center}
-					selected={selected}
-					isInput={false}
-					mode={mode}
-					rootReferenceEnabled={rootReferenceEnabled}
-					index={-1}
-					mute={this.state.mute}
+					notes={node.notes} //array of 12 bools, the notes that are part of the scale
+					selected={selected} //array of 8 separate notes objects for svg and coloring
+					isInput={false} //bool for styling svg and event handlers of input type scales
+					mode={mode} //string for deciding how to render svg
+					rootReferenceEnabled={rootReferenceEnabled} //bool for labeling notes or numbers
+					index={-1} //int for color index of input type scales
+					mute={this.state.mute} //bool for volume
+					style={style}
 				/>
 			);
 		});
@@ -146,81 +159,80 @@ class Root extends React.Component {
 		const { selected, rootReferenceEnabled } = this.state;
 		const scaleDivs = this.scaleComponents();
 		return (
-			<div style={{ fontSize: "14px" }}>
-				<div
-					style={{ width: "65%", display: "inline-block", textAlign: "center" }}
-				>
-					{scaleDivs}
-					<div
-						style={{
-							position: "relative",
-							top: 6 * width() / 20,
-						}}
-					>
-						<button
-							onClick={() => this.shiftScale(2)}
-							style={Object.assign({ marginRight: "50px" }, buttonStyle)}
-						>
-							Left
-						</button>
-						<button onClick={() => this.shiftScale(-2)} style={buttonStyle}>
-							Right
-						</button>
-					</div>
-				</div>
-
+			<div style={mainStyle}>
 				<div
 					style={{
-						width: "35%",
 						display: "inline-block",
-						position: "relative",
-						top: 6 * width() / 20,
+						margin: "auto",
+						width: "fit-content",
 					}}
 				>
-					<div>
-						<div
-							style={{
-								display: "flex",
-								justifyContent: "space-evenly",
-								paddingTop: "30px",
-							}}
-						>
-							<button style={buttonStyle} onClick={this.toggleMute}>
-								{this.state.mute ? "Unmute" : "Mute"}
-							</button>
-							<button style={buttonStyle} onClick={this.clearNotes}>
-								Clear All
-							</button>
-							<button style={buttonStyle} onClick={this.toggleRef}>
-								View: {this.state.rootReferenceEnabled ? "Scale" : "Arbitrary"}
-							</button>
-							<button style={buttonStyle} onClick={this.toggleMode}>
-								Mode: {this.state.mode === "union" ? "Union" : "Intersection"}
-							</button>
-						</div>
-						<div
-							style={{
-								display: "flex",
-								justifyContent: "space-evenly",
-								paddingTop: "30px",
-							}}
-						>
-							<button style={buttonStyle}>Blank</button>
-							<button style={buttonStyle}>Blank</button>
-							<button style={buttonStyle}>Blank</button>
-							<button style={buttonStyle}>Blank</button>
-						</div>
+					<div
+						style={{
+							display: "grid",
+							height: "30vw",
+							width: "60vw",
+							gridTemplateColumns: "2fr repeat(12, 5fr 2fr) 2fr",
+							gridTemplateRows: "2fr repeat(6, 5fr 2fr)",
+						}}
+					>
+						{scaleDivs}
 					</div>
 				</div>
-				<Input
-					selected={selected}
-					handleClick={this.handleClick}
-					handleGroup={this.handleGroup}
-					clearNotes={this.clearNotes}
-					rootReferenceEnabled={rootReferenceEnabled}
-					mode={this.state.mode}
-					mute={this.state.mute}
-				/>
+				<div
+					style={{
+						display: "inline-block",
+						margin: "auto",
+						width: "fit-content",
+					}}
+				>
+					<Input
+						selected={selected}
+						handleClick={this.handleClick}
+						handleGroup={this.handleGroup}
+						clearNotes={this.clearNotes}
+						rootReferenceEnabled={rootReferenceEnabled}
+						mode={this.state.mode}
+						mute={this.state.mute}
+					/>
+				</div>
+				<div style={{ margin: "50px auto", width: "fit-content" }}>
+					<FretBoard
+						selected={selected}
+						style={{
+							width: "80vw",
+							height: "10vw",
+						}}
+					/>
+				</div>
+
+				{/* <div style={{ display: "flex" }}>
+					<button
+						onClick={() => this.shiftScale(2)}
+						style={Object.assign({ marginRight: "50px" }, buttonStyle)}
+					>
+						Left
+					</button>
+					<button onClick={() => this.shiftScale(-2)} style={buttonStyle}>
+						Right
+					</button>
+				</div> */}
+				<div>
+					<div style={{ display: "flex" }}>
+						<button style={buttonStyle} onClick={this.toggleMute}>
+							{this.state.mute ? "Unmute" : "Mute"}
+						</button>
+						<button style={buttonStyle} onClick={this.clearNotes}>
+							Clear All
+						</button>
+						<button style={buttonStyle} onClick={this.toggleRef}>
+							View: {this.state.rootReferenceEnabled ? "Scale" : "Arbitrary"}
+						</button>
+						<button style={buttonStyle} onClick={this.toggleMode}>
+							Mode: {this.state.mode === "union" ? "Union" : "Intersection"}
+						</button>
+					</div>
+				</div>
 			</div>
 		);
 	}

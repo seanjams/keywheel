@@ -1,23 +1,6 @@
-export const width = () => window.innerWidth;
+export const SCALE_RADIUS = 41;
 
-export const SCALE_SPACING = () => width() / 20;
-
-export const SCALE_RADIUS = () => width() / 40;
-
-export const NOTE_RADIUS = () => width() * 3 / 290;
-
-export const NUM_LABEL_SIZE = () => parseFloat((width() / 2048).toFixed(1));
-
-export const TEXT_LABEL_SIZE = () => parseInt((width() / 120).toFixed(0));
-
-export const INPUT_NOTE_RADIUS = 16;
-
-export const INPUT_SCALE_RADIUS = 40;
-
-export const WHEEL_CENTER = () => ({
-	x: 6 * width() / 20,
-	y: 4 * width() / 20,
-});
+export const NOTE_RADIUS = 9;
 
 export const DIRS = ["TL", "TR", "BL", "BR"];
 
@@ -89,70 +72,3 @@ export const SHAPES = {
 	Melmin: [0, 2, 3, 5, 7, 9, 11],
 	Neo: [0, 1, 3, 5, 7, 9, 11],
 };
-
-const getX = i => {
-	return (4 * i + 35) * width() / 50;
-};
-
-const getY = i => {
-	return [2 * width() / 20, 5 * width() / 20][i];
-};
-
-export const getInputNodes = () => [
-	{
-		notes: [...EMPTY],
-		center: {
-			x: getX(0),
-			y: getY(0),
-		},
-	},
-	{
-		notes: [...EMPTY],
-		center: {
-			x: getX(1),
-			y: getY(0),
-		},
-	},
-	{
-		notes: [...EMPTY],
-		center: {
-			x: getX(2),
-			y: getY(0),
-		},
-	},
-	{
-		notes: [...EMPTY],
-		center: {
-			x: getX(3),
-			y: getY(0),
-		},
-	},
-	{
-		notes: [...EMPTY],
-		center: {
-			x: getX(0),
-			y: getY(1),
-		},
-	},
-	{
-		notes: [...EMPTY],
-		center: {
-			x: getX(1),
-			y: getY(1),
-		},
-	},
-	{
-		notes: [...EMPTY],
-		center: {
-			x: getX(2),
-			y: getY(1),
-		},
-	},
-	{
-		notes: [...EMPTY],
-		center: {
-			x: getX(3),
-			y: getY(1),
-		},
-	},
-];
