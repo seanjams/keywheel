@@ -75,6 +75,7 @@ class FretBoard extends React.Component {
 					display: "flex",
 					justifyContent: "center",
 					alignItems: "center",
+					fontSize: "1.1vw",
 				};
 
 				fretDivs.push(

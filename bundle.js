@@ -46313,7 +46313,8 @@ var FretBoard = function (_React$Component) {
 						background: colors[name].background,
 						display: "flex",
 						justifyContent: "center",
-						alignItems: "center"
+						alignItems: "center",
+						fontSize: "1.1vw"
 					};
 
 					fretDivs.push(_react2.default.createElement(
