@@ -48,8 +48,6 @@ class Input extends React.Component {
 			noteNames: Array(8).fill("C"),
 			chordNames: Array(8).fill("major"),
 		};
-
-		this.handleKeyPress = this.handleKeyPress.bind(this);
 	}
 
 	componentDidMount() {
@@ -60,10 +58,10 @@ class Input extends React.Component {
 		window.removeEventListener("keypress", this.handleKeyPress);
 	}
 
-	handleKeyPress(e) {
+	handleKeyPress = e => {
 		const i = parseInt(e.key);
 		if (i > 0 && i < 9) this.soundChord(i - 1);
-	}
+	};
 
 	calculateChord(i) {
 		const { noteNames, chordNames } = this.state;

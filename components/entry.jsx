@@ -40,16 +40,6 @@ class Root extends React.Component {
 			rootReferenceEnabled: true,
 			mute: false,
 		};
-
-		this.handleClick = this.handleClick.bind(this);
-		this.handleGroup = this.handleGroup.bind(this);
-		this.toggleRef = this.toggleRef.bind(this);
-		this.toggleMode = this.toggleMode.bind(this);
-		this.toggleMute = this.toggleMute.bind(this);
-		this.rebuildKeyWheel = this.rebuildKeyWheel.bind(this);
-		this.clearNotes = this.clearNotes.bind(this);
-		this.shiftScale = this.shiftScale.bind(this);
-		this.handleKeyPress = this.handleKeyPress.bind(this);
 	}
 
 	componentDidMount() {
@@ -62,28 +52,28 @@ class Root extends React.Component {
 		window.removeEventListener("keydown", this.handleKeyPress);
 	}
 
-	handleKeyPress(e) {
+	handleKeyPress = e => {
 		if (e.key === "ArrowLeft") {
 			this.shiftScale(2);
 		} else if (e.key === "ArrowRight") {
 			this.shiftScale(-2);
 		}
-	}
+	};
 
-	rebuildKeyWheel() {
+	rebuildKeyWheel = () => {
 		const newNotes = getNotes(getMajor(this.state.start));
 		const newStart = new ScaleNode(newNotes);
 		const flip = this.state.start > 6 ? -1 : 1;
 		const scales = buildKeyWheel(newStart, flip);
 		this.setState({ scales });
-	}
+	};
 
-	shiftScale(inc) {
-		const start = ((this.state.start + inc) % 12 + 12) % 12;
+	shiftScale = inc => {
+		const start = (((this.state.start + inc) % 12) + 12) % 12;
 		this.setState({ start }, this.rebuildKeyWheel);
-	}
+	};
 
-	clearNotes(i = -1) {
+	clearNotes = (i = -1) => {
 		if (i >= 0) {
 			const selected = [...this.state.selected];
 			selected[i] = [...EMPTY];
@@ -91,40 +81,40 @@ class Root extends React.Component {
 		} else {
 			this.setState({ selected: getEmptySet() });
 		}
-	}
+	};
 
-	handleClick(i, id) {
+	handleClick = (i, id) => {
 		const selected = [];
 		this.state.selected.forEach(notes => {
 			selected.push([...notes]);
 		});
 		selected[id][i] = !selected[id][i];
 		this.setState({ selected });
-	}
+	};
 
-	handleGroup(notes, id) {
+	handleGroup = (notes, id) => {
 		const selected = [];
 		this.state.selected.forEach(notes => {
 			selected.push([...notes]);
 		});
 		selected[id] = notes;
 		this.setState({ selected });
-	}
+	};
 
-	toggleMode() {
+	toggleMode = () => {
 		const mode = this.state.mode === "union" ? "intersection" : "union";
 		this.setState({ mode });
-	}
+	};
 
-	toggleRef() {
+	toggleRef = () => {
 		const rootReferenceEnabled = !this.state.rootReferenceEnabled;
 		this.setState({ rootReferenceEnabled });
-	}
+	};
 
-	toggleMute() {
+	toggleMute = () => {
 		const mute = !this.state.mute;
 		this.setState({ mute });
-	}
+	};
 
 	scaleComponents() {
 		const { selected, scales, rootReferenceEnabled, mode } = this.state;

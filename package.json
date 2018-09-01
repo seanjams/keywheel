@@ -11,16 +11,17 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "lodash": "^4.17.4",
+    "lodash": "^4.17.10",
     "react": "^16.2.0",
     "react-dom": "^16.2.0",
     "tone": "^0.11.11"
   },
   "devDependencies": {
-    "babel-core": "^6.26.0",
+    "babel-core": "^6.26.3",
     "babel-loader": "^7.1.2",
-    "babel-preset-env": "^1.6.1",
+    "babel-preset-env": "^1.7.0",
     "babel-preset-react": "^6.24.1",
+    "babel-preset-stage-1": "^6.24.1",
     "webpack": "^3.10.0"
   }
 }

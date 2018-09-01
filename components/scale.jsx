@@ -73,9 +73,9 @@ class Scale extends React.Component {
 
 			const points = pegs.map((peg, i) => {
 				const x =
-					SCALE_RADIUS * (1 + Math.sin(Math.PI * peg / 6)) + NOTE_RADIUS;
+					SCALE_RADIUS * (1 + Math.sin((Math.PI * peg) / 6)) + NOTE_RADIUS;
 				const y =
-					SCALE_RADIUS * (1 - Math.cos(Math.PI * peg / 6)) + NOTE_RADIUS;
+					SCALE_RADIUS * (1 - Math.cos((Math.PI * peg) / 6)) + NOTE_RADIUS;
 				return `${x},${y}`;
 			});
 
@@ -157,9 +157,9 @@ class Scale extends React.Component {
 				backgroundColor,
 				boxSizing: "border-box",
 				border: `1px solid ${borderColor}`,
-				top: `${SCALE_RADIUS * (1 - Math.cos(Math.PI * i / 6)) -
+				top: `${SCALE_RADIUS * (1 - Math.cos((Math.PI * i) / 6)) -
 					2 * NOTE_RADIUS * i}%`,
-				left: `${SCALE_RADIUS * (1 + Math.sin(Math.PI * i / 6))}%`,
+				left: `${SCALE_RADIUS * (1 + Math.sin((Math.PI * i) / 6))}%`,
 			};
 
 			const numLabelStyle = {
@@ -187,8 +187,8 @@ class Scale extends React.Component {
 		);
 		const relMajor = getMajor(keyRootIdx);
 		let pegs = getPegs(notes);
-		let label;
 		let onClick;
+		let label;
 
 		for (let i = 0; i < pegs.length; i++) {
 			if (pegs[0] === keyRootIdx) break;
@@ -217,7 +217,7 @@ class Scale extends React.Component {
 		const svg = this.getSVG();
 
 		return (
-			<div onClick={onClick} style={Object.assign({}, this.props.style)}>
+			<div onClick={onClick} style={{ ...this.props.style }}>
 				<div style={svgContainerStyle}>
 					<svg width="100%" height="100%" viewBox="0 0 100 100">
 						{Array(selected.length)
