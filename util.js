@@ -146,7 +146,7 @@ export const chordReader = notes => {
 	for (let i = 0; i < chords.length; i++) {
 		chordShape = getNotes(SHAPES[chords[i]]);
 		if (isSameType(notes, chordShape)) {
-			let temp = [...notes];
+			let temp = dup(notes);
 			while (!isEqual(temp, chordShape)) {
 				temp = rotate(temp);
 				rootIdx += 1;
@@ -195,7 +195,7 @@ export const soundNotes = (pegs, modeIdx = 0, poly = false) => {
 	// 	// },
 	// });
 
-	let scale = [...pegs];
+	let scale = dup(pegs);
 	for (let i = 0; i < modeIdx; i++) scale = rotate(scale);
 
 	const freqs = [];
@@ -225,8 +225,34 @@ export const soundNotes = (pegs, modeIdx = 0, poly = false) => {
 	Tone.Transport.start();
 };
 
+//input: [0,2,2,1] relative tablature for Major chord
+//output: [1,3,4,2] corresponding finger to play each note with
+//(1 = index, 2 = middle, 3 = ring, 4 = pinky)
+export const chordFingerMachine = tabArr => {
+	let done = false;
+	const fingers = tabArr.map((_, i) => i);
+	while (!done) {
+		done = true;
+		for (let i = 0; i < tabArr.length - 1; i++) {
+			let first = fingers.indexOf(i);
+			let second = fingers.indexOf(i + 1);
+			if (tabArr[first] > tabArr[second]) {
+				fingers[first] = i + 1;
+				fingers[second] = i;
+				done = false;
+				break;
+			}
+		}
+	}
+	return fingers;
+};
+
 //helper methods
 //////////////////////////////////////////////////////////////////
+
+export const dup = obj => {
+	return JSON.parse(JSON.stringify(obj));
+};
 
 export const includesKey = (nodes, notes) => {
 	const notesArr = nodes.map(node => node.notes);
@@ -249,7 +275,7 @@ export const getPegs = notes => {
 export const getNotes = pegs => {
 	const notes = Array(...EMPTY);
 	pegs.forEach(peg => {
-		peg = (peg % 12 + 12) % 12;
+		peg = mod(peg, 12);
 		notes[peg] = true;
 	});
 
@@ -257,7 +283,7 @@ export const getNotes = pegs => {
 };
 
 export const mergeNotes = notesArr => {
-	const result = [...EMPTY];
+	const result = dup(EMPTY);
 	notesArr.forEach(notes => {
 		notes.forEach((note, i) => {
 			if (note) result[i] = true;
@@ -268,7 +294,7 @@ export const mergeNotes = notesArr => {
 };
 
 export const isSameType = (notes1, notes2) => {
-	let temp = [...notes2];
+	let temp = dup(notes2);
 	for (let i = 0; i < notes2.length; i++) {
 		if (isEqual(notes1, temp)) {
 			return true;
@@ -281,7 +307,7 @@ export const isSameType = (notes1, notes2) => {
 };
 
 export const rotate = (arr, times = 1) => {
-	let rotated = [...arr];
+	let rotated = dup(arr);
 	for (let i = 0; i < times; i++) {
 		rotated = rotated.slice(1).concat(rotated[0]);
 	}
@@ -326,12 +352,48 @@ export const getMajor = rootIdx => {
 };
 
 export const getEmptySet = () => [
-	[...EMPTY],
-	[...EMPTY],
-	[...EMPTY],
-	[...EMPTY],
-	[...EMPTY],
-	[...EMPTY],
-	[...EMPTY],
-	[...EMPTY],
+	dup(EMPTY),
+	dup(EMPTY),
+	dup(EMPTY),
+	dup(EMPTY),
+	dup(EMPTY),
+	dup(EMPTY),
+	dup(EMPTY),
+	dup(EMPTY),
 ];
+
+export const mod = (a, m) => {
+	return ((a % m) + m) % m;
+};
+
+export const bStringStep = (a, b) => {
+	if (a < 2 && b >= 2) return -1;
+	if (b < 2 && a >= 2) return 1;
+	return 0;
+};
+
+export const inRange = point => {
+	return (
+		point && point[0] >= 0 && point[0] <= 5 && point[1] >= 0 && point[1] <= 16
+	);
+};
+
+export const getOctaveFrets = point => {
+	let activeString = point[0];
+	let delta, step;
+	let activeFret = activeString < 2 ? point[1] - 1 : point[1];
+
+	const result = [[dup(point)]];
+	for (let i = 0; i < 6; i++) {
+		if (i === activeString) continue;
+		delta = activeString - i;
+		let j = mod(activeFret - delta * 5, 12);
+		if (i < 2) j += 1;
+		result.push([[i, j]]);
+		if (j + 12 < 16) result.push([[i, j + 12]]);
+	}
+
+	return result;
+};
+
+console.log(getOctaveFrets([0, 2]));

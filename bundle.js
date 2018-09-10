@@ -570,6 +570,47 @@ module.exports = emptyObject;
 /* 9 */
 /***/ (function(module, exports, __webpack_require__) {
 
+var baseIsEqual = __webpack_require__(54);
+
+/**
+ * Performs a deep comparison between two values to determine if they are
+ * equivalent.
+ *
+ * **Note:** This method supports comparing arrays, array buffers, booleans,
+ * date objects, error objects, maps, numbers, `Object` objects, regexes,
+ * sets, strings, symbols, and typed arrays. `Object` objects are compared
+ * by their own, not inherited, enumerable properties. Functions and DOM
+ * nodes are compared by strict equality, i.e. `===`.
+ *
+ * @static
+ * @memberOf _
+ * @since 0.1.0
+ * @category Lang
+ * @param {*} value The value to compare.
+ * @param {*} other The other value to compare.
+ * @returns {boolean} Returns `true` if the values are equivalent, else `false`.
+ * @example
+ *
+ * var object = { 'a': 1 };
+ * var other = { 'a': 1 };
+ *
+ * _.isEqual(object, other);
+ * // => true
+ *
+ * object === other;
+ * // => false
+ */
+function isEqual(value, other) {
+  return baseIsEqual(value, other);
+}
+
+module.exports = isEqual;
+
+
+/***/ }),
+/* 10 */
+/***/ (function(module, exports, __webpack_require__) {
+
 var listCacheClear = __webpack_require__(57),
     listCacheDelete = __webpack_require__(58),
     listCacheGet = __webpack_require__(59),
@@ -605,7 +646,7 @@ module.exports = ListCache;
 
 
 /***/ }),
-/* 10 */
+/* 11 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var eq = __webpack_require__(30);
@@ -632,7 +673,7 @@ module.exports = assocIndexOf;
 
 
 /***/ }),
-/* 11 */
+/* 12 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var Symbol = __webpack_require__(20),
@@ -666,7 +707,7 @@ module.exports = baseGetTag;
 
 
 /***/ }),
-/* 12 */
+/* 13 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var getNative = __webpack_require__(4);
@@ -678,7 +719,7 @@ module.exports = nativeCreate;
 
 
 /***/ }),
-/* 13 */
+/* 14 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var isKeyable = __webpack_require__(82);
@@ -702,7 +743,7 @@ module.exports = getMapData;
 
 
 /***/ }),
-/* 14 */
+/* 15 */
 /***/ (function(module, exports) {
 
 /**
@@ -737,7 +778,7 @@ module.exports = isObjectLike;
 
 
 /***/ }),
-/* 15 */
+/* 16 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -746,11 +787,11 @@ module.exports = isObjectLike;
 Object.defineProperty(exports, "__esModule", {
 	value: true
 });
-exports.getEmptySet = exports.getMajor = exports.getIntervals = exports.getCenter = exports.rotate = exports.isSameType = exports.mergeNotes = exports.getNotes = exports.getPegs = exports.includesKey = exports.soundNotes = exports.chordReader = exports.buildKeyWheel = exports.generateNeighbors = exports.tweek = exports.ScaleNode = undefined;
+exports.getOctaveFrets = exports.inRange = exports.bStringStep = exports.mod = exports.getEmptySet = exports.getMajor = exports.getIntervals = exports.getCenter = exports.rotate = exports.isSameType = exports.mergeNotes = exports.getNotes = exports.getPegs = exports.includesKey = exports.dup = exports.chordFingerMachine = exports.soundNotes = exports.chordReader = exports.buildKeyWheel = exports.generateNeighbors = exports.tweek = exports.ScaleNode = undefined;
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
-var _isEqual = __webpack_require__(18);
+var _isEqual = __webpack_require__(9);
 
 var _isEqual2 = _interopRequireDefault(_isEqual);
 
@@ -916,7 +957,7 @@ var chordReader = exports.chordReader = function chordReader(notes) {
 	for (var i = 0; i < chords.length; i++) {
 		chordShape = getNotes(_consts.SHAPES[chords[i]]);
 		if (isSameType(notes, chordShape)) {
-			var temp = [].concat(_toConsumableArray(notes));
+			var temp = dup(notes);
 			while (!(0, _isEqual2.default)(temp, chordShape)) {
 				temp = rotate(temp);
 				rootIdx += 1;
@@ -968,7 +1009,7 @@ var soundNotes = exports.soundNotes = function soundNotes(pegs) {
 	// 	// },
 	// });
 
-	var scale = [].concat(_toConsumableArray(pegs));
+	var scale = dup(pegs);
 	for (var i = 0; i < modeIdx; i++) {
 		scale = rotate(scale);
 	}var freqs = [];
@@ -994,8 +1035,36 @@ var soundNotes = exports.soundNotes = function soundNotes(pegs) {
 	_tone2.default.Transport.start();
 };
 
+//input: [0,2,2,1] relative tablature for Major chord
+//output: [1,3,4,2] corresponding finger to play each note with
+//(1 = index, 2 = middle, 3 = ring, 4 = pinky)
+var chordFingerMachine = exports.chordFingerMachine = function chordFingerMachine(tabArr) {
+	var done = false;
+	var fingers = tabArr.map(function (_, i) {
+		return i;
+	});
+	while (!done) {
+		done = true;
+		for (var i = 0; i < tabArr.length - 1; i++) {
+			var first = fingers.indexOf(i);
+			var second = fingers.indexOf(i + 1);
+			if (tabArr[first] > tabArr[second]) {
+				fingers[first] = i + 1;
+				fingers[second] = i;
+				done = false;
+				break;
+			}
+		}
+	}
+	return fingers;
+};
+
 //helper methods
 //////////////////////////////////////////////////////////////////
+
+var dup = exports.dup = function dup(obj) {
+	return JSON.parse(JSON.stringify(obj));
+};
 
 var includesKey = exports.includesKey = function includesKey(nodes, notes) {
 	var notesArr = nodes.map(function (node) {
@@ -1020,7 +1089,7 @@ var getPegs = exports.getPegs = function getPegs(notes) {
 var getNotes = exports.getNotes = function getNotes(pegs) {
 	var notes = Array.apply(undefined, _toConsumableArray(_consts.EMPTY));
 	pegs.forEach(function (peg) {
-		peg = (peg % 12 + 12) % 12;
+		peg = mod(peg, 12);
 		notes[peg] = true;
 	});
 
@@ -1028,7 +1097,7 @@ var getNotes = exports.getNotes = function getNotes(pegs) {
 };
 
 var mergeNotes = exports.mergeNotes = function mergeNotes(notesArr) {
-	var result = [].concat(_toConsumableArray(_consts.EMPTY));
+	var result = dup(_consts.EMPTY);
 	notesArr.forEach(function (notes) {
 		notes.forEach(function (note, i) {
 			if (note) result[i] = true;
@@ -1039,7 +1108,7 @@ var mergeNotes = exports.mergeNotes = function mergeNotes(notesArr) {
 };
 
 var isSameType = exports.isSameType = function isSameType(notes1, notes2) {
-	var temp = [].concat(_toConsumableArray(notes2));
+	var temp = dup(notes2);
 	for (var i = 0; i < notes2.length; i++) {
 		if ((0, _isEqual2.default)(notes1, temp)) {
 			return true;
@@ -1054,7 +1123,7 @@ var isSameType = exports.isSameType = function isSameType(notes1, notes2) {
 var rotate = exports.rotate = function rotate(arr) {
 	var times = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 1;
 
-	var rotated = [].concat(_toConsumableArray(arr));
+	var rotated = dup(arr);
 	for (var i = 0; i < times; i++) {
 		rotated = rotated.slice(1).concat(rotated[0]);
 	}
@@ -1099,11 +1168,46 @@ var getMajor = exports.getMajor = function getMajor(rootIdx) {
 };
 
 var getEmptySet = exports.getEmptySet = function getEmptySet() {
-	return [[].concat(_toConsumableArray(_consts.EMPTY)), [].concat(_toConsumableArray(_consts.EMPTY)), [].concat(_toConsumableArray(_consts.EMPTY)), [].concat(_toConsumableArray(_consts.EMPTY)), [].concat(_toConsumableArray(_consts.EMPTY)), [].concat(_toConsumableArray(_consts.EMPTY)), [].concat(_toConsumableArray(_consts.EMPTY)), [].concat(_toConsumableArray(_consts.EMPTY))];
+	return [dup(_consts.EMPTY), dup(_consts.EMPTY), dup(_consts.EMPTY), dup(_consts.EMPTY), dup(_consts.EMPTY), dup(_consts.EMPTY), dup(_consts.EMPTY), dup(_consts.EMPTY)];
 };
 
+var mod = exports.mod = function mod(a, m) {
+	return (a % m + m) % m;
+};
+
+var bStringStep = exports.bStringStep = function bStringStep(a, b) {
+	if (a < 2 && b >= 2) return -1;
+	if (b < 2 && a >= 2) return 1;
+	return 0;
+};
+
+var inRange = exports.inRange = function inRange(point) {
+	return point && point[0] >= 0 && point[0] <= 5 && point[1] >= 0 && point[1] <= 16;
+};
+
+var getOctaveFrets = exports.getOctaveFrets = function getOctaveFrets(point) {
+	var activeString = point[0];
+	var delta = void 0,
+	    step = void 0;
+	var activeFret = activeString < 2 ? point[1] - 1 : point[1];
+
+	var result = [[dup(point)]];
+	for (var i = 0; i < 6; i++) {
+		if (i === activeString) continue;
+		delta = activeString - i;
+		var j = mod(activeFret - delta * 5, 12);
+		if (i < 2) j += 1;
+		result.push([[i, j]]);
+		if (j + 12 < 16) result.push([[i, j + 12]]);
+	}
+
+	return result;
+};
+
+console.log(getOctaveFrets([0, 2]));
+
 /***/ }),
-/* 16 */
+/* 17 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -1163,7 +1267,7 @@ module.exports = invariant;
 /* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(0)))
 
 /***/ }),
-/* 17 */
+/* 18 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -1230,47 +1334,6 @@ if (process.env.NODE_ENV !== 'production') {
 
 module.exports = warning;
 /* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(0)))
-
-/***/ }),
-/* 18 */
-/***/ (function(module, exports, __webpack_require__) {
-
-var baseIsEqual = __webpack_require__(54);
-
-/**
- * Performs a deep comparison between two values to determine if they are
- * equivalent.
- *
- * **Note:** This method supports comparing arrays, array buffers, booleans,
- * date objects, error objects, maps, numbers, `Object` objects, regexes,
- * sets, strings, symbols, and typed arrays. `Object` objects are compared
- * by their own, not inherited, enumerable properties. Functions and DOM
- * nodes are compared by strict equality, i.e. `===`.
- *
- * @static
- * @memberOf _
- * @since 0.1.0
- * @category Lang
- * @param {*} value The value to compare.
- * @param {*} other The other value to compare.
- * @returns {boolean} Returns `true` if the values are equivalent, else `false`.
- * @example
- *
- * var object = { 'a': 1 };
- * var other = { 'a': 1 };
- *
- * _.isEqual(object, other);
- * // => true
- *
- * object === other;
- * // => false
- */
-function isEqual(value, other) {
-  return baseIsEqual(value, other);
-}
-
-module.exports = isEqual;
-
 
 /***/ }),
 /* 19 */
@@ -1344,8 +1407,8 @@ module.exports = isArray;
 
 
 if (process.env.NODE_ENV !== 'production') {
-  var invariant = __webpack_require__(16);
-  var warning = __webpack_require__(17);
+  var invariant = __webpack_require__(17);
+  var warning = __webpack_require__(18);
   var ReactPropTypesSecret = __webpack_require__(44);
   var loggedTypeFailures = {};
 }
@@ -1721,7 +1784,7 @@ var _react = __webpack_require__(2);
 
 var _react2 = _interopRequireDefault(_react);
 
-var _isEqual = __webpack_require__(18);
+var _isEqual = __webpack_require__(9);
 
 var _isEqual2 = _interopRequireDefault(_isEqual);
 
@@ -1729,7 +1792,7 @@ var _colors = __webpack_require__(5);
 
 var _consts = __webpack_require__(6);
 
-var _util = __webpack_require__(15);
+var _util = __webpack_require__(16);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
@@ -2061,7 +2124,7 @@ module.exports = eq;
 /* 31 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var baseGetTag = __webpack_require__(11),
+var baseGetTag = __webpack_require__(12),
     isObject = __webpack_require__(33);
 
 /** `Object#toString` result references. */
@@ -2471,10 +2534,6 @@ var _reactDom = __webpack_require__(45);
 
 var _reactDom2 = _interopRequireDefault(_reactDom);
 
-var _scale = __webpack_require__(29);
-
-var _scale2 = _interopRequireDefault(_scale);
-
 var _input = __webpack_require__(123);
 
 var _input2 = _interopRequireDefault(_input);
@@ -2483,15 +2542,15 @@ var _fretboard = __webpack_require__(124);
 
 var _fretboard2 = _interopRequireDefault(_fretboard);
 
-var _util = __webpack_require__(15);
+var _keywheel = __webpack_require__(126);
+
+var _util = __webpack_require__(16);
 
 var _consts = __webpack_require__(6);
 
 var _colors = __webpack_require__(5);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } }
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
@@ -2503,6 +2562,13 @@ var mainStyle = {
 	boxSizing: "border-box"
 };
 
+var inlineWidgetStyle = {
+	display: "inline-block",
+	margin: "auto",
+	width: "fit-content",
+	verticalAlign: "top"
+};
+
 var buttonStyle = {
 	padding: "3px",
 	border: "1px solid brown",
@@ -2510,6 +2576,11 @@ var buttonStyle = {
 	borderRadius: "5px",
 	textAlign: "center",
 	minWidth: "60px"
+};
+
+var linkContainerStyle = {
+	textAlign: "right",
+	width: "100%"
 };
 
 var Root = function (_React$Component) {
@@ -2548,92 +2619,54 @@ var Root = function (_React$Component) {
 			window.removeEventListener("keydown", this.handleKeyPress);
 		}
 	}, {
-		key: "scaleComponents",
-		value: function scaleComponents() {
-			var _this2 = this;
-
+		key: "render",
+		value: function render() {
 			var _state = this.state,
 			    selected = _state.selected,
 			    scales = _state.scales,
-			    rootReferenceEnabled = _state.rootReferenceEnabled,
-			    mode = _state.mode;
+			    mute = _state.mute,
+			    mode = _state.mode,
+			    rootReferenceEnabled = _state.rootReferenceEnabled;
 
-			return scales.map(function (node, i) {
-				var rowShift = i % 12 > 5 ? 1 : 0;
-				var colStart = 4 * (i % 6) + 2 * rowShift + 1;
-				var rowStart = 2 * Math.floor(6 * (i / 36)) + 1;
-
-				var style = {
-					position: "relative",
-					gridColumn: colStart + "/ span 3",
-					gridRow: rowStart + "/ span 3"
-				};
-
-				return _react2.default.createElement(_scale2.default, {
-					key: i,
-					notes: node.notes //array of 12 bools, the notes that are part of the scale
-					, selected: selected //array of 8 separate notes objects for svg and coloring
-					, isInput: false //bool for styling svg and event handlers of input type scales
-					, mode: mode //string for deciding how to render svg
-					, rootReferenceEnabled: rootReferenceEnabled //bool for labeling notes or numbers
-					, index: -1 //int for color index of input type scales
-					, mute: _this2.state.mute //bool for volume
-					, style: style
-				});
-			});
-		}
-	}, {
-		key: "render",
-		value: function render() {
-			var _state2 = this.state,
-			    selected = _state2.selected,
-			    rootReferenceEnabled = _state2.rootReferenceEnabled;
-
-			var scaleDivs = this.scaleComponents();
 			return _react2.default.createElement(
 				"div",
 				{ style: mainStyle },
 				_react2.default.createElement(
 					"div",
-					{
-						style: {
-							display: "inline-block",
-							margin: "auto",
-							width: "fit-content"
-						}
-					},
+					{ style: linkContainerStyle },
 					_react2.default.createElement(
-						"div",
-						{
-							style: {
-								display: "grid",
-								height: "30vw",
-								width: "60vw",
-								gridTemplateColumns: "2fr repeat(12, 5fr 2fr) 2fr",
-								gridTemplateRows: "2fr repeat(6, 5fr 2fr)"
-							}
-						},
-						scaleDivs
+						"a",
+						{ href: "https://github.com/seanjams/keywheel" },
+						"source"
 					)
 				),
 				_react2.default.createElement(
 					"div",
-					{
-						style: {
-							display: "inline-block",
-							margin: "auto",
-							width: "fit-content"
-						}
-					},
-					_react2.default.createElement(_input2.default, {
-						selected: selected,
-						handleClick: this.handleClick,
-						handleGroup: this.handleGroup,
-						clearNotes: this.clearNotes,
-						rootReferenceEnabled: rootReferenceEnabled,
-						mode: this.state.mode,
-						mute: this.state.mute
-					})
+					null,
+					_react2.default.createElement(
+						"div",
+						{ style: inlineWidgetStyle },
+						_react2.default.createElement(_keywheel.KeyWheel, {
+							selected: selected,
+							scales: scales,
+							rootReferenceEnabled: rootReferenceEnabled,
+							mode: mode,
+							mute: mute
+						})
+					),
+					_react2.default.createElement(
+						"div",
+						{ style: inlineWidgetStyle },
+						_react2.default.createElement(_input2.default, {
+							selected: selected,
+							handleClick: this.handleClick,
+							handleGroup: this.handleGroup,
+							clearNotes: this.clearNotes,
+							rootReferenceEnabled: rootReferenceEnabled,
+							mode: mode,
+							mute: mute
+						})
+					)
 				),
 				_react2.default.createElement(
 					"div",
@@ -2684,72 +2717,72 @@ var Root = function (_React$Component) {
 }(_react2.default.Component);
 
 var _initialiseProps = function _initialiseProps() {
-	var _this3 = this;
+	var _this2 = this;
 
 	this.handleKeyPress = function (e) {
 		if (e.key === "ArrowLeft") {
-			_this3.shiftScale(2);
+			_this2.shiftScale(2);
 		} else if (e.key === "ArrowRight") {
-			_this3.shiftScale(-2);
+			_this2.shiftScale(-2);
 		}
 	};
 
 	this.rebuildKeyWheel = function () {
-		var newNotes = (0, _util.getNotes)((0, _util.getMajor)(_this3.state.start));
+		var newNotes = (0, _util.getNotes)((0, _util.getMajor)(_this2.state.start));
 		var newStart = new _util.ScaleNode(newNotes);
-		var flip = _this3.state.start > 6 ? -1 : 1;
+		var flip = _this2.state.start > 6 ? -1 : 1;
 		var scales = (0, _util.buildKeyWheel)(newStart, flip);
-		_this3.setState({ scales: scales });
+		_this2.setState({ scales: scales });
 	};
 
 	this.shiftScale = function (inc) {
-		var start = ((_this3.state.start + inc) % 12 + 12) % 12;
-		_this3.setState({ start: start }, _this3.rebuildKeyWheel);
+		var start = ((_this2.state.start + inc) % 12 + 12) % 12;
+		_this2.setState({ start: start }, _this2.rebuildKeyWheel);
 	};
 
 	this.clearNotes = function () {
 		var i = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : -1;
 
 		if (i >= 0) {
-			var selected = [].concat(_toConsumableArray(_this3.state.selected));
-			selected[i] = [].concat(_toConsumableArray(_consts.EMPTY));
-			_this3.setState({ selected: selected });
+			var selected = (0, _util.dup)(_this2.state.selected);
+			selected[i] = (0, _util.dup)(_consts.EMPTY);
+			_this2.setState({ selected: selected });
 		} else {
-			_this3.setState({ selected: (0, _util.getEmptySet)() });
+			_this2.setState({ selected: (0, _util.getEmptySet)() });
 		}
 	};
 
 	this.handleClick = function (i, id) {
 		var selected = [];
-		_this3.state.selected.forEach(function (notes) {
-			selected.push([].concat(_toConsumableArray(notes)));
+		_this2.state.selected.forEach(function (notes) {
+			selected.push((0, _util.dup)(notes));
 		});
 		selected[id][i] = !selected[id][i];
-		_this3.setState({ selected: selected });
+		_this2.setState({ selected: selected });
 	};
 
 	this.handleGroup = function (notes, id) {
 		var selected = [];
-		_this3.state.selected.forEach(function (notes) {
-			selected.push([].concat(_toConsumableArray(notes)));
+		_this2.state.selected.forEach(function (notes) {
+			selected.push((0, _util.dup)(notes));
 		});
 		selected[id] = notes;
-		_this3.setState({ selected: selected });
+		_this2.setState({ selected: selected });
 	};
 
 	this.toggleMode = function () {
-		var mode = _this3.state.mode === "union" ? "intersection" : "union";
-		_this3.setState({ mode: mode });
+		var mode = _this2.state.mode === "union" ? "intersection" : "union";
+		_this2.setState({ mode: mode });
 	};
 
 	this.toggleRef = function () {
-		var rootReferenceEnabled = !_this3.state.rootReferenceEnabled;
-		_this3.setState({ rootReferenceEnabled: rootReferenceEnabled });
+		var rootReferenceEnabled = !_this2.state.rootReferenceEnabled;
+		_this2.setState({ rootReferenceEnabled: rootReferenceEnabled });
 	};
 
 	this.toggleMute = function () {
-		var mute = !_this3.state.mute;
-		_this3.setState({ mute: mute });
+		var mute = !_this2.state.mute;
+		_this2.setState({ mute: mute });
 	};
 };
 
@@ -2810,8 +2843,8 @@ if (process.env.NODE_ENV !== "production") {
 
 var _assign = __webpack_require__(7);
 var emptyObject = __webpack_require__(8);
-var invariant = __webpack_require__(16);
-var warning = __webpack_require__(17);
+var invariant = __webpack_require__(17);
+var warning = __webpack_require__(18);
 var emptyFunction = __webpack_require__(3);
 var checkPropTypes = __webpack_require__(22);
 
@@ -4531,8 +4564,8 @@ if (process.env.NODE_ENV !== "production") {
 'use strict';
 
 var React = __webpack_require__(2);
-var invariant = __webpack_require__(16);
-var warning = __webpack_require__(17);
+var invariant = __webpack_require__(17);
+var warning = __webpack_require__(18);
 var ExecutionEnvironment = __webpack_require__(23);
 var _assign = __webpack_require__(7);
 var emptyFunction = __webpack_require__(3);
@@ -20071,7 +20104,7 @@ module.exports = camelize;
 /***/ (function(module, exports, __webpack_require__) {
 
 var baseIsEqualDeep = __webpack_require__(55),
-    isObjectLike = __webpack_require__(14);
+    isObjectLike = __webpack_require__(15);
 
 /**
  * The base implementation of `_.isEqual` which supports partial comparisons
@@ -20193,7 +20226,7 @@ module.exports = baseIsEqualDeep;
 /* 56 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var ListCache = __webpack_require__(9),
+var ListCache = __webpack_require__(10),
     stackClear = __webpack_require__(62),
     stackDelete = __webpack_require__(63),
     stackGet = __webpack_require__(64),
@@ -20245,7 +20278,7 @@ module.exports = listCacheClear;
 /* 58 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var assocIndexOf = __webpack_require__(10);
+var assocIndexOf = __webpack_require__(11);
 
 /** Used for built-in method references. */
 var arrayProto = Array.prototype;
@@ -20286,7 +20319,7 @@ module.exports = listCacheDelete;
 /* 59 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var assocIndexOf = __webpack_require__(10);
+var assocIndexOf = __webpack_require__(11);
 
 /**
  * Gets the list cache value for `key`.
@@ -20311,7 +20344,7 @@ module.exports = listCacheGet;
 /* 60 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var assocIndexOf = __webpack_require__(10);
+var assocIndexOf = __webpack_require__(11);
 
 /**
  * Checks if a list cache value for `key` exists.
@@ -20333,7 +20366,7 @@ module.exports = listCacheHas;
 /* 61 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var assocIndexOf = __webpack_require__(10);
+var assocIndexOf = __webpack_require__(11);
 
 /**
  * Sets the list cache `key` to `value`.
@@ -20365,7 +20398,7 @@ module.exports = listCacheSet;
 /* 62 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var ListCache = __webpack_require__(9);
+var ListCache = __webpack_require__(10);
 
 /**
  * Removes all key-value entries from the stack.
@@ -20450,7 +20483,7 @@ module.exports = stackHas;
 /* 66 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var ListCache = __webpack_require__(9),
+var ListCache = __webpack_require__(10),
     Map = __webpack_require__(19),
     MapCache = __webpack_require__(35);
 
@@ -20708,7 +20741,7 @@ module.exports = getValue;
 /***/ (function(module, exports, __webpack_require__) {
 
 var Hash = __webpack_require__(75),
-    ListCache = __webpack_require__(9),
+    ListCache = __webpack_require__(10),
     Map = __webpack_require__(19);
 
 /**
@@ -20772,7 +20805,7 @@ module.exports = Hash;
 /* 76 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var nativeCreate = __webpack_require__(12);
+var nativeCreate = __webpack_require__(13);
 
 /**
  * Removes all key-value entries from the hash.
@@ -20816,7 +20849,7 @@ module.exports = hashDelete;
 /* 78 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var nativeCreate = __webpack_require__(12);
+var nativeCreate = __webpack_require__(13);
 
 /** Used to stand-in for `undefined` hash values. */
 var HASH_UNDEFINED = '__lodash_hash_undefined__';
@@ -20852,7 +20885,7 @@ module.exports = hashGet;
 /* 79 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var nativeCreate = __webpack_require__(12);
+var nativeCreate = __webpack_require__(13);
 
 /** Used for built-in method references. */
 var objectProto = Object.prototype;
@@ -20881,7 +20914,7 @@ module.exports = hashHas;
 /* 80 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var nativeCreate = __webpack_require__(12);
+var nativeCreate = __webpack_require__(13);
 
 /** Used to stand-in for `undefined` hash values. */
 var HASH_UNDEFINED = '__lodash_hash_undefined__';
@@ -20910,7 +20943,7 @@ module.exports = hashSet;
 /* 81 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var getMapData = __webpack_require__(13);
+var getMapData = __webpack_require__(14);
 
 /**
  * Removes `key` and its value from the map.
@@ -20955,7 +20988,7 @@ module.exports = isKeyable;
 /* 83 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var getMapData = __webpack_require__(13);
+var getMapData = __webpack_require__(14);
 
 /**
  * Gets the map value for `key`.
@@ -20977,7 +21010,7 @@ module.exports = mapCacheGet;
 /* 84 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var getMapData = __webpack_require__(13);
+var getMapData = __webpack_require__(14);
 
 /**
  * Checks if a map value for `key` exists.
@@ -20999,7 +21032,7 @@ module.exports = mapCacheHas;
 /* 85 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var getMapData = __webpack_require__(13);
+var getMapData = __webpack_require__(14);
 
 /**
  * Sets the map `key` to `value`.
@@ -21721,7 +21754,7 @@ module.exports = baseTimes;
 /***/ (function(module, exports, __webpack_require__) {
 
 var baseIsArguments = __webpack_require__(106),
-    isObjectLike = __webpack_require__(14);
+    isObjectLike = __webpack_require__(15);
 
 /** Used for built-in method references. */
 var objectProto = Object.prototype;
@@ -21762,8 +21795,8 @@ module.exports = isArguments;
 /* 106 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var baseGetTag = __webpack_require__(11),
-    isObjectLike = __webpack_require__(14);
+var baseGetTag = __webpack_require__(12),
+    isObjectLike = __webpack_require__(15);
 
 /** `Object#toString` result references. */
 var argsTag = '[object Arguments]';
@@ -21841,9 +21874,9 @@ module.exports = isIndex;
 /* 109 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var baseGetTag = __webpack_require__(11),
+var baseGetTag = __webpack_require__(12),
     isLength = __webpack_require__(40),
-    isObjectLike = __webpack_require__(14);
+    isObjectLike = __webpack_require__(15);
 
 /** `Object#toString` result references. */
 var argsTag = '[object Arguments]',
@@ -22101,7 +22134,7 @@ var DataView = __webpack_require__(118),
     Promise = __webpack_require__(119),
     Set = __webpack_require__(120),
     WeakMap = __webpack_require__(121),
-    baseGetTag = __webpack_require__(11),
+    baseGetTag = __webpack_require__(12),
     toSource = __webpack_require__(34);
 
 /** `Object#toString` result references. */
@@ -45959,17 +45992,15 @@ var _scale2 = _interopRequireDefault(_scale);
 
 var _consts = __webpack_require__(6);
 
-var _util = __webpack_require__(15);
+var _util = __webpack_require__(16);
 
 var _colors = __webpack_require__(5);
 
-var _isEqual = __webpack_require__(18);
+var _isEqual = __webpack_require__(9);
 
 var _isEqual2 = _interopRequireDefault(_isEqual);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } }
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
@@ -46061,7 +46092,7 @@ var Input = function (_React$Component) {
 		value: function onNameChange(e, i) {
 			var _this2 = this;
 
-			var noteNames = [].concat(_toConsumableArray(this.state.noteNames));
+			var noteNames = (0, _util.dup)(this.state.noteNames);
 			noteNames[i] = e.target.value;
 			this.setState({ noteNames: noteNames }, function () {
 				return _this2.calculateChord(i);
@@ -46072,7 +46103,7 @@ var Input = function (_React$Component) {
 		value: function onChordChange(e, i) {
 			var _this3 = this;
 
-			var chordNames = [].concat(_toConsumableArray(this.state.chordNames));
+			var chordNames = (0, _util.dup)(this.state.chordNames);
 			chordNames[i] = e.target.value;
 			this.setState({ chordNames: chordNames }, function () {
 				return _this3.calculateChord(i);
@@ -46163,7 +46194,7 @@ var Input = function (_React$Component) {
 				));
 
 				scaleDivs.push(_react2.default.createElement(_scale2.default, {
-					notes: [].concat(_toConsumableArray(_consts.EMPTY)),
+					notes: (0, _util.dup)(_consts.EMPTY),
 					index: i,
 					selected: selected,
 					handleClick: function handleClick(k) {
@@ -46208,21 +46239,25 @@ Object.defineProperty(exports, "__esModule", {
 	value: true
 });
 
+var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
+
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
 var _react = __webpack_require__(2);
 
 var _react2 = _interopRequireDefault(_react);
 
+var _isEqual = __webpack_require__(9);
+
+var _isEqual2 = _interopRequireDefault(_isEqual);
+
 var _consts = __webpack_require__(6);
 
 var _colors = __webpack_require__(5);
 
-var _util = __webpack_require__(15);
+var _util = __webpack_require__(16);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } }
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
@@ -46230,32 +46265,43 @@ function _possibleConstructorReturn(self, call) { if (!self) { throw new Referen
 
 function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
 
+var buttonStyle = {
+	padding: "3px",
+	border: "1px solid brown",
+	backgroundColor: _colors.buttonBlue,
+	borderRadius: "5px",
+	textAlign: "center",
+	minWidth: "60px"
+};
+
+var byString = function byString(a, b) {
+	if (b[0] == a[0]) return b[1] - a[1];
+	return b[0] - a[0];
+};
+
 var FretBoard = function (_React$Component) {
 	_inherits(FretBoard, _React$Component);
 
-	function FretBoard() {
+	function FretBoard(props) {
 		_classCallCheck(this, FretBoard);
 
-		return _possibleConstructorReturn(this, (FretBoard.__proto__ || Object.getPrototypeOf(FretBoard)).apply(this, arguments));
-	}
+		var _this = _possibleConstructorReturn(this, (FretBoard.__proto__ || Object.getPrototypeOf(FretBoard)).call(this, props));
 
-	_createClass(FretBoard, [{
-		key: "getLabelColors",
-		value: function getLabelColors() {
-			var selectedDict = {};
+		_this.getLabelColors = function () {
+			var selectedNotesByInput = {};
 			var result = {};
 			_consts.NOTE_NAMES.forEach(function (name) {
-				selectedDict[name] = [];
+				selectedNotesByInput[name] = [];
 			});
 
-			this.props.selected.forEach(function (notes, i) {
+			_this.props.selected.forEach(function (notes, i) {
 				notes.forEach(function (note, j) {
-					if (note) selectedDict[_consts.NOTE_NAMES[j]].push(i);
+					if (note) selectedNotesByInput[_consts.NOTE_NAMES[j]].push(i);
 				});
 			});
 
 			_consts.NOTE_NAMES.forEach(function (name) {
-				var colors = selectedDict[name].map(function (i) {
+				var colors = selectedNotesByInput[name].map(function (i) {
 					return (0, _colors.COLORS)(1)[i];
 				});
 
@@ -46265,8 +46311,6 @@ var FretBoard = function (_React$Component) {
 						stripes.push(colors[i] + " " + 100 * i / colors.length + "%");
 						if (colors[i + 1]) stripes.push(colors[i] + " " + 100 * (i + 1) / colors.length + "%");
 					}
-
-					stripes.join(", ");
 
 					result[name] = {
 						background: "linear-gradient(45deg, " + stripes + ")",
@@ -46286,17 +46330,17 @@ var FretBoard = function (_React$Component) {
 			});
 
 			return result;
-		}
-	}, {
-		key: "fretComponents",
-		value: function fretComponents() {
+		};
+
+		_this.fretComponents = function () {
 			var fretDivs = [];
-			var colors = this.getLabelColors();
-			var eString = (0, _util.rotate)([].concat(_toConsumableArray(_consts.NOTE_NAMES)), 5);
+			var clickHandlers = [];
+			var colors = _this.getLabelColors();
+			var eString = (0, _util.rotate)((0, _util.dup)(_consts.NOTE_NAMES), 5);
 
 			var strings = Array(6).fill(0).map(function (_, i) {
 				var times = i > 3 ? 5 * i - 1 : 5 * i;
-				var string = (0, _util.rotate)([].concat(_toConsumableArray(eString)), times);
+				var string = (0, _util.rotate)((0, _util.dup)(eString), times);
 				string = string.concat(string.slice(0, 4));
 				return string;
 			}).reverse();
@@ -46314,45 +46358,253 @@ var FretBoard = function (_React$Component) {
 						fontSize: "1.1vw"
 					};
 
+					var onClick = function onClick() {
+						var chords = (0, _util.dup)(_this.state.chords);
+						var active = _this.state.active;
+						var previewPoints = [];
+
+						if (!_this.state.chords.length) {
+							chords = (0, _util.getOctaveFrets)([i, j]);
+							_this.setState({ chords: chords, previewPoints: previewPoints });
+							return;
+						}
+
+						var activeChord = chords[0];
+						var handled = false;
+
+						var _loop = function _loop(k) {
+							if ((0, _isEqual2.default)(activeChord[k], [i, j])) {
+								chords = chords.map(function (chord) {
+									return chord.slice(0, k).concat(chord.slice(k + 1));
+								});
+								handled = true;
+								return "break";
+							} else if (activeChord[k][0] === i) {
+								var diff = j - activeChord[k][1];
+								chords = chords.map(function (chord) {
+									chord[k][1] += diff;
+									return chord;
+								});
+								handled = true;
+								return "break";
+							}
+						};
+
+						for (var k = 0; k < activeChord.length; k++) {
+							var _ret = _loop(k);
+
+							if (_ret === "break") break;
+						}
+
+						if (!handled) {
+							var last = activeChord[activeChord.length - 1];
+							var step = (0, _util.bStringStep)(last[0], i);
+							var delta = [i - last[0], j - last[1] - step];
+							var nextString = void 0,
+							    nextFret = void 0;
+
+							chords.forEach(function (chord) {
+								// debugger;
+								last = chord[chord.length - 1];
+								nextString = last[0] + delta[0];
+								step = (0, _util.bStringStep)(last[0], nextString);
+								nextFret = last[1] + delta[1] + step;
+								chord.push([nextString, nextFret]);
+								chord.sort(byString);
+							});
+						}
+
+						_this.setState({ chords: chords, previewPoints: previewPoints });
+					};
+
+					var onMouseEnter = function onMouseEnter() {
+						if (!_this.state.chords.length) return;
+						var points = (0, _util.dup)(_this.state.chords[0]);
+						var previewPoints = [];
+
+						if (points[points.length - 1][0] > i) {
+							previewPoints = [points[points.length - 1], [i, j]];
+							_this.setState({ previewPoints: previewPoints });
+							return;
+						} else if (points[0][0] < i) {
+							previewPoints = [[i, j], points[0]];
+							_this.setState({ previewPoints: previewPoints });
+							return;
+						}
+
+						for (var _idx = 0; _idx < points.length; _idx++) {
+							if ((0, _isEqual2.default)(points[_idx], [i, j])) {
+								_this.setState({ previewPoints: previewPoints });
+								return;
+							} else if (points[_idx][0] === i && points[_idx][1] !== j) {
+								if (_idx - 1 >= 0) previewPoints.push(points[_idx - 1]);
+								previewPoints.push([i, j]);
+								if (_idx + 1 <= 5 && points[_idx + 1]) previewPoints.push(points[_idx + 1]);
+
+								_this.setState({ previewPoints: previewPoints });
+								return;
+							}
+						}
+
+						points.push([i, j]);
+						points.sort(byString);
+						var idx = points.findIndex(function (point) {
+							return point[0] === i;
+						});
+						if (idx - 1 >= 0) previewPoints.push(points[idx - 1]);
+						if (idx >= 0) previewPoints.push([i, j]);
+						if (idx + 1 <= 5 && points[idx + 1]) previewPoints.push(points[idx + 1]);
+						_this.setState({ previewPoints: previewPoints });
+					};
+
+					var onMouseLeave = function onMouseLeave() {
+						_this.setState({ previewPoints: [] });
+					};
+
 					fretDivs.push(_react2.default.createElement(
 						"div",
-						{ key: noteNames.length * i + j, style: fretStyle },
+						{ key: "fret-" + (noteNames.length * i + j), style: fretStyle },
 						name
 					));
+
+					clickHandlers.push(_react2.default.createElement("div", {
+						key: "handler-" + (noteNames.length * i + j),
+						style: { height: "100%" },
+						onClick: onClick,
+						onMouseEnter: onMouseEnter,
+						onMouseLeave: onMouseLeave
+					}));
 				});
 			});
 
-			return fretDivs;
-		}
-	}, {
+			return { fretDivs: fretDivs, clickHandlers: clickHandlers };
+		};
+
+		_this.getPoints = function (points) {
+			if (!points.length || points.some(function (point) {
+				return !(0, _util.inRange)(point);
+			})) return "";
+			return points.map(function (point) {
+				if (point) {
+					return point[1] * 100 + 50 + "," + (point[0] * 33 + 16.5);
+				} else {
+					return "";
+				}
+			}).join(" ");
+		};
+
+		_this.clearPoints = function () {
+			_this.setState({ chords: [], previewPoints: [] });
+		};
+
+		_this.state = {
+			chords: [],
+			points: [],
+			previewPoints: []
+		};
+		return _this;
+	}
+
+	_createClass(FretBoard, [{
 		key: "render",
 		value: function render() {
+			var _this2 = this;
+
+			var _state = this.state,
+			    chords = _state.chords,
+			    previewPoints = _state.previewPoints;
+
+			var _fretComponents = this.fretComponents(),
+			    fretDivs = _fretComponents.fretDivs,
+			    clickHandlers = _fretComponents.clickHandlers;
+
+			chords = chords.map(function (chord) {
+				return _this2.getPoints(chord);
+			});
+			previewPoints = this.getPoints(previewPoints);
+
 			var style = Object.assign({}, this.props.style, {
 				position: "relative",
 				display: "grid",
 				gridTemplateColumns: "repeat(16, 1fr)"
 			});
 
-			var fretDivs = this.fretComponents();
+			var clickHandlerStyle = _extends({}, style, {
+				zIndex: 60,
+				marginBottom: "-" + this.props.style.height
+			});
 
-			// const svgContainerStyle = {
-			// 	position: "absolute",
-			// 	height: "100%",
-			// 	width: "100%",
-			// 	zIndex: 50,
-			// 	top: 0,
-			// 	left: 0,
-			// };
+			var svgContainerStyle = {
+				position: "absolute",
+				float: "left",
+				height: "100%",
+				width: "100%",
+				zIndex: 50,
+				top: 0,
+				left: 0
+			};
 
-			// const lineStyle = {
-			// 	stroke: "red",
-			// 	strokeWidth: "1",
-			// };
+			var activeLineStyle = {
+				stroke: "green",
+				strokeWidth: "5",
+				fill: "none"
+			};
+
+			var lineStyle = {
+				stroke: "purple",
+				strokeWidth: "5",
+				fill: "none"
+			};
+
+			var previewLineStyle = {
+				stroke: "yellow",
+				strokeWidth: "3",
+				fill: "none",
+				strokeDasharray: "5,5"
+			};
 
 			return _react2.default.createElement(
 				"div",
-				{ style: style },
-				fretDivs
+				null,
+				_react2.default.createElement(
+					"div",
+					{ style: clickHandlerStyle },
+					clickHandlers
+				),
+				_react2.default.createElement(
+					"div",
+					{ style: style },
+					_react2.default.createElement(
+						"div",
+						{ style: svgContainerStyle },
+						_react2.default.createElement(
+							"svg",
+							{ width: "100%", height: "100%", viewBox: "0 0 1600 198" },
+							chords.map(function (chord, i) {
+								if (i === 0) {
+									return _react2.default.createElement("polyline", {
+										key: "line-" + i,
+										style: activeLineStyle,
+										points: chord
+									});
+								} else {
+									return _react2.default.createElement("polyline", {
+										key: "line-" + i,
+										style: lineStyle,
+										points: chord
+									});
+								}
+							}),
+							_react2.default.createElement("polyline", { style: previewLineStyle, points: previewPoints })
+						)
+					),
+					fretDivs
+				),
+				_react2.default.createElement(
+					"button",
+					{ style: buttonStyle, onClick: this.clearPoints },
+					"Clear"
+				)
 			);
 		}
 	}]);
@@ -46361,6 +46613,75 @@ var FretBoard = function (_React$Component) {
 }(_react2.default.Component);
 
 exports.default = FretBoard;
+
+/***/ }),
+/* 125 */,
+/* 126 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+	value: true
+});
+exports.KeyWheel = undefined;
+
+var _react = __webpack_require__(2);
+
+var _react2 = _interopRequireDefault(_react);
+
+var _scale = __webpack_require__(29);
+
+var _scale2 = _interopRequireDefault(_scale);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+var KeyWheel = exports.KeyWheel = function KeyWheel(props) {
+	var selected = props.selected,
+	    scales = props.scales,
+	    rootReferenceEnabled = props.rootReferenceEnabled,
+	    mode = props.mode,
+	    mute = props.mute;
+
+	var scaleComponents = scales.map(function (node, i) {
+		var rowShift = i % 12 > 5 ? 1 : 0;
+		var colStart = 4 * (i % 6) + 2 * rowShift + 1;
+		var rowStart = 2 * Math.floor(6 * (i / 36)) + 1;
+
+		var style = {
+			position: "relative",
+			gridColumn: colStart + "/ span 3",
+			gridRow: rowStart + "/ span 3"
+		};
+
+		return _react2.default.createElement(_scale2.default, {
+			key: i,
+			notes: node.notes //array of 12 bools, the notes that are part of the scale
+			, selected: selected //array of 8 separate notes objects for svg and coloring
+			, isInput: false //bool for styling svg and event handlers of input type scales
+			, mode: mode //string for deciding how to render svg
+			, rootReferenceEnabled: rootReferenceEnabled //bool for labeling notes or numbers
+			, index: -1 //int for color index of input type scales
+			, mute: mute //bool for volume
+			, style: style
+		});
+	});
+
+	return _react2.default.createElement(
+		"div",
+		{
+			style: {
+				display: "grid",
+				height: "30vw",
+				width: "60vw",
+				gridTemplateColumns: "2fr repeat(12, 5fr 2fr) 2fr",
+				gridTemplateRows: "2fr repeat(6, 5fr 2fr)"
+			}
+		},
+		scaleComponents
+	);
+};
 
 /***/ })
 /******/ ]);

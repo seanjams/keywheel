@@ -1,8 +1,8 @@
 import React from "react";
 import ReactDOM from "react-dom";
-import Scale from "./scale";
 import Input from "./input";
 import FretBoard from "./fretboard";
+import { KeyWheel } from "./keywheel";
 import {
 	ScaleNode,
 	buildKeyWheel,
@@ -10,12 +10,20 @@ import {
 	getPegs,
 	getEmptySet,
 	getMajor,
+	dup,
 } from "../util";
 import { C, EMPTY } from "../consts";
 import { buttonBlue } from "../colors";
 
 const mainStyle = {
 	boxSizing: "border-box",
+};
+
+const inlineWidgetStyle = {
+	display: "inline-block",
+	margin: "auto",
+	width: "fit-content",
+	verticalAlign: "top",
 };
 
 const buttonStyle = {
@@ -25,6 +33,11 @@ const buttonStyle = {
 	borderRadius: "5px",
 	textAlign: "center",
 	minWidth: "60px",
+};
+
+const linkContainerStyle = {
+	textAlign: "right",
+	width: "100%",
 };
 
 class Root extends React.Component {
@@ -75,8 +88,8 @@ class Root extends React.Component {
 
 	clearNotes = (i = -1) => {
 		if (i >= 0) {
-			const selected = [...this.state.selected];
-			selected[i] = [...EMPTY];
+			const selected = dup(this.state.selected);
+			selected[i] = dup(EMPTY);
 			this.setState({ selected });
 		} else {
 			this.setState({ selected: getEmptySet() });
@@ -86,7 +99,7 @@ class Root extends React.Component {
 	handleClick = (i, id) => {
 		const selected = [];
 		this.state.selected.forEach(notes => {
-			selected.push([...notes]);
+			selected.push(dup(notes));
 		});
 		selected[id][i] = !selected[id][i];
 		this.setState({ selected });
@@ -95,7 +108,7 @@ class Root extends React.Component {
 	handleGroup = (notes, id) => {
 		const selected = [];
 		this.state.selected.forEach(notes => {
-			selected.push([...notes]);
+			selected.push(dup(notes));
 		});
 		selected[id] = notes;
 		this.setState({ selected });
@@ -116,75 +129,34 @@ class Root extends React.Component {
 		this.setState({ mute });
 	};
 
-	scaleComponents() {
-		const { selected, scales, rootReferenceEnabled, mode } = this.state;
-		return scales.map((node, i) => {
-			const rowShift = i % 12 > 5 ? 1 : 0;
-			const colStart = 4 * (i % 6) + 2 * rowShift + 1;
-			const rowStart = 2 * Math.floor(6 * (i / 36)) + 1;
-
-			const style = {
-				position: "relative",
-				gridColumn: `${colStart}/ span 3`,
-				gridRow: `${rowStart}/ span 3`,
-			};
-
-			return (
-				<Scale
-					key={i}
-					notes={node.notes} //array of 12 bools, the notes that are part of the scale
-					selected={selected} //array of 8 separate notes objects for svg and coloring
-					isInput={false} //bool for styling svg and event handlers of input type scales
-					mode={mode} //string for deciding how to render svg
-					rootReferenceEnabled={rootReferenceEnabled} //bool for labeling notes or numbers
-					index={-1} //int for color index of input type scales
-					mute={this.state.mute} //bool for volume
-					style={style}
-				/>
-			);
-		});
-	}
-
 	render() {
-		const { selected, rootReferenceEnabled } = this.state;
-		const scaleDivs = this.scaleComponents();
+		const { selected, scales, mute, mode, rootReferenceEnabled } = this.state;
 		return (
 			<div style={mainStyle}>
-				<div
-					style={{
-						display: "inline-block",
-						margin: "auto",
-						width: "fit-content",
-					}}
-				>
-					<div
-						style={{
-							display: "grid",
-							height: "30vw",
-							width: "60vw",
-							gridTemplateColumns: "2fr repeat(12, 5fr 2fr) 2fr",
-							gridTemplateRows: "2fr repeat(6, 5fr 2fr)",
-						}}
-					>
-						{scaleDivs}
-					</div>
+				<div style={linkContainerStyle}>
+					<a href="https://github.com/seanjams/keywheel">source</a>
 				</div>
-				<div
-					style={{
-						display: "inline-block",
-						margin: "auto",
-						width: "fit-content",
-					}}
-				>
-					<Input
-						selected={selected}
-						handleClick={this.handleClick}
-						handleGroup={this.handleGroup}
-						clearNotes={this.clearNotes}
-						rootReferenceEnabled={rootReferenceEnabled}
-						mode={this.state.mode}
-						mute={this.state.mute}
-					/>
+				<div>
+					<div style={inlineWidgetStyle}>
+						<KeyWheel
+							selected={selected}
+							scales={scales}
+							rootReferenceEnabled={rootReferenceEnabled}
+							mode={mode}
+							mute={mute}
+						/>
+					</div>
+					<div style={inlineWidgetStyle}>
+						<Input
+							selected={selected}
+							handleClick={this.handleClick}
+							handleGroup={this.handleGroup}
+							clearNotes={this.clearNotes}
+							rootReferenceEnabled={rootReferenceEnabled}
+							mode={mode}
+							mute={mute}
+						/>
+					</div>
 				</div>
 				<div style={{ margin: "50px auto", width: "fit-content" }}>
 					<FretBoard
@@ -195,7 +167,6 @@ class Root extends React.Component {
 						}}
 					/>
 				</div>
-
 				{/* <div style={{ display: "flex" }}>
 					<button
 						onClick={() => this.shiftScale(2)}

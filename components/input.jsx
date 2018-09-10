@@ -1,7 +1,7 @@
 import React from "react";
 import Scale from "./scale";
 import { EMPTY, SHAPES, NOTE_NAMES } from "../consts";
-import { getNotes, getPegs, soundNotes, chordReader } from "../util";
+import { getNotes, getPegs, soundNotes, chordReader, dup } from "../util";
 import { buttonBlue } from "../colors";
 import isEqual from "lodash/isEqual";
 
@@ -73,13 +73,13 @@ class Input extends React.Component {
 	}
 
 	onNameChange(e, i) {
-		const noteNames = [...this.state.noteNames];
+		const noteNames = dup(this.state.noteNames);
 		noteNames[i] = e.target.value;
 		this.setState({ noteNames }, () => this.calculateChord(i));
 	}
 
 	onChordChange(e, i) {
-		const chordNames = [...this.state.chordNames];
+		const chordNames = dup(this.state.chordNames);
 		chordNames[i] = e.target.value;
 		this.setState({ chordNames }, () => this.calculateChord(i));
 	}
@@ -142,7 +142,7 @@ class Input extends React.Component {
 
 			scaleDivs.push(
 				<Scale
-					notes={[...EMPTY]}
+					notes={dup(EMPTY)}
 					index={i}
 					selected={selected}
 					handleClick={k => this.props.handleClick(k, i)}
