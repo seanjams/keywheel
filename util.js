@@ -395,5 +395,3 @@ export const getOctaveFrets = point => {
 
 	return result;
 };
-
-console.log(getOctaveFrets([0, 2]));

@@ -1,7 +1,7 @@
 import React from "react";
 import isEqual from "lodash/isEqual";
 import { EMPTY, NOTE_NAMES } from "../consts";
-import { COLORS, offWhite } from "../colors";
+import { COLORS, INTERVAL_COLORS, offWhite } from "../colors";
 import {
 	rotate,
 	chordFingerMachine,
@@ -13,12 +13,14 @@ import {
 import { buttonBlue } from "../colors";
 
 const buttonStyle = {
+	height: "24px",
 	padding: "3px",
 	border: "1px solid brown",
 	backgroundColor: buttonBlue,
 	borderRadius: "5px",
 	textAlign: "center",
 	minWidth: "60px",
+	boxSizing: "border-box",
 };
 
 const byString = (a, b) => {
@@ -31,11 +33,15 @@ class FretBoard extends React.Component {
 		super(props);
 
 		this.state = {
-			chords: [],
-			points: [],
+			chordGroups: {},
 			previewPoints: [],
+			current: null,
 		};
 	}
+
+	getCurrentChordGroup = () => {
+		return this.state.chordGroups[this.state.current] || [];
+	};
 
 	getLabelColors = () => {
 		const selectedNotesByInput = {};
@@ -72,8 +78,8 @@ class FretBoard extends React.Component {
 				};
 			} else {
 				result[name] = {
-					background: "#ccc",
-					color: "#444",
+					background: "#ddd",
+					color: "#666",
 				};
 			}
 		});
@@ -110,39 +116,62 @@ class FretBoard extends React.Component {
 					fontSize: "1.1vw",
 				};
 
-				const onClick = () => {
-					let chords = dup(this.state.chords);
-					let active = this.state.active;
+				const onClick = e => {
+					const chordGroups = dup(this.state.chordGroups);
+					let chords = this.getCurrentChordGroup();
+					let current = this.state.current;
 					let previewPoints = [];
-
-					if (!this.state.chords.length) {
-						chords = getOctaveFrets([i, j]);
-						this.setState({ chords, previewPoints });
-						return;
-					}
-
-					let activeChord = chords[0];
 					let handled = false;
 
-					for (let k = 0; k < activeChord.length; k++) {
-						if (isEqual(activeChord[k], [i, j])) {
-							chords = chords.map(chord => {
-								return chord.slice(0, k).concat(chord.slice(k + 1));
-							});
-							handled = true;
-							break;
-						} else if (activeChord[k][0] === i) {
-							let diff = j - activeChord[k][1];
-							chords = chords.map(chord => {
-								chord[k][1] += diff;
-								return chord;
-							});
-							handled = true;
-							break;
+					// first click of chordGroup, get octaves and escape
+					//shouldnt have to check length here but being safe
+					if (!current || !chords.length) {
+						chordGroups[name] = [];
+						current = name;
+						chords = getOctaveFrets([i, j]);
+						handled = true;
+					}
+
+					// subsequent click, check that we aren't unclicking or replacing another click and escape
+					let activeChord = chords[0];
+
+					if (!handled) {
+						for (let k = 0; k < activeChord.length; k++) {
+							if (isEqual(activeChord[k], [i, j])) {
+								//clicked on same fret
+								chords = chords.map(chord =>
+									chord.slice(0, k).concat(chord.slice(k + 1))
+								);
+								if (chords.every(chord => !chord.length)) {
+									delete chordGroups[current];
+									current = null;
+								}
+								handled = true;
+								break;
+							} else if (activeChord[k][0] === i) {
+								// clicked on same string as fret, find fret difference
+								chords = chords.map(chord => {
+									chord[k][1] += j - activeChord[k][1];
+									return chord;
+								});
+								if (k === 0) {
+									chordGroups[name] = chordGroups[current];
+									delete chordGroups[current];
+									current = name;
+								}
+								handled = true;
+								break;
+							}
 						}
 					}
 
+					// adding a fret to all chords in group
 					if (!handled) {
+						if (activeChord[0][0] < i) {
+							chordGroups[name] = chordGroups[current];
+							delete chordGroups[current];
+							current = name;
+						}
 						let last = activeChord[activeChord.length - 1];
 						let step = bStringStep(last[0], i);
 						let delta = [i - last[0], j - last[1] - step];
@@ -159,12 +188,19 @@ class FretBoard extends React.Component {
 						});
 					}
 
-					this.setState({ chords, previewPoints });
+					if (current) chordGroups[current] = chords;
+
+					this.setState({
+						chordGroups: chordGroups,
+						previewPoints: previewPoints,
+						current: current,
+					});
 				};
 
 				const onMouseEnter = () => {
-					if (!this.state.chords.length) return;
-					let points = dup(this.state.chords[0]);
+					let chords = this.getCurrentChordGroup();
+					if (!chords.length) return;
+					let points = dup(chords[0]);
 					let previewPoints = [];
 
 					if (points[points.length - 1][0] > i) {
@@ -207,7 +243,11 @@ class FretBoard extends React.Component {
 				};
 
 				fretDivs.push(
-					<div key={`fret-${noteNames.length * i + j}`} style={fretStyle}>
+					<div
+						key={`fret-${noteNames.length * i + j}`}
+						style={fretStyle}
+						name={name}
+					>
 						{name}
 					</div>
 				);
@@ -217,6 +257,7 @@ class FretBoard extends React.Component {
 						key={`handler-${noteNames.length * i + j}`}
 						style={{ height: "100%" }}
 						onClick={onClick}
+						name={name}
 						onMouseEnter={onMouseEnter}
 						onMouseLeave={onMouseLeave}
 					/>
@@ -240,15 +281,31 @@ class FretBoard extends React.Component {
 			.join(" ");
 	};
 
+	setCurrent = name => e => this.setState({ current: name });
+
+	removeGroup = name => {
+		let { current, chordGroups } = dup(this.state);
+		current = null;
+		delete chordGroups[name];
+		this.setState({ chordGroups }, () => this.setState({ current }));
+	};
+
 	clearPoints = () => {
-		this.setState({ chords: [], previewPoints: [] });
+		this.setState({ chordGroups: {}, current: null, previewPoints: [] });
+	};
+
+	getCenters = () => {
+		return this.getCurrentChordGroup().map(chord => chord[0]);
 	};
 
 	render() {
-		let { chords, previewPoints } = this.state;
+		const chordGroups = dup(this.state.chordGroups);
 		const { fretDivs, clickHandlers } = this.fretComponents();
-		chords = chords.map(chord => this.getPoints(chord));
-		previewPoints = this.getPoints(previewPoints);
+		const previewPoints = this.getPoints(this.state.previewPoints);
+		const pointGroups = {};
+		Object.keys(chordGroups).forEach(key => {
+			pointGroups[key] = chordGroups[key].map(chord => this.getPoints(chord));
+		});
 
 		const style = Object.assign({}, this.props.style, {
 			position: "relative",
@@ -272,24 +329,21 @@ class FretBoard extends React.Component {
 			left: 0,
 		};
 
-		const activeLineStyle = {
-			stroke: "green",
-			strokeWidth: "5",
-			fill: "none",
-		};
-
-		const lineStyle = {
-			stroke: "purple",
-			strokeWidth: "5",
-			fill: "none",
-		};
-
 		const previewLineStyle = {
 			stroke: "yellow",
 			strokeWidth: "3",
 			fill: "none",
 			strokeDasharray: "5,5",
+			strokeLinecap: "round",
 		};
+
+		const chooseButtonStyle = Object.assign({}, buttonStyle, {
+			backgroundColor: "#AAA",
+			color: "#666",
+			display: "flex",
+			alignItems: "center",
+			minWidth: "unset",
+		});
 
 		return (
 			<div>
@@ -297,33 +351,131 @@ class FretBoard extends React.Component {
 				<div style={style}>
 					<div style={svgContainerStyle}>
 						<svg width="100%" height="100%" viewBox="0 0 1600 198">
-							{chords.map((chord, i) => {
-								if (i === 0) {
+							{Object.keys(this.state.chordGroups).map((key, i) => {
+								const chords = this.state.chordGroups[key];
+								const points = pointGroups[key];
+
+								const activeLineStyle = {
+									stroke: COLORS(0.8)[i],
+									strokeWidth: "4",
+									strokeLinecap: "round",
+									fill: "none",
+								};
+
+								const lineStyle = {
+									stroke: COLORS(0.7)[i],
+									strokeWidth: "4",
+									strokeLinecap: "round",
+									fill: "none",
+								};
+
+								return chords.map((chord, j) => {
+									if (j === 0) {
+										return (
+											<polyline
+												key={`line-${i}-${j}`}
+												style={activeLineStyle}
+												points={points[j]}
+											/>
+										);
+									} else {
+										return (
+											<polyline
+												key={`line-${i}-${j}`}
+												style={lineStyle}
+												points={points[j]}
+											/>
+										);
+									}
+								});
+							})}
+							{Object.keys(this.state.chordGroups).map((key, i) => {
+								const chords = this.state.chordGroups[key];
+								return chords.map((chord, j) => {
+									const center = chord[0];
 									return (
-										<polyline
-											key={`line-${i}`}
-											style={activeLineStyle}
-											points={chord}
-										/>
+										center && (
+											<circle
+												key={`circle-${i}-${j}`}
+												cx={`${center[1] * 100 + 50}`}
+												cy={`${center[0] * 33 + 16}`}
+												r="13"
+												stroke={COLORS(0.7)[i]}
+												strokeWidth="3"
+												fill={COLORS(0.2)[i]}
+											/>
+										)
 									);
-								} else {
-									return (
-										<polyline
-											key={`line-${i}`}
-											style={lineStyle}
-											points={chord}
-										/>
-									);
-								}
+								});
 							})}
 							<polyline style={previewLineStyle} points={previewPoints} />
 						</svg>
 					</div>
 					{fretDivs}
 				</div>
-				<button style={buttonStyle} onClick={this.clearPoints}>
-					Clear
-				</button>
+
+				<div
+					style={{
+						width: "100%",
+						display: "flex",
+						paddingBottom: "20px",
+						justifyContent: "space-between",
+					}}
+				>
+					<div style={{ display: "flex" }}>
+						{Object.keys(this.state.chordGroups).map((name, i) => {
+							const chordButtonStyle = Object.assign({}, buttonStyle, {
+								backgroundColor: COLORS(0.5)[i],
+								display: "flex",
+								alignItems: "center",
+								minWidth: "unset",
+								border:
+									this.state.current === name
+										? "2px solid yellow"
+										: "1px solid brown",
+							});
+
+							return (
+								<button
+									key={`chord-button-${i}`}
+									style={chordButtonStyle}
+									onClick={this.setCurrent(name)}
+								>
+									<span style={{ paddingRight: "40px", fontSize: "12px" }}>
+										{name}
+									</span>
+									<span
+										name={name}
+										style={{ color: "#666", fontSize: "9px" }}
+										onClick={() => this.removeGroup(name)}
+									>
+										X
+									</span>
+								</button>
+							);
+						})}
+
+						{!this.state.current ? (
+							<button style={chooseButtonStyle}>
+								<span style={{ paddingRight: "10px", fontSize: "12px" }}>
+									Choose A Root Note
+								</span>
+								<span name={name} style={{ color: "#666", fontSize: "9px" }}>
+									X
+								</span>
+							</button>
+						) : (
+							<button style={buttonStyle} onClick={this.setCurrent(null)}>
+								New Chord
+							</button>
+						)}
+					</div>
+					<div>
+						<button style={buttonStyle} onClick={this.clearPoints}>
+							Clear
+						</button>
+					</div>
+				</div>
 			</div>
 		);
 	}
