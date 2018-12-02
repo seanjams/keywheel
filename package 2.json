@@ -4,12 +4,9 @@
 	"description": "",
 	"main": "./components/entry.jsx",
 	"scripts": {
-		"dev": "webpack --mode=development --devtool=eval-source-map --display-modules --progress",
-		"start": "webpack-dev-server --mode=development --progress --open",
-		"build": "webpack --mode=production --progress --display-modules",
-		"deps": "rm -rf node_modules && npm install",
-		"clean": "rm -rf dist",
-		"deploy": "npm run clean && npm run deps && npm run build && git add -f . && git commit -m 'Temporary Commit' && git push origin master:gh-pages && g reset HEAD~"
+		"test": "webpack --mode=development --devtool=eval-source-map --display-modules --progress",
+		"dev": "webpack-dev-server --mode=development --devtool=eval-source-map --display-modules --progress --open",
+		"build": "webpack --mode=production --progress"
 	},
 	"repository": {
 		"type": "git",
@@ -22,7 +19,7 @@
 		"lodash": "^4.17.11",
 		"react": "^16.6.3",
 		"react-dom": "^16.6.3",
-		"tone": "^0.11.11"
+		"tone": "^0.12.80"
 	},
 	"devDependencies": {
 		"@babel/core": "^7.1.6",
@@ -30,14 +27,12 @@
 		"@babel/preset-env": "^7.0.0",
 		"@babel/preset-react": "^7.0.0",
 		"babel-loader": "^8.0.4",
-		"compression-webpack-plugin": "^2.0.0",
 		"css-loader": "^1.0.1",
 		"html-webpack-plugin": "^3.2.0",
 		"style-loader": "^0.23.1",
 		"webpack": "^4.26.0",
 		"webpack-bundle-analyzer": "^3.0.3",
 		"webpack-cli": "^3.1.2",
-		"webpack-dev-server": "^3.1.10",
-		"webpack-merge": "^4.1.4"
+		"webpack-dev-server": "^3.1.10"
 	}
 }
