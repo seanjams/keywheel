@@ -2,6 +2,7 @@ import React from "react";
 import ReactDOM from "react-dom";
 import Input from "./input";
 import FretBoard from "./fretboard";
+import Piano from "./piano";
 import { KeyWheel } from "./keywheel";
 import {
 	ScaleNode,
@@ -161,6 +162,16 @@ class App extends React.Component {
 				<div style={{ margin: "50px auto", width: "fit-content" }}>
 					<FretBoard
 						selected={selected}
+						style={{
+							width: "80vw",
+							height: "10vw",
+						}}
+					/>
+				</div>
+				<div style={{ margin: "50px auto", width: "fit-content" }}>
+					<Piano
+						selected={selected}
+						octaves={3}
 						style={{
 							width: "80vw",
 							height: "10vw",

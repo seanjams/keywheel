@@ -1,6 +1,6 @@
 import isEqual from "lodash/isEqual";
 import Tone from "tone";
-import { COLORS, CHORD_COLOR, INTERVAL_COLORS, grey } from "./colors";
+import { COLORS, CHORD_COLOR, INTERVAL_COLORS, grey, offWhite } from "./colors";
 import {
 	SCALE_SPACING,
 	WHEEL_CENTER,
@@ -392,6 +392,51 @@ export const getOctaveFrets = point => {
 		result.push([[i, j]]);
 		if (j + 12 < 16) result.push([[i, j + 12]]);
 	}
+
+	return result;
+};
+
+export const getLabelColors = (notesArr, piano) => {
+	const selectedNotesByInput = {};
+	const result = {};
+	NOTE_NAMES.forEach(name => {
+		selectedNotesByInput[name] = [];
+	});
+
+	notesArr.forEach((notes, i) => {
+		notes.forEach((note, j) => {
+			if (note) selectedNotesByInput[NOTE_NAMES[j]].push(i);
+		});
+	});
+
+	NOTE_NAMES.forEach(name => {
+		const colors = selectedNotesByInput[name].map(i => COLORS(1)[i]);
+		const flat = name.endsWith("b");
+
+		if (colors.length > 1) {
+			const stripes = [];
+			for (let i = 0; i < colors.length; i++) {
+				stripes.push(`${colors[i]} ${(100 * i) / colors.length}%`);
+				if (colors[i + 1])
+					stripes.push(`${colors[i]} ${(100 * (i + 1)) / colors.length}%`);
+			}
+
+			result[name] = {
+				background: `linear-gradient(45deg, ${stripes})`,
+				color: offWhite,
+			};
+		} else if (colors.length === 1) {
+			result[name] = {
+				background: colors[0],
+				color: offWhite,
+			};
+		} else {
+			result[name] = {
+				background: piano ? (flat ? "black" : "white") : "#ddd",
+				color: "#666",
+			};
+		}
+	});
 
 	return result;
 };

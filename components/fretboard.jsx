@@ -1,7 +1,7 @@
 import React from "react";
 import isEqual from "lodash/isEqual";
-import { EMPTY, NOTE_NAMES } from "../consts";
-import { COLORS, INTERVAL_COLORS, offWhite } from "../colors";
+import { NOTE_NAMES } from "../consts";
+import { COLORS, INTERVAL_COLORS, buttonBlue } from "../colors";
 import {
 	rotate,
 	chordFingerMachine,
@@ -9,8 +9,8 @@ import {
 	getOctaveFrets,
 	inRange,
 	bStringStep,
+	getLabelColors,
 } from "../util";
-import { buttonBlue } from "../colors";
 
 const buttonStyle = {
 	height: "24px",
@@ -43,54 +43,10 @@ class FretBoard extends React.Component {
 		return this.state.chordGroups[this.state.current] || [];
 	};
 
-	getLabelColors = () => {
-		const selectedNotesByInput = {};
-		const result = {};
-		NOTE_NAMES.forEach(name => {
-			selectedNotesByInput[name] = [];
-		});
-
-		this.props.selected.forEach((notes, i) => {
-			notes.forEach((note, j) => {
-				if (note) selectedNotesByInput[NOTE_NAMES[j]].push(i);
-			});
-		});
-
-		NOTE_NAMES.forEach(name => {
-			const colors = selectedNotesByInput[name].map(i => COLORS(1)[i]);
-
-			if (colors.length > 1) {
-				const stripes = [];
-				for (let i = 0; i < colors.length; i++) {
-					stripes.push(`${colors[i]} ${(100 * i) / colors.length}%`);
-					if (colors[i + 1])
-						stripes.push(`${colors[i]} ${(100 * (i + 1)) / colors.length}%`);
-				}
-
-				result[name] = {
-					background: `linear-gradient(45deg, ${stripes})`,
-					color: offWhite,
-				};
-			} else if (colors.length === 1) {
-				result[name] = {
-					background: colors[0],
-					color: offWhite,
-				};
-			} else {
-				result[name] = {
-					background: "#ddd",
-					color: "#666",
-				};
-			}
-		});
-
-		return result;
-	};
-
 	fretComponents = () => {
 		const fretDivs = [];
 		const clickHandlers = [];
-		const colors = this.getLabelColors();
+		const colors = getLabelColors(this.props.selected);
 		const eString = rotate(dup(NOTE_NAMES), 5);
 
 		const strings = Array(6)
