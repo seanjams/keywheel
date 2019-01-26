@@ -94,7 +94,7 @@ class Input extends React.Component {
 	}
 
 	render() {
-		const { selected } = this.props;
+		const { selected, ordering } = this.props;
 		const buttonDivs = [];
 		const scaleDivs = [];
 		const selectDivs = [];
@@ -146,11 +146,12 @@ class Input extends React.Component {
 					index={i}
 					selected={selected}
 					handleClick={k => this.props.handleClick(k, i)}
-					rootReferenceEnabled={this.props.rootReferenceEnabled}
+					rootReference={this.props.rootReference}
 					isInput={true}
 					mode={this.props.mode}
 					mute={this.state.mute}
 					key={3 * i + 2}
+					ordering={ordering}
 					style={{
 						width: "100%",
 						height: "100%",

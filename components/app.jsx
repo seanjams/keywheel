@@ -13,7 +13,7 @@ import {
 	getMajor,
 	dup,
 } from "../util";
-import { C, EMPTY } from "../consts";
+import { C, EMPTY, ROOT_REFERENCES, ORDERINGS } from "../consts";
 import { buttonBlue } from "../colors";
 
 const mainStyle = {
@@ -34,11 +34,18 @@ const buttonStyle = {
 	borderRadius: "5px",
 	textAlign: "center",
 	minWidth: "60px",
+	height: "30px",
+	fontSize: "14px",
 };
 
 const linkContainerStyle = {
-	textAlign: "right",
+	display: "flex",
+	justifyContent: "flex-end",
+	alignItems: "center",
 	width: "100%",
+	height: "40px",
+	borderBottom: "2px solid black",
+	marginBottom: "20px",
 };
 
 class App extends React.Component {
@@ -51,18 +58,17 @@ class App extends React.Component {
 			scales: buildKeyWheel(start),
 			selected: getEmptySet(),
 			mode: "union",
-			rootReferenceEnabled: true,
+			rootReference: "names",
+			ordering: "chromatic",
 			mute: false,
 		};
 	}
 
 	componentDidMount() {
-		// window.addEventListener("resize", this.rebuildKeyWheel);
 		window.addEventListener("keydown", this.handleKeyPress);
 	}
 
 	componentWillUnmount() {
-		// window.removeEventListener("resize", this.rebuildKeyWheel);
 		window.removeEventListener("keydown", this.handleKeyPress);
 	}
 
@@ -120,9 +126,12 @@ class App extends React.Component {
 		this.setState({ mode });
 	};
 
-	toggleRef = () => {
-		const rootReferenceEnabled = !this.state.rootReferenceEnabled;
-		this.setState({ rootReferenceEnabled });
+	changeRef = e => {
+		this.setState({ rootReference: e.currentTarget.value });
+	};
+
+	changeOrder = e => {
+		this.setState({ ordering: e.currentTarget.value });
 	};
 
 	toggleMute = () => {
@@ -131,20 +140,53 @@ class App extends React.Component {
 	};
 
 	render() {
-		const { selected, scales, mute, mode, rootReferenceEnabled } = this.state;
+		const { selected, scales, mute, mode, rootReference, ordering } = this.state;
 		return (
 			<div style={mainStyle}>
 				<div style={linkContainerStyle}>
-					<a href="https://github.com/seanjams/keywheel">source</a>
+					<button style={buttonStyle} onClick={this.toggleMute}>
+						{this.state.mute ? "Unmute" : "Mute"}
+					</button>
+					<button style={buttonStyle} onClick={this.clearNotes}>
+						Clear All
+					</button>
+					<select onChange={this.changeRef} style={buttonStyle} defaultValue={"numbers"}>
+						{Object.keys(ROOT_REFERENCES).map((key, i) => (
+							<option
+								key={`reference-${i}`}
+								value={key}
+							>
+								Label: {ROOT_REFERENCES[key]}
+							</option>
+						))}
+					</select>
+					<select onChange={this.changeOrder} style={buttonStyle} defaultValue={"chromatic"}>
+						{Object.keys(ORDERINGS).map((key, i) => (
+							<option
+								key={`ordering-${i}`}
+								value={key}
+							>
+								{/* {When you return, fix this so the ordering is passed by prop down to Scale} */}
+								{ORDERINGS[key]}
+							</option>
+						))}
+					</select>
+					<button style={buttonStyle} onClick={this.toggleMode}>
+						Mode: {this.state.mode === "union" ? "Union" : "Intersection"}
+					</button>
+					<button style={buttonStyle}>
+						<a href="https://github.com/seanjams/keywheel">source</a>
+					</button>
 				</div>
 				<div>
 					<div style={inlineWidgetStyle}>
 						<KeyWheel
 							selected={selected}
 							scales={scales}
-							rootReferenceEnabled={rootReferenceEnabled}
+							rootReference={rootReference}
 							mode={mode}
 							mute={mute}
+							ordering={ordering}
 						/>
 					</div>
 					<div style={inlineWidgetStyle}>
@@ -153,9 +195,10 @@ class App extends React.Component {
 							handleClick={this.handleClick}
 							handleGroup={this.handleGroup}
 							clearNotes={this.clearNotes}
-							rootReferenceEnabled={rootReferenceEnabled}
+							rootReference={rootReference}
 							mode={mode}
 							mute={mute}
+							ordering={ordering}
 						/>
 					</div>
 				</div>
@@ -177,33 +220,6 @@ class App extends React.Component {
 							height: "10vw",
 						}}
 					/>
-				</div>
-				{/* <div style={{ display: "flex" }}>
-					<button
-						onClick={() => this.shiftScale(2)}
-						style={Object.assign({ marginRight: "50px" }, buttonStyle)}
-					>
-						Left
-					</button>
-					<button onClick={() => this.shiftScale(-2)} style={buttonStyle}>
-						Right
-					</button>
-				</div> */}
-				<div>
-					<div style={{ display: "flex" }}>
-						<button style={buttonStyle} onClick={this.toggleMute}>
-							{this.state.mute ? "Unmute" : "Mute"}
-						</button>
-						<button style={buttonStyle} onClick={this.clearNotes}>
-							Clear All
-						</button>
-						<button style={buttonStyle} onClick={this.toggleRef}>
-							View: {this.state.rootReferenceEnabled ? "Scale" : "Arbitrary"}
-						</button>
-						<button style={buttonStyle} onClick={this.toggleMode}>
-							Mode: {this.state.mode === "union" ? "Union" : "Intersection"}
-						</button>
-					</div>
 				</div>
 			</div>
 		);

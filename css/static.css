@@ -6,7 +6,7 @@ body {
 a {
 	margin-right: 30px;
 	color: blue;
-	text-decoration: underline;
+	text-decoration: none;
 }
 
 .selected:hover {

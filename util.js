@@ -396,7 +396,7 @@ export const getOctaveFrets = point => {
 	return result;
 };
 
-export const getLabelColors = (notesArr, piano) => {
+export const getLabelColors = (notesArr, isPiano) => {
 	const selectedNotesByInput = {};
 	const result = {};
 	NOTE_NAMES.forEach(name => {
@@ -432,7 +432,7 @@ export const getLabelColors = (notesArr, piano) => {
 			};
 		} else {
 			result[name] = {
-				background: piano ? (flat ? "black" : "white") : "#ddd",
+				background: isPiano ? (flat ? "black" : "white") : "#ddd",
 				color: "#666",
 			};
 		}

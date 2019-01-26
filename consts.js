@@ -1,8 +1,20 @@
-export const SCALE_RADIUS = 41;
+// SCALE_RADIUS + NOTE_RADIUS === 50
+export const SCALE_RADIUS = 40;
 
-export const NOTE_RADIUS = 9;
+export const NOTE_RADIUS = 10;
 
 export const DIRS = ["TL", "TR", "BL", "BR"];
+
+export const ROOT_REFERENCES = {
+	numbers: "Numbers",
+	degrees: "Scale Degrees",
+	names: "Note Names",
+};
+
+export const ORDERINGS = {
+	chromatic: "Chromatic",
+	fifths: "Fifths",
+};
 
 export const C = [
 	true,

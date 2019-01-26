@@ -2,7 +2,7 @@ import React from "react";
 import Scale from "./scale";
 
 export const KeyWheel = props => {
-	const { selected, scales, rootReferenceEnabled, mode, mute } = props;
+	const { selected, scales, rootReference, mode, mute, ordering } = props;
 	const scaleComponents = scales.map((node, i) => {
 		const rowShift = i % 12 > 5 ? 1 : 0;
 		const colStart = 4 * (i % 6) + 2 * rowShift + 1;
@@ -21,10 +21,11 @@ export const KeyWheel = props => {
 				selected={selected} //array of 8 separate notes objects for svg and coloring
 				isInput={false} //bool for styling svg and event handlers of input type scales
 				mode={mode} //string for deciding how to render svg
-				rootReferenceEnabled={rootReferenceEnabled} //bool for labeling notes or numbers
+				rootReference={rootReference} //bool for labeling notes
 				index={-1} //int for color index of input type scales
 				mute={mute} //bool for volume
 				style={style}
+				ordering={ordering} //key representing what order to arrange notes
 			/>
 		);
 	});

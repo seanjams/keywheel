@@ -19,6 +19,7 @@ import {
 	rotate,
 	soundNotes,
 	getMajor,
+	mod
 } from "../util";
 
 const textStyle = {
@@ -41,7 +42,7 @@ class Scale extends React.Component {
 	}
 
 	getSVG() {
-		const { notes, selected, mode, index, isInput } = this.props;
+		const { notes, selected, mode, index, isInput, ordering } = this.props;
 		let result = [];
 		let colorIdx = 8;
 
@@ -65,11 +66,15 @@ class Scale extends React.Component {
 
 		return result.map((arr, i) => {
 			if (arr.length === 0) return null;
-			const pegs = getPegs(arr);
+			let pegs = getPegs(arr);
 			if (pegs.length < 3) return null;
 
 			const style = { stroke: grey, strokeWidth: 1 };
 			style.fill = result.length > 1 ? COLORS(0.5)[i] : COLORS(0.5)[colorIdx];
+
+			if (ordering === "fifths") {
+				pegs = pegs.map(peg => mod(7 * peg, 12)).sort((a,b) => a - b);
+			}
 
 			const points = pegs.map((peg, i) => {
 				const x =
@@ -100,9 +105,15 @@ class Scale extends React.Component {
 	}
 
 	noteComponents(notes, pegs, relMajor, rootIdx = -1) {
-		const { selected, rootReferenceEnabled, isInput, index } = this.props;
+		const { selected, rootReference, isInput, index, ordering } = this.props;
 
 		return notes.map((note, i) => {
+			let m = i;
+			if (ordering === "fifths") {
+				m = mod(7 * i, 12);
+			}
+			note = notes[m];
+
 			let color = darkGrey;
 			let borderColor = darkGrey;
 			let backgroundColor = transparent;
@@ -113,17 +124,17 @@ class Scale extends React.Component {
 				selected.some((arr, j) => {
 					const arrPegs = getPegs(arr);
 					const match =
-						arr[i] && arrPegs.length > 0 && arrPegs.every(k => notes[k]);
+						arr[m] && arrPegs.length > 0 && arrPegs.every(k => notes[k]);
 					if (match && !noteColor) noteColor = COLORS(1)[j];
 					return match;
 				});
 
 			if (isInput) {
-				numLabel = NOTE_NAMES[i];
-				if (selected[index][i]) {
+				numLabel = NOTE_NAMES[m];
+				if (selected[index][m]) {
 					backgroundColor = COLORS(1)[index];
 					color = offWhite;
-					if (i === rootIdx) {
+					if (m === rootIdx) {
 						color = gold;
 						borderColor = brown;
 					}
@@ -136,16 +147,16 @@ class Scale extends React.Component {
 					backgroundColor = grey;
 				}
 
-				if (pegs.includes(i)) {
-					const idx = pegs.indexOf(i);
-					numLabel = i === relMajor[idx] ? "" : "b";
+				if (pegs.includes(m)) {
+					const idx = pegs.indexOf(m);
+					numLabel = m === relMajor[idx] ? "" : "b";
 					numLabel += `${idx + 1}`;
 				}
 			}
 
 			const onClick = e => {
 				e.stopPropagation();
-				this.handleClick(pegs, i);
+				this.handleClick(pegs, m);
 			};
 
 			const style = {
@@ -171,9 +182,15 @@ class Scale extends React.Component {
 				transform: "translateY(-50%)",
 			};
 
+			const refLabel = {
+				numbers: m,
+				names: NOTE_NAMES[m],
+				degrees: numLabel,
+			};
+
 			return (
-				<div key={i} onClick={onClick} style={style}>
-					<div style={numLabelStyle}>{rootReferenceEnabled ? numLabel : i}</div>
+				<div key={m} onClick={onClick} style={style}>
+					<div style={numLabelStyle}>{refLabel[rootReference]}</div>
 				</div>
 			);
 		});
