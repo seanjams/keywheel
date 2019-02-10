@@ -6,13 +6,11 @@ import { buttonBlue } from "../colors";
 import isEqual from "lodash/isEqual";
 
 const containerStyle = {
-	display: "grid",
-	gridTemplateColumns: "repeat(4, 1fr)",
-	gridAutoRows: "2.5vw 2.5vw 10vw 2.5vw 2.5vw 10vw",
-	justifyItems: "center",
+	display: "flex",
+	justifyContent: "center",
 	alignItems: "center",
-	width: "40vw",
-	height: "30vw",
+	width: "100%",
+	height: "100%",
 };
 
 const buttonStyle = {
@@ -27,6 +25,8 @@ const buttonStyle = {
 const buttonContainerStyle = {
 	display: "flex",
 	justifyContent: "center",
+	width: "100%",
+	margin: "10px auto",
 };
 
 const optionContainerStyle = {
@@ -39,6 +39,8 @@ const selectContainerStyle = {
 	display: "flex",
 	justifyContent: "center",
 	fontSize: "1vw",
+	width: "100%",
+	margin: "10px auto",
 };
 
 class Input extends React.Component {
@@ -94,82 +96,78 @@ class Input extends React.Component {
 	}
 
 	render() {
-		const { selected, ordering } = this.props;
-		const buttonDivs = [];
-		const scaleDivs = [];
-		const selectDivs = [];
+		const { selected } = this.props;
 
-		selected.forEach((_, i) => {
-			buttonDivs.push(
-				<div style={buttonContainerStyle} key={3 * i}>
-					<button style={buttonStyle} onClick={() => this.soundChord(i)}>
-						Sound
-					</button>
-					<button style={buttonStyle} onClick={() => this.props.clearNotes(i)}>
-						Clear
-					</button>
-				</div>
-			);
-
-			selectDivs.push(
-				<div style={selectContainerStyle} key={3 * i + 1}>
-					<select onChange={e => this.onNameChange(e, i)} defaultValue="">
-						<option disabled value="">
-							--
-						</option>
-						{NOTE_NAMES.map((name, j) => {
-							return (
-								<option key={j} value={name}>
-									{name}
-								</option>
-							);
-						})}
-					</select>
-					<select onChange={e => this.onChordChange(e, i)} defaultValue="">
-						<option disabled value="">
-							--
-						</option>
-						{Object.keys(SHAPES).map((chordName, j) => {
-							return (
-								<option key={j} value={chordName}>
-									{chordName}
-								</option>
-							);
-						})}
-					</select>
-				</div>
-			);
-
-			scaleDivs.push(
-				<Scale
-					notes={dup(EMPTY)}
-					index={i}
-					selected={selected}
-					handleClick={k => this.props.handleClick(k, i)}
-					rootReference={this.props.rootReference}
-					isInput={true}
-					mode={this.props.mode}
-					mute={this.state.mute}
-					key={3 * i + 2}
-					ordering={ordering}
-					style={{
-						width: "100%",
-						height: "100%",
-						position: "relative",
-					}}
-				/>
-			);
-		});
-
-		const domNodes = buttonDivs
-			.slice(0, 4)
-			.concat(selectDivs.slice(0, 4))
-			.concat(scaleDivs.slice(0, 4))
-			.concat(buttonDivs.slice(4))
-			.concat(selectDivs.slice(4))
-			.concat(scaleDivs.slice(4));
-
-		return <div style={containerStyle}>{domNodes}</div>;
+		return (
+			<div style={containerStyle}>
+				{selected.map((_, i) => {
+					return (
+						<div
+							key={`input-${i}`}
+							style={{ textAlign: "center", margin: "10px" }}
+						>
+							<h3>Chord {i + 1}</h3>
+							<div style={buttonContainerStyle}>
+								<button style={buttonStyle} onClick={() => this.soundChord(i)}>
+									Sound
+								</button>
+								<button
+									style={buttonStyle}
+									onClick={() => this.props.clearNotes(i)}
+								>
+									Clear
+								</button>
+							</div>
+							<div style={selectContainerStyle}>
+								<select onChange={e => this.onNameChange(e, i)} defaultValue="">
+									<option disabled value="">
+										--
+									</option>
+									{NOTE_NAMES.map((name, j) => {
+										return (
+											<option key={`note-name-${j}`} value={name}>
+												{name}
+											</option>
+										);
+									})}
+								</select>
+								<select
+									onChange={e => this.onChordChange(e, i)}
+									defaultValue=""
+								>
+									<option disabled value="">
+										--
+									</option>
+									{Object.keys(SHAPES).map((chordName, j) => {
+										return (
+											<option key={`chord-name-${j}`} value={chordName}>
+												{chordName}
+											</option>
+										);
+									})}
+								</select>
+							</div>
+							<Scale
+								notes={dup(EMPTY)}
+								index={i}
+								selected={selected}
+								handleClick={k => this.props.handleClick(k, i)}
+								rootReference={this.props.rootReference}
+								isInput={true}
+								mode={this.props.mode}
+								mute={this.state.mute}
+								ordering={this.state.ordering}
+								style={{
+									width: "10vw",
+									height: "10vw",
+									position: "relative",
+								}}
+							/>
+						</div>
+					);
+				})}
+			</div>
+		);
 	}
 }
 

@@ -19,15 +19,15 @@ import {
 	rotate,
 	soundNotes,
 	getMajor,
-	mod
+	mod,
 } from "../util";
 
 const textStyle = {
 	position: "relative",
-	top: "30%",
+	top: "34%",
 	textAlign: "center",
 	height: 0,
-	fontSize: "1vw",
+	fontSize: "1.1vw",
 };
 
 const svgContainerStyle = {
@@ -73,7 +73,7 @@ class Scale extends React.Component {
 			style.fill = result.length > 1 ? COLORS(0.5)[i] : COLORS(0.5)[colorIdx];
 
 			if (ordering === "fifths") {
-				pegs = pegs.map(peg => mod(7 * peg, 12)).sort((a,b) => a - b);
+				pegs = pegs.map(peg => mod(7 * peg, 12)).sort((a, b) => a - b);
 			}
 
 			const points = pegs.map((peg, i) => {

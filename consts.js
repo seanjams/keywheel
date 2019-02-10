@@ -1,7 +1,7 @@
 // SCALE_RADIUS + NOTE_RADIUS === 50
-export const SCALE_RADIUS = 40;
+export const SCALE_RADIUS = 41;
 
-export const NOTE_RADIUS = 10;
+export const NOTE_RADIUS = 9;
 
 export const DIRS = ["TL", "TR", "BL", "BR"];
 

@@ -140,7 +140,14 @@ class App extends React.Component {
 	};
 
 	render() {
-		const { selected, scales, mute, mode, rootReference, ordering } = this.state;
+		const {
+			selected,
+			scales,
+			mute,
+			mode,
+			rootReference,
+			ordering,
+		} = this.state;
 		return (
 			<div style={mainStyle}>
 				<div style={linkContainerStyle}>
@@ -150,22 +157,24 @@ class App extends React.Component {
 					<button style={buttonStyle} onClick={this.clearNotes}>
 						Clear All
 					</button>
-					<select onChange={this.changeRef} style={buttonStyle} defaultValue={"numbers"}>
+					<select
+						onChange={this.changeRef}
+						style={buttonStyle}
+						defaultValue={"numbers"}
+					>
 						{Object.keys(ROOT_REFERENCES).map((key, i) => (
-							<option
-								key={`reference-${i}`}
-								value={key}
-							>
+							<option key={`reference-${i}`} value={key}>
 								Label: {ROOT_REFERENCES[key]}
 							</option>
 						))}
 					</select>
-					<select onChange={this.changeOrder} style={buttonStyle} defaultValue={"chromatic"}>
+					<select
+						onChange={this.changeOrder}
+						style={buttonStyle}
+						defaultValue={"chromatic"}
+					>
 						{Object.keys(ORDERINGS).map((key, i) => (
-							<option
-								key={`ordering-${i}`}
-								value={key}
-							>
+							<option key={`ordering-${i}`} value={key}>
 								{/* {When you return, fix this so the ordering is passed by prop down to Scale} */}
 								{ORDERINGS[key]}
 							</option>
@@ -178,30 +187,20 @@ class App extends React.Component {
 						<a href="https://github.com/seanjams/keywheel">source</a>
 					</button>
 				</div>
-				<div>
-					<div style={inlineWidgetStyle}>
-						<KeyWheel
-							selected={selected}
-							scales={scales}
-							rootReference={rootReference}
-							mode={mode}
-							mute={mute}
-							ordering={ordering}
-						/>
-					</div>
-					<div style={inlineWidgetStyle}>
-						<Input
-							selected={selected}
-							handleClick={this.handleClick}
-							handleGroup={this.handleGroup}
-							clearNotes={this.clearNotes}
-							rootReference={rootReference}
-							mode={mode}
-							mute={mute}
-							ordering={ordering}
-						/>
-					</div>
+
+				<div style={{ margin: "50px auto", width: "fit-content" }}>
+					<Input
+						selected={selected}
+						handleClick={this.handleClick}
+						handleGroup={this.handleGroup}
+						clearNotes={this.clearNotes}
+						rootReference={rootReference}
+						mode={mode}
+						mute={mute}
+						ordering={ordering}
+					/>
 				</div>
+
 				<div style={{ margin: "50px auto", width: "fit-content" }}>
 					<FretBoard
 						selected={selected}
@@ -211,6 +210,7 @@ class App extends React.Component {
 						}}
 					/>
 				</div>
+
 				<div style={{ margin: "50px auto", width: "fit-content" }}>
 					<Piano
 						selected={selected}
@@ -219,6 +219,17 @@ class App extends React.Component {
 							width: "80vw",
 							height: "10vw",
 						}}
+					/>
+				</div>
+
+				<div style={{ margin: "50px auto", width: "fit-content" }}>
+					<KeyWheel
+						selected={selected}
+						scales={scales}
+						rootReference={rootReference}
+						mode={mode}
+						mute={mute}
+						ordering={ordering}
 					/>
 				</div>
 			</div>

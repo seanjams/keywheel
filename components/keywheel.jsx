@@ -34,8 +34,8 @@ export const KeyWheel = props => {
 		<div
 			style={{
 				display: "grid",
-				height: "30vw",
-				width: "60vw",
+				height: "40vw",
+				width: "80vw",
 				gridTemplateColumns: "2fr repeat(12, 5fr 2fr) 2fr",
 				gridTemplateRows: "2fr repeat(6, 5fr 2fr)",
 			}}
