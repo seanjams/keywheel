@@ -27,25 +27,35 @@ const inlineWidgetStyle = {
 	verticalAlign: "top",
 };
 
+const titleStyle = {
+	fontSize: "26px",
+	padding: "10px",
+};
+
 const buttonStyle = {
-	padding: "3px",
-	border: "1px solid brown",
-	backgroundColor: buttonBlue,
-	borderRadius: "5px",
+	padding: "5px",
+	backgroundColor: "#aaa",
+	borderRadius: 0,
+	margin: "5px",
 	textAlign: "center",
 	minWidth: "60px",
 	height: "30px",
 	fontSize: "14px",
 };
 
+const navBarStyle = {
+	display: "flex",
+	justifyContent: "space-between",
+	alignItems: "center",
+	width: "100%",
+	borderBottom: "2px solid black",
+	marginBottom: "20px",
+};
+
 const linkContainerStyle = {
 	display: "flex",
 	justifyContent: "flex-end",
 	alignItems: "center",
-	width: "100%",
-	height: "40px",
-	borderBottom: "2px solid black",
-	marginBottom: "20px",
 };
 
 class App extends React.Component {
@@ -150,42 +160,45 @@ class App extends React.Component {
 		} = this.state;
 		return (
 			<div style={mainStyle}>
-				<div style={linkContainerStyle}>
-					<button style={buttonStyle} onClick={this.toggleMute}>
-						{this.state.mute ? "Unmute" : "Mute"}
-					</button>
-					<button style={buttonStyle} onClick={this.clearNotes}>
-						Clear All
-					</button>
-					<select
-						onChange={this.changeRef}
-						style={buttonStyle}
-						defaultValue={"numbers"}
-					>
-						{Object.keys(ROOT_REFERENCES).map((key, i) => (
-							<option key={`reference-${i}`} value={key}>
-								Label: {ROOT_REFERENCES[key]}
-							</option>
-						))}
-					</select>
-					<select
-						onChange={this.changeOrder}
-						style={buttonStyle}
-						defaultValue={"chromatic"}
-					>
-						{Object.keys(ORDERINGS).map((key, i) => (
-							<option key={`ordering-${i}`} value={key}>
-								{/* {When you return, fix this so the ordering is passed by prop down to Scale} */}
-								{ORDERINGS[key]}
-							</option>
-						))}
-					</select>
-					<button style={buttonStyle} onClick={this.toggleMode}>
-						Mode: {this.state.mode === "union" ? "Union" : "Intersection"}
-					</button>
-					<button style={buttonStyle}>
-						<a href="https://github.com/seanjams/keywheel">source</a>
-					</button>
+				<div style={navBarStyle}>
+					<div style={titleStyle}>KeyWheel</div>
+					<div style={linkContainerStyle}>
+						<button style={buttonStyle} onClick={this.toggleMute}>
+							{this.state.mute ? "Unmute" : "Mute"}
+						</button>
+						<button style={buttonStyle} onClick={this.clearNotes}>
+							Clear All
+						</button>
+						<select
+							onChange={this.changeRef}
+							style={buttonStyle}
+							defaultValue={"numbers"}
+						>
+							{Object.keys(ROOT_REFERENCES).map((key, i) => (
+								<option key={`reference-${i}`} value={key}>
+									Label: {ROOT_REFERENCES[key]}
+								</option>
+							))}
+						</select>
+						<select
+							onChange={this.changeOrder}
+							style={buttonStyle}
+							defaultValue={"chromatic"}
+						>
+							{Object.keys(ORDERINGS).map((key, i) => (
+								<option key={`ordering-${i}`} value={key}>
+									{/* {When you return, fix this so the ordering is passed by prop down to Scale} */}
+									{ORDERINGS[key]}
+								</option>
+							))}
+						</select>
+						<button style={buttonStyle} onClick={this.toggleMode}>
+							Mode: {this.state.mode === "union" ? "Union" : "Intersection"}
+						</button>
+						<button style={buttonStyle}>
+							<a href="https://github.com/seanjams/keywheel">source</a>
+						</button>
+					</div>
 				</div>
 
 				<div style={{ margin: "50px auto", width: "fit-content" }}>

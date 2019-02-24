@@ -14,11 +14,13 @@ const containerStyle = {
 };
 
 const buttonStyle = {
-	padding: "3px",
-	border: "1px solid brown",
-	backgroundColor: buttonBlue,
-	borderRadius: "5px",
+	padding: "5px",
+	backgroundColor: "#aaa",
+	borderRadius: 0,
+	margin: "5px",
 	textAlign: "center",
+	minWidth: "60px",
+	height: "30px",
 	fontSize: "1vw",
 };
 

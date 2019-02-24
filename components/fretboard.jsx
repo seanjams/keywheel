@@ -13,14 +13,14 @@ import {
 } from "../util";
 
 const buttonStyle = {
-	height: "24px",
-	padding: "3px",
-	border: "1px solid brown",
-	backgroundColor: buttonBlue,
-	borderRadius: "5px",
+	padding: "5px",
+	backgroundColor: "#aaa",
+	borderRadius: 0,
+	margin: "5px",
 	textAlign: "center",
 	minWidth: "60px",
-	boxSizing: "border-box",
+	height: "24px",
+	fontSize: "14px",
 };
 
 const byString = (a, b) => {
@@ -62,7 +62,7 @@ class FretBoard extends React.Component {
 		strings.forEach((noteNames, i) => {
 			noteNames.forEach((name, j) => {
 				const fretStyle = {
-					boxShadow: "0px 0px 0px 2px #333",
+					boxShadow: "0px 0px 0px 2px #777",
 					height: "100%",
 					color: colors[name].color,
 					background: colors[name].background,
@@ -227,13 +227,9 @@ class FretBoard extends React.Component {
 	getPoints = points => {
 		if (!points.length || points.some(point => !inRange(point))) return "";
 		return points
-			.map(point => {
-				if (point) {
-					return `${point[1] * 100 + 50},${point[0] * 33 + 16.5}`;
-				} else {
-					return "";
-				}
-			})
+			.map(point =>
+				point ? `${point[1] * 100 + 50},${point[0] * 33 + 16.5}` : ""
+			)
 			.join(" ");
 	};
 
@@ -294,7 +290,6 @@ class FretBoard extends React.Component {
 		};
 
 		const chooseButtonStyle = Object.assign({}, buttonStyle, {
-			backgroundColor: "#AAA",
 			color: "#666",
 			display: "flex",
 			alignItems: "center",
@@ -311,39 +306,18 @@ class FretBoard extends React.Component {
 								const chords = this.state.chordGroups[key];
 								const points = pointGroups[key];
 
-								const activeLineStyle = {
-									stroke: COLORS(0.8)[i],
-									strokeWidth: "4",
-									strokeLinecap: "round",
-									fill: "none",
-								};
-
-								const lineStyle = {
-									stroke: COLORS(0.7)[i],
-									strokeWidth: "4",
-									strokeLinecap: "round",
-									fill: "none",
-								};
-
-								return chords.map((chord, j) => {
-									if (j === 0) {
-										return (
-											<polyline
-												key={`line-${i}-${j}`}
-												style={activeLineStyle}
-												points={points[j]}
-											/>
-										);
-									} else {
-										return (
-											<polyline
-												key={`line-${i}-${j}`}
-												style={lineStyle}
-												points={points[j]}
-											/>
-										);
-									}
-								});
+								return chords.map((chord, j) => (
+									<polyline
+										key={`line-${i}-${j}`}
+										style={{
+											stroke: COLORS(j ? 0.7 : 0.8)[i],
+											strokeWidth: "4",
+											strokeLinecap: "round",
+											fill: "none",
+										}}
+										points={points[j]}
+									/>
+								));
 							})}
 							{Object.keys(this.state.chordGroups).map((key, i) => {
 								const chords = this.state.chordGroups[key];
