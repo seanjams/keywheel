@@ -215,6 +215,17 @@ class App extends React.Component {
 				</div>
 
 				<div style={{ margin: "50px auto", width: "fit-content" }}>
+					<KeyWheel
+						selected={selected}
+						scales={scales}
+						rootReference={rootReference}
+						mode={mode}
+						mute={mute}
+						ordering={ordering}
+					/>
+				</div>
+
+				<div style={{ margin: "50px auto", width: "fit-content" }}>
 					<FretBoard
 						selected={selected}
 						style={{
@@ -232,17 +243,6 @@ class App extends React.Component {
 							width: "80vw",
 							height: "10vw",
 						}}
-					/>
-				</div>
-
-				<div style={{ margin: "50px auto", width: "fit-content" }}>
-					<KeyWheel
-						selected={selected}
-						scales={scales}
-						rootReference={rootReference}
-						mode={mode}
-						mute={mute}
-						ordering={ordering}
 					/>
 				</div>
 			</div>
