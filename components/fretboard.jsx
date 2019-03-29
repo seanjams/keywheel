@@ -310,7 +310,8 @@ class FretBoard extends React.Component {
 									<polyline
 										key={`line-${i}-${j}`}
 										style={{
-											stroke: COLORS(j ? 0.7 : 0.8)[i],
+											stroke: "orange",
+											// stroke: COLORS(j ? 0.7 : 0.8)[i],
 											strokeWidth: "4",
 											strokeLinecap: "round",
 											fill: "none",

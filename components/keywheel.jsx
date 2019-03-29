@@ -24,7 +24,7 @@ export const KeyWheel = props => {
 				rootReference={rootReference} //bool for labeling notes
 				index={-1} //int for color index of input type scales
 				mute={mute} //bool for volume
-				style={style}
+				style={style} // scale container style
 				ordering={ordering} //key representing what order to arrange notes
 			/>
 		);

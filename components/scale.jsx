@@ -171,6 +171,7 @@ class Scale extends React.Component {
 				top: `${SCALE_RADIUS * (1 - Math.cos((Math.PI * i) / 6)) -
 					2 * NOTE_RADIUS * i}%`,
 				left: `${SCALE_RADIUS * (1 + Math.sin((Math.PI * i) / 6))}%`,
+				cursor: "pointer",
 			};
 
 			const numLabelStyle = {

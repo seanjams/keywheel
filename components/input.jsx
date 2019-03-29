@@ -158,7 +158,7 @@ class Input extends React.Component {
 								isInput={true}
 								mode={this.props.mode}
 								mute={this.state.mute}
-								ordering={this.state.ordering}
+								ordering={this.props.ordering}
 								style={{
 									width: "10vw",
 									height: "10vw",
