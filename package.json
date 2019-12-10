@@ -7,9 +7,9 @@
 		"dev": "webpack --mode=development --devtool=eval-source-map --display-modules --progress",
 		"start": "webpack-dev-server --mode=development --progress --open",
 		"build": "webpack --mode=production --progress --display-modules",
-		"deps": "rm -rf node_modules && npm install",
+		"deps": "rm -rf node_modules && yarn install",
 		"clean": "rm -rf dist",
-		"deploy": "npm run clean && npm run deps && npm run build && git add . && git commit -m 'Deployment Commit' && git push origin `git subtree split --prefix dist master`:gh-pages --force && git reset HEAD~ && echo DEPLOYMENT SUCCESSFULL"
+		"deploy": "yarn run clean && yarn run deps && yarn run build && git add . && git commit -m 'Deployment Commit' && git push origin `git subtree split --prefix dist master`:gh-pages --force && git reset HEAD~ && echo DEPLOYMENT SUCCESSFULL"
 	},
 	"repository": {
 		"type": "git",

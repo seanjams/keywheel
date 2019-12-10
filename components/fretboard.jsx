@@ -134,7 +134,6 @@ class FretBoard extends React.Component {
 						let nextString, nextFret;
 
 						chords.forEach(chord => {
-							// debugger;
 							last = chord[chord.length - 1];
 							nextString = last[0] + delta[0];
 							step = bStringStep(last[0], nextString);

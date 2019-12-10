@@ -12,8 +12,12 @@ import {
 	getEmptySet,
 	getMajor,
 	dup,
+	mod,
+	onCopyToClipboard,
+	fallbackCopyTextToClipboard,
+	nodeFromRoot
 } from "../util";
-import { C, EMPTY, ROOT_REFERENCES, ORDERINGS } from "../consts";
+import { C, EMPTY, ROOT_REFERENCES, ORDERINGS, NOTE_NAMES, SHAPES } from "../consts";
 import { buttonBlue } from "../colors";
 
 const mainStyle = {
@@ -61,45 +65,114 @@ const linkContainerStyle = {
 class App extends React.Component {
 	constructor(props) {
 		super(props);
-		const start = new ScaleNode(C);
+
+		// starting keywheel centered on "C"
+		const start = 0;
 
 		this.state = {
-			start: 0,
-			scales: buildKeyWheel(start),
+			start,
 			selected: getEmptySet(),
 			mode: "union",
 			rootReference: "names",
 			ordering: "chromatic",
 			mute: false,
+			noteNames: Array(8).fill("C"),
+			chordNames: Array(8).fill("major"),
 		};
 	}
 
 	componentDidMount() {
+		this.rehydrateState(this.rebuildKeyWheel);
 		window.addEventListener("keydown", this.handleKeyPress);
+		window.addEventListener("beforeunload", this.saveToLocalStorage);
 	}
 
 	componentWillUnmount() {
+		this.saveToLocalStorage();
+		window.removeEventListener("beforeunload", this.saveToLocalStorage);
 		window.removeEventListener("keydown", this.handleKeyPress);
+	}
+
+	saveToLocalStorage = () => {
+		for (let key in this.state) {
+			if (key !== "scales") localStorage.setItem(key, JSON.stringify(this.state[key]));
+		}
+	};
+
+	rehydrateState = cb => {
+		let newState = {};
+		for (let key in this.state) {
+			if (this.props.state) {
+				newState[key] = this.props.state[key];
+			} else if (localStorage.hasOwnProperty(key)) {
+				let val = localStorage.getItem(key);
+				try {
+					val = JSON.parse(val);
+					newState[key] = val;
+				} catch (e) {
+					newState[key] = this.state[key];
+				}
+			}
+		}
+
+		this.setState(newState, cb);
+	};
+
+	onSaveToClipboard = e => {
+		// save state to URL
+		const state = dup(this.state);
+		delete state.scales;
+
+		history.pushState(
+			"",
+			"KeyWheel",
+			`?q=${encodeURIComponent(JSON.stringify(state))}`
+		);
+
+		// copy to clipboard
+		onCopyToClipboard(window.location.href);
+	};
+
+	calculateChord(i) {
+		const { noteNames, chordNames } = this.state;
+		const rootIdx = NOTE_NAMES.indexOf(noteNames[i]);
+		const pegs = SHAPES[chordNames[i]]
+			.map(note => (note + rootIdx) % 12)
+			.sort();
+		this.handleGroup(getNotes(pegs), i);
+	}
+
+	onNameChange = (e, i) => {
+		const noteNames = dup(this.state.noteNames);
+		noteNames[i] = e.target.value;
+		this.setState({ noteNames }, () => this.calculateChord(i));
+	}
+
+	onChordChange = (e, i) => {
+		const chordNames = dup(this.state.chordNames);
+		chordNames[i] = e.target.value;
+		this.setState({ chordNames }, () => this.calculateChord(i));
 	}
 
 	handleKeyPress = e => {
 		if (e.key === "ArrowLeft") {
+			e.preventDefault();
 			this.shiftScale(2);
 		} else if (e.key === "ArrowRight") {
+			e.preventDefault();
 			this.shiftScale(-2);
 		}
 	};
 
 	rebuildKeyWheel = () => {
-		const newNotes = getNotes(getMajor(this.state.start));
-		const newStart = new ScaleNode(newNotes);
+		const newStart = nodeFromRoot(this.state.start);
 		const flip = this.state.start > 6 ? -1 : 1;
 		const scales = buildKeyWheel(newStart, flip);
 		this.setState({ scales });
 	};
 
 	shiftScale = inc => {
-		const start = (((this.state.start + inc) % 12) + 12) % 12;
+		const start = mod(this.state.start + inc, 12);
 		this.setState({ start }, this.rebuildKeyWheel);
 	};
 
@@ -158,11 +231,17 @@ class App extends React.Component {
 			rootReference,
 			ordering,
 		} = this.state;
+
+		if (!scales) return null;
+
 		return (
 			<div style={mainStyle}>
 				<div style={navBarStyle}>
 					<div style={titleStyle}>KeyWheel</div>
 					<div style={linkContainerStyle}>
+						<button style={buttonStyle} onClick={this.onSaveToClipboard}>
+							Save To Clipboard
+						</button>
 						<button style={buttonStyle} onClick={this.toggleMute}>
 							{this.state.mute ? "Unmute" : "Mute"}
 						</button>
@@ -206,6 +285,8 @@ class App extends React.Component {
 						selected={selected}
 						handleClick={this.handleClick}
 						handleGroup={this.handleGroup}
+						onNameChange={this.onNameChange}
+						onChordChange={this.onChordChange}
 						clearNotes={this.clearNotes}
 						rootReference={rootReference}
 						mode={mode}

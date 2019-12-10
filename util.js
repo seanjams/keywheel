@@ -14,27 +14,30 @@ import {
 	SHAPES,
 } from "./consts";
 
-//Scale Node class dynamically holds information about location
 export class ScaleNode {
 	constructor(notes = C, center = { x: 0, y: 0 }) {
 		this.rank = 0;
 		this.notes = notes;
 		this.center = center;
 		this.parent = null;
-		this.children = [];
+		// this.children = [];
 	}
 
 	addChild(node) {
 		node.parent = this;
 		node.rank = this.rank + 1;
-		this.children.push(node);
+		// this.children.push(node);
 	}
 
 	removeChild(node) {
 		node.parent = null;
 		node.rank = 0;
-		this.children.splice(this.children.indexOf(node), 1);
+		// this.children.splice(this.children.indexOf(node), 1);
 	}
+}
+
+export const nodeFromRoot = root => {
+	return new ScaleNode(getNotes(getMajor(root)));
 }
 
 export const tweek = (notes, idx) => {
@@ -439,4 +442,36 @@ export const getLabelColors = (notesArr, isPiano) => {
 	});
 
 	return result;
+};
+
+
+// Save to Clipboard helpers
+export const fallbackCopyTextToClipboard = text => {
+	const textArea = document.createElement("textarea");
+	textArea.value = text;
+	document.body.appendChild(textArea);
+	textArea.focus();
+	textArea.select();
+
+	try {
+		const successful = document.execCommand("copy");
+		const msg = successful ? "successful" : "unsuccessful";
+		console.log("Fallback: Copying text command was " + msg);
+	} catch (err) {
+		console.error("Fallback: Oops, unable to copy", err);
+	}
+
+	document.body.removeChild(textArea);
+};
+
+export const onCopyToClipboard = text => {
+	if (!navigator.clipboard) {
+		fallbackCopyTextToClipboard(text);
+		return;
+	}
+
+	navigator.clipboard.writeText(text).then(
+		() => console.log("Copying to clipboard was successful!"),
+		err => console.error("Could not copy text: ", err),
+	);
 };

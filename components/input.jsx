@@ -1,7 +1,7 @@
 import React from "react";
 import Scale from "./scale";
 import { EMPTY, SHAPES, NOTE_NAMES } from "../consts";
-import { getNotes, getPegs, soundNotes, chordReader, dup } from "../util";
+import { getPegs, soundNotes, chordReader, dup } from "../util";
 import { buttonBlue } from "../colors";
 import isEqual from "lodash/isEqual";
 
@@ -22,6 +22,7 @@ const buttonStyle = {
 	minWidth: "60px",
 	height: "30px",
 	fontSize: "1vw",
+	cursor: "pointer",
 };
 
 const buttonContainerStyle = {
@@ -46,14 +47,6 @@ const selectContainerStyle = {
 };
 
 class Input extends React.Component {
-	constructor(props) {
-		super(props);
-		this.state = {
-			noteNames: Array(8).fill("C"),
-			chordNames: Array(8).fill("major"),
-		};
-	}
-
 	componentDidMount() {
 		window.addEventListener("keypress", this.handleKeyPress);
 	}
@@ -66,27 +59,6 @@ class Input extends React.Component {
 		const i = parseInt(e.key);
 		if (i > 0 && i < 9) this.soundChord(i - 1);
 	};
-
-	calculateChord(i) {
-		const { noteNames, chordNames } = this.state;
-		const rootIdx = NOTE_NAMES.indexOf(noteNames[i]);
-		const pegs = SHAPES[chordNames[i]]
-			.map(note => (note + rootIdx) % 12)
-			.sort();
-		this.props.handleGroup(getNotes(pegs), i);
-	}
-
-	onNameChange(e, i) {
-		const noteNames = dup(this.state.noteNames);
-		noteNames[i] = e.target.value;
-		this.setState({ noteNames }, () => this.calculateChord(i));
-	}
-
-	onChordChange(e, i) {
-		const chordNames = dup(this.state.chordNames);
-		chordNames[i] = e.target.value;
-		this.setState({ chordNames }, () => this.calculateChord(i));
-	}
 
 	soundChord(i) {
 		if (!this.props.mute) {
@@ -121,7 +93,7 @@ class Input extends React.Component {
 								</button>
 							</div>
 							<div style={selectContainerStyle}>
-								<select onChange={e => this.onNameChange(e, i)} defaultValue="">
+								<select onChange={e => this.props.onNameChange(e, i)} defaultValue="">
 									<option disabled value="">
 										--
 									</option>
@@ -134,7 +106,7 @@ class Input extends React.Component {
 									})}
 								</select>
 								<select
-									onChange={e => this.onChordChange(e, i)}
+									onChange={e => this.props.onChordChange(e, i)}
 									defaultValue=""
 								>
 									<option disabled value="">
@@ -157,7 +129,7 @@ class Input extends React.Component {
 								rootReference={this.props.rootReference}
 								isInput={true}
 								mode={this.props.mode}
-								mute={this.state.mute}
+								mute={this.props.mute}
 								ordering={this.props.ordering}
 								style={{
 									width: "10vw",

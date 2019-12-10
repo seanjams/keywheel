@@ -68,7 +68,7 @@ export const SHAPES = {
 	major: [0, 4, 7],
 	minor: [0, 3, 7],
 	aug: [0, 4, 8],
-	dim: [0, 4, 8],
+	dim: [0, 3, 6],
 	sus: [0, 2, 7],
 	maj7: [0, 4, 7, 11],
 	min7: [0, 3, 7, 10],

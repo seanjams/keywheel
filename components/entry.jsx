@@ -14,5 +14,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
 	document.body.appendChild(root);
 	document.head.appendChild(meta);
-	ReactDOM.render(<App />, root);
+
+	try {
+		let state = JSON.parse(decodeURIComponent(window.location.search.slice(3)));
+		ReactDOM.render(<App state={state} />, root);
+	} catch (e) {
+		console.warn("Unable to parse state from url, resorting to default", e);
+		ReactDOM.render(<App />, root);
+	}
 });
