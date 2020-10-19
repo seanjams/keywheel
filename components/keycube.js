@@ -162,17 +162,23 @@ export default (props) => {
             const rootIdx = NOTE_NAMES.indexOf(root);
             if (rootIdx === -1) return DEFAULT_OPTIONS;
 
-            const selectedPegs = getPegs(props.selected[0]);
-            const scaleNotes = getNotes(
-                SHAPES[scaleType].map((note) => (note + rootIdx) % 12).sort()
-            );
+            for (let i in props.selected) {
+                const selectedPegs = getPegs(props.selected[i]);
+                const scaleNotes = getNotes(
+                    SHAPES[scaleType]
+                        .map((note) => (note + rootIdx) % 12)
+                        .sort()
+                );
 
-            if (
-                selectedPegs.length &&
-                selectedPegs.every((val) => scaleNotes[val])
-            ) {
-                return HIGHLIGHT_OPTIONS;
+                if (
+                    selectedPegs.length &&
+                    selectedPegs.every((val) => scaleNotes[val])
+                ) {
+                    HIGHLIGHT_OPTIONS.color = COLORS(1)[i];
+                    return HIGHLIGHT_OPTIONS;
+                }
             }
+
             return DEFAULT_OPTIONS;
         };
 
