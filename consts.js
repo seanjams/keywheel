@@ -203,7 +203,7 @@ const z = CUBE_ORIGIN[2];
 
 //refactor, builds negative and positive branch of keycube centered at C
 export const CUBE_POSITIONS = {};
-for (let i = -1; i <= 0; i++) {
+for (let i = -2; i < 2; i++) {
     Object.keys(POSITIONS).forEach((noteName) => {
         if (!CUBE_POSITIONS[noteName]) CUBE_POSITIONS[noteName] = [];
         CUBE_POSITIONS[noteName].push(

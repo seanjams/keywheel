@@ -48,10 +48,9 @@ const Box = ({ position, color }) => {
     //     color: "grey",
     // });
 
-    // refactor
-    const x = position[0] + (3 * CUBE_SIZE) / 2;
-    const y = position[1] + (3 * CUBE_SIZE) / 2;
-    const z = position[2] + CUBE_SIZE / 2;
+    const x = position[0] + CUBE_SIZE / 2;
+    const y = position[1] + CUBE_SIZE / 2;
+    const z = position[2] - CUBE_SIZE / 2;
 
     const boxGeometry = new THREE.BoxBufferGeometry(
         CUBE_SIZE,
@@ -114,7 +113,8 @@ export default (props) => {
     const boxes = [];
     const noteNames = [];
 
-    for (let i = 0; i < NOTE_NAMES.length * 2; i++) {
+    // refactor
+    for (let i = 0; i < NOTE_NAMES.length * 2 + 3; i++) {
         const j = Math.floor(i / 3) * size;
         const position =
             i % 3 === 0
@@ -130,7 +130,13 @@ export default (props) => {
                 ? [-j - size, -j, -j]
                 : [-j - size, -j - size, -j];
 
-        boxes.push(<Box position={position} key={`box-${i}`} color="grey" />);
+        // fixes alignment issue between note vertices and boxes
+        if (i < 2 * (NOTE_NAMES.length - 1)) {
+            boxes.push(
+                <Box position={position} key={`box-${i}`} color="grey" />
+            );
+        }
+
         if (i > 0) {
             boxes.push(
                 <Box position={negPosition} key={`box-${i}-neg`} color="grey" />
