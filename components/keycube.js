@@ -241,7 +241,17 @@ export default (props) => {
 
     return (
         <Canvas
-            camera={{ position: [0, 0, 5], near: 1, far: 10000 }}
+            orthographic
+            // camera={{ position: [CUBE_SIZE, CUBE_SIZE, CUBE_SIZE], near: 1, far: 10000 }}
+            camera={{
+                position: [CUBE_SIZE * 10, CUBE_SIZE * 10, CUBE_SIZE * 10],
+                // left: (CUBE_SIZE * 1) / -0.2,
+                // right: (CUBE_SIZE * 1) / -0.2,
+                // top: CUBE_SIZE / 0.2,
+                // bottom: CUBE_SIZE / -0.2,
+                far: 100000,
+                near: CUBE_SIZE,
+            }}
             style={{
                 height: "40vw",
                 width: "80vw",
