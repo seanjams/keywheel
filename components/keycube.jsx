@@ -1,0 +1,285 @@
+import React, { useRef, useEffect, useContext } from "react";
+import * as THREE from "three";
+import { OrbitControls } from "three-orbitcontrols";
+import { Canvas, extend, useThree, useFrame } from "react-three-fiber";
+import { useSpring, animated } from "react-spring/three";
+import {
+    NOTE_NAMES,
+    CUBE_POSITIONS,
+    CUBE_SIZE,
+    SHAPES,
+    MajorScale,
+    MelminScale,
+    HarminScale,
+    HarmajScale,
+} from "../consts";
+import { getNotes, getPegs } from "../util";
+import { fontJSON } from "../font";
+import { COLORS } from "../colors";
+import { KeyWheelContext, useStore } from "../store";
+
+extend({ OrbitControls });
+
+const loader = new THREE.FontLoader();
+const font = loader.parse(fontJSON);
+
+// TODO: add drag reposition controls
+const Controls = () => {
+    const orbitRef = useRef();
+    const { camera, gl } = useThree();
+
+    useFrame(() => {
+        orbitRef.current.update();
+    });
+
+    return (
+        <orbitControls
+            // maxPolarAngle={Math.PI / 3}
+            // minPolarAngle={Math.PI / 3}
+            args={[camera, gl.domElement]}
+            ref={orbitRef}
+        />
+    );
+};
+
+// refactor
+const buildTextProps = (selected) => {
+    const nextTextProps = {};
+    for (let i = 0; i < NOTE_NAMES.length; i++) {
+        let majorName = `${NOTE_NAMES[i]} ${MajorScale}`;
+        let melMinorName = `${NOTE_NAMES[i]} ${MelminScale}`;
+        let harMinorName = `${NOTE_NAMES[i]} ${HarminScale}`;
+        let harMajorName = `${NOTE_NAMES[i]} ${HarmajScale}`;
+
+        const majorPositions = CUBE_POSITIONS[majorName];
+        const melMinorPositions = CUBE_POSITIONS[melMinorName];
+        const harMinorPositions = CUBE_POSITIONS[harMinorName];
+        const harMajorPositions = CUBE_POSITIONS[harMajorName];
+
+        const getHighlightOptions = (root, scaleType) => {
+            const DEFAULT_OPTIONS = {
+                color: "grey",
+                size: 10,
+            };
+
+            const HIGHLIGHT_OPTIONS = {
+                color: COLORS(1)[0],
+                size: 14,
+            };
+            const rootIdx = NOTE_NAMES.indexOf(root);
+            if (rootIdx === -1) return DEFAULT_OPTIONS;
+
+            for (let i in selected) {
+                const selectedPegs = getPegs(selected[i]);
+                const scaleNotes = getNotes(
+                    SHAPES[scaleType]
+                        .map((note) => (note + rootIdx) % 12)
+                        .sort()
+                );
+
+                if (
+                    selectedPegs.length &&
+                    selectedPegs.every((val) => scaleNotes[val])
+                ) {
+                    HIGHLIGHT_OPTIONS.color = COLORS(1)[i];
+                    return HIGHLIGHT_OPTIONS;
+                }
+            }
+
+            return DEFAULT_OPTIONS;
+        };
+
+        const MajorOpts = getHighlightOptions(NOTE_NAMES[i], MajorScale);
+        const MelminOpts = getHighlightOptions(NOTE_NAMES[i], MelminScale);
+        const HarminOpts = getHighlightOptions(NOTE_NAMES[i], HarminScale);
+        const HarmajOpts = getHighlightOptions(NOTE_NAMES[i], HarmajScale);
+
+        for (let j in majorPositions) {
+            let key = `${NOTE_NAMES[i]}-${MajorScale}-${j}`;
+            let text = `${NOTE_NAMES[i]}\n${MajorScale}`;
+            nextTextProps[key] = {
+                position: majorPositions[j],
+                color: MajorOpts.color,
+                text,
+                options: MajorOpts,
+            };
+        }
+        for (let j in melMinorPositions) {
+            let key = `${NOTE_NAMES[i]}-${MelminScale}-${j}`;
+            let text = `${NOTE_NAMES[i]}\n${MelminScale}`;
+            nextTextProps[key] = {
+                position: melMinorPositions[j],
+                color: MelminOpts.color,
+                text,
+                options: MelminOpts,
+            };
+        }
+        for (let j in harMinorPositions) {
+            let key = `${NOTE_NAMES[i]}-${HarminScale}-${j}`;
+            let text = `${NOTE_NAMES[i]}\n${HarminScale}`;
+            nextTextProps[key] = {
+                position: harMinorPositions[j],
+                color: HarminOpts.color,
+                text,
+                options: HarminOpts,
+            };
+        }
+        for (let j in harMajorPositions) {
+            let key = `${NOTE_NAMES[i]}-${HarmajScale}-${j}`;
+            let text = `${NOTE_NAMES[i]}\n${HarmajScale}`;
+            nextTextProps[key] = {
+                position: harMajorPositions[j],
+                color: HarmajOpts.color,
+                text,
+                options: HarmajOpts,
+            };
+        }
+    }
+
+    return nextTextProps;
+};
+
+export const TextNodes = () => {
+    const textProps = useStore((state) => state.textProps);
+    return (
+        <>
+            {Object.keys(textProps).map((key) => (
+                <Text key={key} name={key} />
+            ))}
+        </>
+    );
+};
+
+export const Text = ({ name }) => {
+    const meshRef = useRef();
+    const geometryRef = useRef();
+    const materialRef = useRef();
+
+    const { position = [], color = "", text = "", options = {} } = useStore(
+        (state) => state.textProps[name] || {}
+    );
+    const textOptions = {
+        font,
+        height: 5,
+        ...options,
+    };
+
+    useFrame((state) => {
+        if (meshRef.current) {
+            meshRef.current.lookAt(state.camera.position);
+            meshRef.current.position.set(...position);
+        }
+    });
+
+    return (
+        <animated.mesh position={position} castShadow ref={meshRef}>
+            <textBufferGeometry
+                ref={geometryRef}
+                attach="geometry"
+                args={[text, textOptions]}
+            />
+            <animated.meshPhysicalMaterial
+                ref={materialRef}
+                attach="material"
+                color={color}
+            />
+        </animated.mesh>
+    );
+};
+
+export const Box = ({ position, color }) => {
+    const x = position[0] + CUBE_SIZE / 2;
+    const y = position[1] + CUBE_SIZE / 2;
+    const z = position[2] - CUBE_SIZE / 2;
+
+    const boxGeometry = new THREE.BoxBufferGeometry(
+        CUBE_SIZE,
+        CUBE_SIZE,
+        CUBE_SIZE
+    );
+
+    return (
+        <animated.lineSegments position={[x, y, z]}>
+            <edgesGeometry attach="geometry" args={[boxGeometry]} />
+            <animated.lineBasicMaterial attach="material" color={color} />
+        </animated.lineSegments>
+    );
+};
+
+export const Boxes = () => {
+    const boxes = [];
+    const size = CUBE_SIZE;
+    for (let i = 0; i < NOTE_NAMES.length * 2 + 3; i++) {
+        const j = Math.floor(i / 3) * size;
+        const position =
+            i % 3 === 0
+                ? [j, j, j]
+                : i % 3 === 1
+                ? [j, j, j + size]
+                : [j, j + size, j + size];
+
+        const negPosition =
+            i % 3 === 0
+                ? [-j, -j, -j]
+                : i % 3 === 1
+                ? [-j - size, -j, -j]
+                : [-j - size, -j - size, -j];
+
+        // fixes alignment issue between note vertices and boxes
+        if (i < 2 * (NOTE_NAMES.length - 1)) {
+            boxes.push(
+                <Box position={position} key={`box-${i}`} color="grey" />
+            );
+        }
+
+        if (i > 0) {
+            boxes.push(
+                <Box position={negPosition} key={`box-${i}-neg`} color="grey" />
+            );
+        }
+    }
+
+    return <>{boxes}</>;
+};
+
+export const KeyCube = () => {
+    const { state } = useContext(KeyWheelContext);
+    const { selected } = state;
+    const setTextProps = useStore((store) => store.setTextProps);
+
+    useEffect(() => {
+        if (!selected) return;
+        const nextTextProps = buildTextProps(selected);
+        setTextProps(nextTextProps);
+    }, [selected]);
+
+    return (
+        <Canvas
+            orthographic
+            // camera={{ position: [CUBE_SIZE, CUBE_SIZE, CUBE_SIZE], near: 1, far: 10000 }}
+            camera={{
+                position: [CUBE_SIZE * 10, CUBE_SIZE * 10, CUBE_SIZE * 10],
+                // left: (CUBE_SIZE * 1) / -0.2,
+                // right: (CUBE_SIZE * 1) / -0.2,
+                // top: CUBE_SIZE / 0.2,
+                // bottom: CUBE_SIZE / -0.2,
+                far: 100000,
+                near: CUBE_SIZE,
+            }}
+            style={{
+                height: "40vw",
+                width: "80vw",
+            }}
+            onCreated={({ gl }) => {
+                gl.shadowMap.enabled = true;
+                gl.shadowMap.type = THREE.PCFSoftShadowMap;
+            }}
+        >
+            <ambientLight intensity={0.5} />
+            <spotLight position={[15, 20, 5]} penumbra={1} castShadow />
+            <Controls />
+            <TextNodes />
+            <Boxes />
+        </Canvas>
+    );
+};
