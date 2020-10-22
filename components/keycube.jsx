@@ -5,13 +5,10 @@ import { Canvas, extend, useThree, useFrame } from "react-three-fiber";
 import { useSpring, animated } from "react-spring/three";
 import {
     NOTE_NAMES,
+    VERTEX_POSITIONS,
     CUBE_POSITIONS,
     CUBE_SIZE,
     SHAPES,
-    MajorScale,
-    MelminScale,
-    HarminScale,
-    HarmajScale,
 } from "../consts";
 import { getNotes, getPegs } from "../util";
 import { fontJSON } from "../font";
@@ -42,96 +39,53 @@ const Controls = () => {
     );
 };
 
-// refactor
+// builds object with key pointing to textGeometry props for specific vertix
 const buildTextProps = (selected) => {
-    const nextTextProps = {};
-    for (let i = 0; i < NOTE_NAMES.length; i++) {
-        let majorName = `${NOTE_NAMES[i]} ${MajorScale}`;
-        let melMinorName = `${NOTE_NAMES[i]} ${MelminScale}`;
-        let harMinorName = `${NOTE_NAMES[i]} ${HarminScale}`;
-        let harMajorName = `${NOTE_NAMES[i]} ${HarmajScale}`;
-
-        const majorPositions = CUBE_POSITIONS[majorName];
-        const melMinorPositions = CUBE_POSITIONS[melMinorName];
-        const harMinorPositions = CUBE_POSITIONS[harMinorName];
-        const harMajorPositions = CUBE_POSITIONS[harMajorName];
-
-        const getHighlightOptions = (root, scaleType) => {
-            const DEFAULT_OPTIONS = {
-                color: "grey",
-                size: 10,
-            };
-
-            const HIGHLIGHT_OPTIONS = {
-                color: COLORS(1)[0],
-                size: 14,
-            };
-            const rootIdx = NOTE_NAMES.indexOf(root);
-            if (rootIdx === -1) return DEFAULT_OPTIONS;
-
-            for (let i in selected) {
-                const selectedPegs = getPegs(selected[i]);
-                const scaleNotes = getNotes(
-                    SHAPES[scaleType]
-                        .map((note) => (note + rootIdx) % 12)
-                        .sort()
-                );
-
-                if (
-                    selectedPegs.length &&
-                    selectedPegs.every((val) => scaleNotes[val])
-                ) {
-                    HIGHLIGHT_OPTIONS.color = COLORS(1)[i];
-                    return HIGHLIGHT_OPTIONS;
-                }
-            }
-
-            return DEFAULT_OPTIONS;
+    const getHighlightOptions = (root, scaleType) => {
+        const DEFAULT_OPTIONS = {
+            color: "grey",
+            size: 10,
         };
 
-        const MajorOpts = getHighlightOptions(NOTE_NAMES[i], MajorScale);
-        const MelminOpts = getHighlightOptions(NOTE_NAMES[i], MelminScale);
-        const HarminOpts = getHighlightOptions(NOTE_NAMES[i], HarminScale);
-        const HarmajOpts = getHighlightOptions(NOTE_NAMES[i], HarmajScale);
+        const rootIdx = NOTE_NAMES.indexOf(root);
+        if (rootIdx === -1) return DEFAULT_OPTIONS;
 
-        for (let j in majorPositions) {
-            let key = `${NOTE_NAMES[i]}-${MajorScale}-${j}`;
-            let text = `${NOTE_NAMES[i]}\n${MajorScale}`;
-            nextTextProps[key] = {
-                position: majorPositions[j],
-                color: MajorOpts.color,
-                text,
-                options: MajorOpts,
-            };
+        for (let i in selected) {
+            const selectedPegs = getPegs(selected[i]);
+            const scaleNotes = getNotes(
+                SHAPES[scaleType].map((note) => (note + rootIdx) % 12).sort()
+            );
+
+            if (
+                selectedPegs.length &&
+                selectedPegs.every((val) => scaleNotes[val])
+            ) {
+                return {
+                    color: COLORS(1)[i],
+                    size: 14,
+                };
+            }
         }
-        for (let j in melMinorPositions) {
-            let key = `${NOTE_NAMES[i]}-${MelminScale}-${j}`;
-            let text = `${NOTE_NAMES[i]}\n${MelminScale}`;
+
+        return DEFAULT_OPTIONS;
+    };
+
+    const nextTextProps = {};
+    for (let scaleName in VERTEX_POSITIONS) {
+        // split only on first space
+        let [root, scaleType] = scaleName.split(/\s(.+)/);
+
+        const options = getHighlightOptions(root, scaleType);
+        const positions = VERTEX_POSITIONS[scaleName];
+
+        for (let j in positions) {
+            let key = `${root}-${scaleType}-${j}`;
+            let text = `${root}\n${scaleType}`;
             nextTextProps[key] = {
-                position: melMinorPositions[j],
-                color: MelminOpts.color,
+                position: positions[j],
+                color: options.color,
                 text,
-                options: MelminOpts,
-            };
-        }
-        for (let j in harMinorPositions) {
-            let key = `${NOTE_NAMES[i]}-${HarminScale}-${j}`;
-            let text = `${NOTE_NAMES[i]}\n${HarminScale}`;
-            nextTextProps[key] = {
-                position: harMinorPositions[j],
-                color: HarminOpts.color,
-                text,
-                options: HarminOpts,
-            };
-        }
-        for (let j in harMajorPositions) {
-            let key = `${NOTE_NAMES[i]}-${HarmajScale}-${j}`;
-            let text = `${NOTE_NAMES[i]}\n${HarmajScale}`;
-            nextTextProps[key] = {
-                position: harMajorPositions[j],
-                color: HarmajOpts.color,
-                text,
-                options: HarmajOpts,
+                options,
             };
         }
     }
@@ -139,6 +93,7 @@ const buildTextProps = (selected) => {
     return nextTextProps;
 };
 
+// Scale Vertices
 export const TextNodes = () => {
     const textProps = useStore((state) => state.textProps);
     return (
@@ -187,6 +142,7 @@ export const Text = ({ name }) => {
     );
 };
 
+// Boxes
 export const Box = ({ position, color }) => {
     const x = position[0] + CUBE_SIZE / 2;
     const y = position[1] + CUBE_SIZE / 2;
@@ -207,41 +163,16 @@ export const Box = ({ position, color }) => {
 };
 
 export const Boxes = () => {
-    const boxes = [];
-    const size = CUBE_SIZE;
-    for (let i = 0; i < NOTE_NAMES.length * 2 + 3; i++) {
-        const j = Math.floor(i / 3) * size;
-        const position =
-            i % 3 === 0
-                ? [j, j, j]
-                : i % 3 === 1
-                ? [j, j, j + size]
-                : [j, j + size, j + size];
-
-        const negPosition =
-            i % 3 === 0
-                ? [-j, -j, -j]
-                : i % 3 === 1
-                ? [-j - size, -j, -j]
-                : [-j - size, -j - size, -j];
-
-        // fixes alignment issue between note vertices and boxes
-        if (i < 2 * (NOTE_NAMES.length - 1)) {
-            boxes.push(
+    return (
+        <>
+            {CUBE_POSITIONS.map((position, i) => (
                 <Box position={position} key={`box-${i}`} color="grey" />
-            );
-        }
-
-        if (i > 0) {
-            boxes.push(
-                <Box position={negPosition} key={`box-${i}-neg`} color="grey" />
-            );
-        }
-    }
-
-    return <>{boxes}</>;
+            ))}
+        </>
+    );
 };
 
+// KeyCube
 export const KeyCube = () => {
     const { state } = useContext(KeyWheelContext);
     const { selected } = state;

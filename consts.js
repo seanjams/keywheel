@@ -79,10 +79,10 @@ export const min7b5Chord = "min7b5";
 export const dim7Chord = "dimbb7";
 export const pentaScale = "penta";
 export const dimPentaScale = "Dim Penta";
-export const MajorScale = "Major";
-export const MelminScale = "Mel min";
-export const HarmajScale = "Har Maj";
-export const HarminScale = "Har Min";
+export const majorScale = "Major";
+export const melMinScale = "Mel min";
+export const harMajScale = "Har Maj";
+export const harMinScale = "Har Min";
 export const NeoScale = "Neo";
 
 export const CHORD_NAMES = [
@@ -98,10 +98,10 @@ export const CHORD_NAMES = [
     dim7Chord,
     pentaScale,
     dimPentaScale,
-    MajorScale,
-    MelminScale,
-    HarmajScale,
-    HarminScale,
+    majorScale,
+    melMinScale,
+    harMajScale,
+    harMinScale,
     NeoScale,
 ];
 
@@ -118,96 +118,63 @@ export const SHAPES = {
     [dim7Chord]: [0, 3, 6, 9],
     [pentaScale]: [0, 2, 4, 7, 9],
     [dimPentaScale]: [0, 3, 6, 8, 10],
-    [MajorScale]: [0, 2, 4, 5, 7, 9, 11],
-    [MelminScale]: [0, 2, 3, 5, 7, 9, 11],
-    [HarmajScale]: [0, 2, 4, 5, 7, 8, 11],
-    [HarminScale]: [0, 2, 3, 5, 7, 8, 11],
+    [majorScale]: [0, 2, 4, 5, 7, 9, 11],
+    [melMinScale]: [0, 2, 3, 5, 7, 9, 11],
+    [harMajScale]: [0, 2, 4, 5, 7, 8, 11],
+    [harMinScale]: [0, 2, 3, 5, 7, 8, 11],
     [NeoScale]: [0, 1, 3, 5, 7, 9, 11],
 };
 
-// Key Cube Experimental
+// Key Cube Experimental Constants
+const PATTERN_MAP = {
+    [majorScale]: [
+        [0, 0, 0],
+        [0, 1, 0],
+        [1, 1, 0],
+    ],
+    [melMinScale]: [
+        [-1, 0, 0],
+        [0, 1, -1],
+        [1, 0, 0],
+    ],
 
-const POSITIONS = {
-    // Major
-    [`C ${MajorScale}`]: [0, 0, 0],
-    [`G ${MajorScale}`]: [0, 1, 0],
-    [`D ${MajorScale}`]: [1, 1, 0],
+    [harMinScale]: [
+        [-1, -1, 0],
+        [-1, 1, -1],
+        [1, 0, -1],
+    ],
 
-    [`A ${MajorScale}`]: [1, 1, 1],
-    [`E ${MajorScale}`]: [1, 2, 1],
-    [`B ${MajorScale}`]: [2, 2, 1],
-
-    [`Gb ${MajorScale}`]: [2, 2, 2],
-    [`Db ${MajorScale}`]: [2, 3, 2],
-    [`Ab ${MajorScale}`]: [3, 3, 2],
-
-    [`Eb ${MajorScale}`]: [3, 3, 3],
-    [`Bb ${MajorScale}`]: [3, 4, 3],
-    [`F ${MajorScale}`]: [4, 4, 3],
-    // Melminor
-    [`C ${MelminScale}`]: [-1, 0, 0],
-    [`G ${MelminScale}`]: [0, 1, -1],
-    [`D ${MelminScale}`]: [1, 0, 0],
-
-    [`A ${MelminScale}`]: [0, 1, 1],
-    [`E ${MelminScale}`]: [1, 2, 0],
-    [`B ${MelminScale}`]: [2, 1, 1],
-
-    [`Gb ${MelminScale}`]: [1, 2, 2],
-    [`Db ${MelminScale}`]: [2, 3, 1],
-    [`Ab ${MelminScale}`]: [3, 2, 2],
-
-    [`Eb ${MelminScale}`]: [2, 3, 3],
-    [`Bb ${MelminScale}`]: [3, 4, 2],
-    [`F ${MelminScale}`]: [4, 3, 3],
-    // Harminor
-    [`C ${HarminScale}`]: [-1, -1, 0],
-    [`G ${HarminScale}`]: [-1, 1, -1],
-    [`D ${HarminScale}`]: [1, 0, -1],
-
-    [`A ${HarminScale}`]: [0, 0, 1],
-    [`E ${HarminScale}`]: [0, 2, 0],
-    [`B ${HarminScale}`]: [2, 1, 0],
-
-    [`Gb ${HarminScale}`]: [1, 1, 2],
-    [`Db ${HarminScale}`]: [1, 3, 1],
-    [`Ab ${HarminScale}`]: [3, 2, 1],
-
-    [`Eb ${HarminScale}`]: [2, 2, 3],
-    [`Bb ${HarminScale}`]: [2, 4, 2],
-    [`F ${HarminScale}`]: [4, 3, 2],
-    // Harmajor
-    [`C ${HarmajScale}`]: [0, -1, 0],
-    [`G ${HarmajScale}`]: [-1, 1, 0],
-    [`D ${HarmajScale}`]: [1, 1, -1],
-
-    [`A ${HarmajScale}`]: [1, 0, 1],
-    [`E ${HarmajScale}`]: [0, 2, 1],
-    [`B ${HarmajScale}`]: [2, 2, 0],
-
-    [`Gb ${HarmajScale}`]: [2, 1, 2],
-    [`Db ${HarmajScale}`]: [1, 3, 2],
-    [`Ab ${HarmajScale}`]: [3, 3, 1],
-
-    [`Eb ${HarmajScale}`]: [3, 2, 3],
-    [`Bb ${HarmajScale}`]: [2, 4, 3],
-    [`F ${HarmajScale}`]: [4, 4, 2],
+    [harMajScale]: [
+        [0, -1, 0],
+        [-1, 1, 0],
+        [1, 1, -1],
+    ],
 };
 
+export const CUBE_RANGE = [-1, 0, 1];
 export const CUBE_ORIGIN = [0, 0, 0];
 export const CUBE_SIZE = 150;
+export const VERTEX_POSITIONS = {};
+export const CUBE_POSITIONS = [];
 
-const x = CUBE_ORIGIN[0];
-const y = CUBE_ORIGIN[1];
-const z = CUBE_ORIGIN[2];
+for (let i in NOTE_NAMES) {
+    // traverse in circle of fifths
+    // get positions for every scale vertex and the cube positions for them
+    const root = NOTE_NAMES[(7 * i) % 12];
+    const patternIndex = i % 3;
+    const patternDelta = Math.floor(i / 3);
 
-//refactor, builds negative and positive branch of keycube centered at C
-export const CUBE_POSITIONS = {};
-for (let i = -2; i < 2; i++) {
-    Object.keys(POSITIONS).forEach((noteName) => {
-        if (!CUBE_POSITIONS[noteName]) CUBE_POSITIONS[noteName] = [];
-        CUBE_POSITIONS[noteName].push(
-            POSITIONS[noteName].map((coord) => (4 * i + coord) * CUBE_SIZE)
+    for (let name of [majorScale, melMinScale, harMinScale, harMajScale]) {
+        const position = PATTERN_MAP[name][patternIndex];
+        const scaleName = `${root} ${name}`;
+        VERTEX_POSITIONS[scaleName] = CUBE_RANGE.map((i) =>
+            position.map(
+                (coord) => (4 * i + (coord + patternDelta)) * CUBE_SIZE
+            )
         );
-    });
+
+        if (i % 3 === 0) {
+            CUBE_POSITIONS.push(...VERTEX_POSITIONS[scaleName]);
+        }
+    }
 }
