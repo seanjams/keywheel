@@ -80,11 +80,11 @@ const buildTextProps = (selected) => {
 
         for (let j in positions) {
             let key = `${root}-${scaleType}-${j}`;
-            let text = `${root}\n${scaleType}`;
+            let label = `${root}\n${scaleType}`;
             nextTextProps[key] = {
                 position: positions[j],
                 color: options.color,
-                text,
+                label,
                 options,
             };
         }
@@ -110,7 +110,7 @@ export const Text = ({ name }) => {
     const geometryRef = useRef();
     const materialRef = useRef();
 
-    const { position = [], color = "", text = "", options = {} } = useStore(
+    const { position = [], color = "", label = "", options = {} } = useStore(
         (state) => state.textProps[name] || {}
     );
     const textOptions = {
@@ -131,7 +131,7 @@ export const Text = ({ name }) => {
             <textBufferGeometry
                 ref={geometryRef}
                 attach="geometry"
-                args={[text, textOptions]}
+                args={[label, textOptions]}
             />
             <animated.meshPhysicalMaterial
                 ref={materialRef}

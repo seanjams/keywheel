@@ -173,7 +173,7 @@ for (let i in NOTE_NAMES) {
             )
         );
 
-        if (i % 3 === 0) {
+        if (i % 3 === 0 && name !== harMajScale) {
             CUBE_POSITIONS.push(...VERTEX_POSITIONS[scaleName]);
         }
     }
