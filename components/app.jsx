@@ -4,15 +4,7 @@ import { FretBoard } from "./fretboard";
 import { Piano } from "./piano";
 import { KeyWheel } from "./keywheel";
 import { KeyCube } from "./keycube";
-import {
-    buildKeyWheel,
-    getNotes,
-    getEmptySet,
-    dup,
-    mod,
-    onCopyToClipboard,
-    nodeFromRoot,
-} from "../util";
+import { getNotes, getEmptySet, dup, onCopyToClipboard } from "../util";
 import {
     EMPTY,
     ROOT_REFERENCES,
@@ -53,7 +45,6 @@ const navBarStyle = {
 
 const linkContainerStyle = {
     display: "flex",
-    justifyContent: "flex-end",
     alignItems: "center",
 };
 
@@ -61,7 +52,7 @@ export const App = ({ oldState }) => {
     const { state, dispatch } = useContext(KeyWheelContext);
 
     useEffect(() => {
-        rehydrateState(rebuildKeyWheel);
+        rehydrateState();
         window.addEventListener("keydown", handleKeyPress);
         window.addEventListener("beforeunload", saveToLocalStorage);
         return () => {
@@ -78,7 +69,7 @@ export const App = ({ oldState }) => {
         }
     };
 
-    const rehydrateState = (cb) => {
+    const rehydrateState = () => {
         let newState = {};
         for (let key in state) {
             if (oldState) {
@@ -95,18 +86,17 @@ export const App = ({ oldState }) => {
         }
 
         dispatch({ type: "REHYDRATE", payload: newState });
-        cb();
     };
 
     const onSaveToClipboard = (e) => {
         // save state to URL
-        const state = dup(state);
-        delete state.scales;
+        const savedState = dup(state);
+        delete savedState.scales;
 
         history.pushState(
             "",
             "KeyWheel",
-            `?q=${encodeURIComponent(JSON.stringify(state))}`
+            `?q=${encodeURIComponent(JSON.stringify(savedState))}`
         );
 
         // copy to clipboard
@@ -138,26 +128,15 @@ export const App = ({ oldState }) => {
     };
 
     const handleKeyPress = (e) => {
-        if (e.key === "ArrowLeft") {
+        let inc = e.key === "ArrowLeft" ? 2 : e.key === "ArrowRight" ? -2 : 0;
+        if (inc) {
             e.preventDefault();
-            shiftScale(2);
-        } else if (e.key === "ArrowRight") {
-            e.preventDefault();
-            shiftScale(-2);
+            shiftScale(inc);
         }
     };
 
-    const rebuildKeyWheel = () => {
-        const newStart = nodeFromRoot(state.start);
-        const flip = state.start > 6 ? -1 : 1;
-        const scales = buildKeyWheel(newStart, flip);
-        dispatch({ type: "REBUILD_SCALES", payload: scales });
-    };
-
     const shiftScale = (inc) => {
-        const start = mod(state.start + inc, 12);
-        dispatch({ type: "SHIFT_SCALE", payload: start });
-        rebuildKeyWheel;
+        dispatch({ type: "SHIFT_SCALE", payload: inc });
     };
 
     const clearNotes = (i = -1) => {
@@ -207,6 +186,16 @@ export const App = ({ oldState }) => {
         dispatch({ type: "TOGGLE_MUTE", payload: mute });
     };
 
+    const toggleKeyCube = () => {
+        const keyCubeVisible = !state.keyCubeVisible;
+        dispatch({ type: "TOGGLE_KEY_CUBE", payload: keyCubeVisible });
+    };
+
+    const toggleKeyWheel = () => {
+        const keyWheelVisible = !state.keyWheelVisible;
+        dispatch({ type: "TOGGLE_KEY_WHEEL", payload: keyWheelVisible });
+    };
+
     const { selected, scales, mute, mode, rootReference, ordering } = state;
 
     if (!scales) return null;
@@ -215,7 +204,12 @@ export const App = ({ oldState }) => {
         <div style={mainStyle}>
             <div style={navBarStyle}>
                 <div style={titleStyle}>KeyWheel</div>
-                <div style={linkContainerStyle}>
+                <div
+                    style={{
+                        ...linkContainerStyle,
+                        justifyContent: "flex-end",
+                    }}
+                >
                     <button style={buttonStyle} onClick={onSaveToClipboard}>
                         Save To Clipboard
                     </button>
@@ -276,20 +270,39 @@ export const App = ({ oldState }) => {
                 />
             </div>
 
-            <div style={{ margin: "50px auto", width: "fit-content" }}>
-                <KeyCube />
+            <div
+                style={{
+                    ...linkContainerStyle,
+                    width: "80%",
+                    margin: "0 auto",
+                }}
+            >
+                <button style={buttonStyle} onClick={toggleKeyCube}>
+                    {state.keyCubeVisible ? "Hide" : "Show"} Key Cube
+                </button>
+                <button style={buttonStyle} onClick={toggleKeyWheel}>
+                    {state.keyWheelVisible ? "Hide" : "Show"} Key Wheel
+                </button>
             </div>
 
-            <div style={{ margin: "50px auto", width: "fit-content" }}>
-                <KeyWheel
-                    selected={selected}
-                    scales={scales}
-                    rootReference={rootReference}
-                    mode={mode}
-                    mute={mute}
-                    ordering={ordering}
-                />
-            </div>
+            {state.keyCubeVisible && (
+                <div style={{ margin: "50px auto", width: "fit-content" }}>
+                    <KeyCube />
+                </div>
+            )}
+
+            {state.keyWheelVisible && (
+                <div style={{ margin: "50px auto", width: "fit-content" }}>
+                    <KeyWheel
+                        selected={selected}
+                        scales={scales}
+                        rootReference={rootReference}
+                        mode={mode}
+                        mute={mute}
+                        ordering={ordering}
+                    />
+                </div>
+            )}
 
             <div style={{ margin: "50px auto", width: "fit-content" }}>
                 <FretBoard
