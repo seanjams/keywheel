@@ -19,7 +19,7 @@ import {
     SHAPES,
     VERTICES,
 } from "../consts";
-import { COLORS } from "../colors";
+import { COLORS, DEFAULT_TEXT_COLOR } from "../colors";
 import { KeyWheelContext, useStore } from "../store";
 
 const mainStyle = {
@@ -59,9 +59,8 @@ const linkContainerStyle = {
 // builds object with key pointing to textGeometry props for specific vertix
 const buildTextProps = (selected) => {
     const getHighlightColor = (root, scaleType) => {
-        const defaultColor = "grey";
         const rootIdx = NOTE_NAMES.indexOf(root);
-        if (rootIdx === -1) return defaultColor;
+        if (rootIdx === -1) return DEFAULT_TEXT_COLOR;
 
         for (let i in selected) {
             const selectedPegs = getPegs(selected[i]);
@@ -77,7 +76,7 @@ const buildTextProps = (selected) => {
             }
         }
 
-        return defaultColor;
+        return DEFAULT_TEXT_COLOR;
     };
 
     const nextTextProps = {};
@@ -247,8 +246,7 @@ export const App = ({ oldState }) => {
     };
 
     const toggleKeyCube = () => {
-        const keyCubeVisible = !state.keyCubeVisible;
-        dispatch({ type: "TOGGLE_KEY_CUBE", payload: keyCubeVisible });
+        store.set({ keyCubeVisible: !store.keyCubeVisible });
     };
 
     const toggleKeyWheel = () => {
@@ -320,7 +318,7 @@ export const App = ({ oldState }) => {
                 </div>
             </div>
 
-            <div style={{ margin: "50px auto", width: "fit-content" }}>
+            <div style={{ margin: "30px auto", width: "fit-content" }}>
                 <Input
                     selected={selected}
                     handleClick={handleClick}
@@ -345,10 +343,17 @@ export const App = ({ oldState }) => {
                 <button style={buttonStyle} onClick={toggleInstruments}>
                     {state.instrumentsVisible ? "Hide" : "Show"} Instruments
                 </button>
+                <button style={buttonStyle} onClick={toggleKeyWheel}>
+                    {state.keyWheelVisible ? "Hide" : "Show"} Key Wheel
+                </button>
+                <button style={buttonStyle} onClick={toggleKeyCube}>
+                    {store.keyCubeVisible ? "Hide" : "Show"} Key Cube
+                </button>
             </div>
+
             {state.instrumentsVisible && (
                 <>
-                    <div style={{ margin: "50px auto", width: "fit-content" }}>
+                    <div style={{ margin: "30px auto", width: "fit-content" }}>
                         <FretBoard
                             selected={selected}
                             style={{
@@ -358,7 +363,7 @@ export const App = ({ oldState }) => {
                         />
                     </div>
 
-                    <div style={{ margin: "50px auto", width: "fit-content" }}>
+                    <div style={{ margin: "30px auto", width: "fit-content" }}>
                         <Piano
                             selected={selected}
                             octaves={3}
@@ -371,23 +376,8 @@ export const App = ({ oldState }) => {
                 </>
             )}
 
-            <div
-                style={{
-                    ...linkContainerStyle,
-                    width: "80%",
-                    margin: "0 auto",
-                }}
-            >
-                <button style={buttonStyle} onClick={toggleKeyCube}>
-                    {state.keyCubeVisible ? "Hide" : "Show"} Key Cube
-                </button>
-                <button style={buttonStyle} onClick={toggleKeyWheel}>
-                    {state.keyWheelVisible ? "Hide" : "Show"} Key Wheel
-                </button>
-            </div>
-
             {state.keyWheelVisible && (
-                <div style={{ margin: "50px auto", width: "fit-content" }}>
+                <div style={{ margin: "30px auto", width: "fit-content" }}>
                     <KeyWheel
                         selected={selected}
                         scales={scales}

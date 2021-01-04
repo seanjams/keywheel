@@ -1,5 +1,5 @@
 import { createContext } from "react";
-import { mod, getEmptySet, nodeFromRoot, buildKeyWheel } from "./util";
+import { mod, getEmptySet, buildKeyWheel } from "./util";
 import create from "zustand";
 
 export const DEFAULT_STATE = {
@@ -11,22 +11,14 @@ export const DEFAULT_STATE = {
     mute: false,
     noteNames: Array(8).fill("C"),
     chordNames: Array(8).fill("Major"),
-    keyCubeVisible: false,
     keyWheelVisible: true,
     instrumentsVisible: true,
 };
 
 export const KeyWheelContext = createContext(DEFAULT_STATE);
 
-const keyWheelFromStart = (start) => {
-    const startNode = nodeFromRoot(start);
-    const flip = start > 6 ? -1 : 1;
-    const scaleNodes = buildKeyWheel(startNode, flip);
-    return scaleNodes;
-};
-
 export const [useStore, api] = create((set) => {
-    return { set };
+    return { keyCubeVisible: true, set };
 });
 
 export const reducer = (state, action) => {
@@ -37,7 +29,7 @@ export const reducer = (state, action) => {
         case "REHYDRATE":
             return {
                 ...action.payload,
-                scales: keyWheelFromStart(action.payload.start || 0),
+                scales: buildKeyWheel(action.payload.start || 0),
             };
         case "CHANGE_NAME":
             return { ...state, noteNames: action.payload };
@@ -58,7 +50,7 @@ export const reducer = (state, action) => {
             return {
                 ...state,
                 start,
-                scales: keyWheelFromStart(start),
+                scales: buildKeyWheel(start),
             };
         case "TOGGLE_KEY_CUBE":
             return { ...state, keyCubeVisible: action.payload };

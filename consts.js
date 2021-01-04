@@ -151,7 +151,7 @@ const PATTERN_MAP = {
     ],
 };
 
-export const CUBE_RANGE = [-1, 0, 1];
+export const CUBE_RANGE = [-3, -2, -1, 0, 1, 2, 3];
 export const CUBE_ORIGIN = [0, 0, 0];
 export const CUBE_SIZE = 150;
 export const CUBE_POSITIONS = [];
@@ -169,7 +169,7 @@ for (let i in NOTE_NAMES) {
         const cubePositions = CUBE_RANGE.map((i, index) => {
             const key = `${root}-${name}-${index}`;
             const position = coordinates.map((coord, j) => {
-              return (4 * i + (coord + patternDelta)) * CUBE_SIZE;
+                return (4 * i + (coord + patternDelta)) * CUBE_SIZE;
             });
 
             VERTICES[key] = {

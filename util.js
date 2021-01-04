@@ -113,14 +113,16 @@ export const generateNeighbors = (node, visited, flip) => {
     return { neighbors, adjustedPegs };
 };
 
-export const buildKeyWheel = (start, flip = 1) => {
-    const queue = [start];
-    const visited = [start];
+export const buildKeyWheel = (start) => {
+    const flip = start > 6 ? -1 : 1;
+    const startNode = nodeFromRoot(start);
+    const queue = [startNode];
+    const visited = [startNode];
     let currentNode, neighbors, newNode;
 
     while (visited.length < 36) {
         currentNode = queue.shift();
-        if (!currentNode) return start;
+        if (!currentNode) return startNode;
         neighbors = generateNeighbors(currentNode, visited, flip).neighbors;
 
         neighbors.forEach((neighbor) => {
