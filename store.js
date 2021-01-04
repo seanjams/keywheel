@@ -13,6 +13,7 @@ export const DEFAULT_STATE = {
     chordNames: Array(8).fill("Major"),
     keyCubeVisible: false,
     keyWheelVisible: true,
+    instrumentsVisible: true,
 };
 
 export const KeyWheelContext = createContext(DEFAULT_STATE);
@@ -63,6 +64,8 @@ export const reducer = (state, action) => {
             return { ...state, keyCubeVisible: action.payload };
         case "TOGGLE_KEY_WHEEL":
             return { ...state, keyWheelVisible: action.payload };
+        case "TOGGLE_INSTRUMENTS":
+            return { ...state, instrumentsVisible: action.payload };
         default:
             return state;
     }

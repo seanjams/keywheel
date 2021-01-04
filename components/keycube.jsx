@@ -5,9 +5,7 @@ import { Canvas, extend, useThree, useFrame } from "react-three-fiber";
 import {
     CUBE_POSITIONS,
     CUBE_SIZE,
-    VERTEX_KEYS,
-    NAME_TO_LABEL,
-    VERTEX_POSITIONS_BY_KEY,
+    VERTICES,
 } from "../consts";
 import { fontJSON } from "../font";
 import { api } from "../store";
@@ -18,10 +16,7 @@ const loader = new THREE.FontLoader();
 const font = loader.parse(fontJSON);
 
 const DEFAULT_OPTIONS = {
-    position: [],
-    color: "",
-    label: "",
-    options: {},
+    color: "grey",
 };
 
 // TODO: add drag reposition controls
@@ -49,7 +44,7 @@ const Controls = () => {
 export const TextNodes = () => {
     return (
         <>
-            {VERTEX_KEYS.map((key) => (
+            {Object.keys(VERTICES).map((key) => (
                 <Text key={key} name={key} />
             ))}
         </>
@@ -61,8 +56,7 @@ export const Text = ({ name }) => {
     const geometryRef = useRef();
     const materialRef = useRef();
     const optionsRef = useRef(DEFAULT_OPTIONS);
-    const label = NAME_TO_LABEL[name];
-    const position = VERTEX_POSITIONS_BY_KEY[name];
+    const { label, position } = VERTICES[name];
 
     useEffect(() =>
         api.subscribe(
@@ -90,7 +84,7 @@ export const Text = ({ name }) => {
             <meshPhysicalMaterial
                 ref={materialRef}
                 attach="material"
-                color="grey"
+                color={DEFAULT_OPTIONS.color}
             />
         </mesh>
     );

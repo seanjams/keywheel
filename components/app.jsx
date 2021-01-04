@@ -17,7 +17,7 @@ import {
     ORDERINGS,
     NOTE_NAMES,
     SHAPES,
-    VERTEX_POSITIONS,
+    VERTICES,
 } from "../consts";
 import { COLORS } from "../colors";
 import { KeyWheelContext, useStore } from "../store";
@@ -58,14 +58,10 @@ const linkContainerStyle = {
 
 // builds object with key pointing to textGeometry props for specific vertix
 const buildTextProps = (selected) => {
-    const getHighlightOptions = (root, scaleType) => {
-        const DEFAULT_OPTIONS = {
-            color: "grey",
-            size: 10,
-        };
-
+    const getHighlightColor = (root, scaleType) => {
+        const defaultColor = "grey";
         const rootIdx = NOTE_NAMES.indexOf(root);
-        if (rootIdx === -1) return DEFAULT_OPTIONS;
+        if (rootIdx === -1) return defaultColor;
 
         for (let i in selected) {
             const selectedPegs = getPegs(selected[i]);
@@ -77,34 +73,20 @@ const buildTextProps = (selected) => {
                 selectedPegs.length &&
                 selectedPegs.every((val) => scaleNotes[val])
             ) {
-                return {
-                    color: COLORS(1)[i],
-                    size: 14,
-                };
+                return COLORS(1)[i];
             }
         }
 
-        return DEFAULT_OPTIONS;
+        return defaultColor;
     };
 
     const nextTextProps = {};
-    for (let scaleName in VERTEX_POSITIONS) {
-        // split only on first space
-        let [root, scaleType] = scaleName.split(/\s(.+)/);
-
-        const options = getHighlightOptions(root, scaleType);
-        const positions = VERTEX_POSITIONS[scaleName];
-
-        for (let j in positions) {
-            let key = `${root}-${scaleType}-${j}`;
-            let label = `${root}\n${scaleType}`;
-            nextTextProps[key] = {
-                position: positions[j],
-                color: options.color,
-                label,
-                options,
-            };
-        }
+    for (let key in VERTICES) {
+        let { root, scaleType } = VERTICES[key];
+        const color = getHighlightColor(root, scaleType);
+        nextTextProps[key] = {
+            color,
+        };
     }
 
     return nextTextProps;
@@ -274,6 +256,11 @@ export const App = ({ oldState }) => {
         dispatch({ type: "TOGGLE_KEY_WHEEL", payload: keyWheelVisible });
     };
 
+    const toggleInstruments = () => {
+        const instrumentsVisible = !state.instrumentsVisible;
+        dispatch({ type: "TOGGLE_INSTRUMENTS", payload: instrumentsVisible });
+    };
+
     const { selected, scales, mute, mode, rootReference, ordering } = state;
 
     if (!scales) return null;
@@ -348,26 +335,41 @@ export const App = ({ oldState }) => {
                 />
             </div>
 
-            <div style={{ margin: "50px auto", width: "fit-content" }}>
-                <FretBoard
-                    selected={selected}
-                    style={{
-                        width: "80vw",
-                        height: "10vw",
-                    }}
-                />
+            <div
+                style={{
+                    ...linkContainerStyle,
+                    width: "80%",
+                    margin: "0 auto",
+                }}
+            >
+                <button style={buttonStyle} onClick={toggleInstruments}>
+                    {state.instrumentsVisible ? "Hide" : "Show"} Instruments
+                </button>
             </div>
+            {state.instrumentsVisible && (
+                <>
+                    <div style={{ margin: "50px auto", width: "fit-content" }}>
+                        <FretBoard
+                            selected={selected}
+                            style={{
+                                width: "80vw",
+                                height: "10vw",
+                            }}
+                        />
+                    </div>
 
-            <div style={{ margin: "50px auto", width: "fit-content" }}>
-                <Piano
-                    selected={selected}
-                    octaves={3}
-                    style={{
-                        width: "80vw",
-                        height: "10vw",
-                    }}
-                />
-            </div>
+                    <div style={{ margin: "50px auto", width: "fit-content" }}>
+                        <Piano
+                            selected={selected}
+                            octaves={3}
+                            style={{
+                                width: "80vw",
+                                height: "10vw",
+                            }}
+                        />
+                    </div>
+                </>
+            )}
 
             <div
                 style={{

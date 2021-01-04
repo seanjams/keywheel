@@ -154,11 +154,8 @@ const PATTERN_MAP = {
 export const CUBE_RANGE = [-1, 0, 1];
 export const CUBE_ORIGIN = [0, 0, 0];
 export const CUBE_SIZE = 150;
-export const VERTEX_POSITIONS = {};
-export const VERTEX_KEYS = [];
-export const VERTEX_POSITIONS_BY_KEY = {};
 export const CUBE_POSITIONS = [];
-export const NAME_TO_LABEL = {};
+export const VERTICES = {};
 
 for (let i in NOTE_NAMES) {
     // traverse in circle of fifths
@@ -168,21 +165,25 @@ for (let i in NOTE_NAMES) {
     const patternDelta = Math.floor(i / 3);
 
     for (let name of [majorScale, melMinScale, harMinScale, harMajScale]) {
-        const position = PATTERN_MAP[name][patternIndex];
-        const scaleName = `${root} ${name}`;
-        VERTEX_POSITIONS[scaleName] = CUBE_RANGE.map((i, index) => {
+        const coordinates = PATTERN_MAP[name][patternIndex];
+        const cubePositions = CUBE_RANGE.map((i, index) => {
             const key = `${root}-${name}-${index}`;
-            VERTEX_KEYS.push(key);
-            NAME_TO_LABEL[key] = scaleName;
-            const newPosition = position.map((coord, j) => {
-                return (4 * i + (coord + patternDelta)) * CUBE_SIZE;
+            const position = coordinates.map((coord, j) => {
+              return (4 * i + (coord + patternDelta)) * CUBE_SIZE;
             });
-            VERTEX_POSITIONS_BY_KEY[key] = newPosition;
-            return newPosition;
+
+            VERTICES[key] = {
+                key,
+                label: `${root}\n${name}`,
+                root,
+                scaleType: name,
+                position,
+            };
+            return position;
         });
 
         if (i % 3 === 0 && name !== harMajScale) {
-            CUBE_POSITIONS.push(...VERTEX_POSITIONS[scaleName]);
+            CUBE_POSITIONS.push(...cubePositions);
         }
     }
 }
