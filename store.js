@@ -13,6 +13,7 @@ export const DEFAULT_STATE = {
     chordNames: Array(8).fill("Major"),
     keyCubeVisible: false,
     keyWheelVisible: true,
+    instrumentsVisible: true,
 };
 
 export const KeyWheelContext = createContext(DEFAULT_STATE);
@@ -23,6 +24,10 @@ const keyWheelFromStart = (start) => {
     const scaleNodes = buildKeyWheel(startNode, flip);
     return scaleNodes;
 };
+
+export const [useStore, api] = create((set) => {
+    return { set };
+});
 
 export const reducer = (state, action) => {
     Object.freeze(state);
@@ -59,14 +64,9 @@ export const reducer = (state, action) => {
             return { ...state, keyCubeVisible: action.payload };
         case "TOGGLE_KEY_WHEEL":
             return { ...state, keyWheelVisible: action.payload };
+        case "TOGGLE_INSTRUMENTS":
+            return { ...state, instrumentsVisible: action.payload };
         default:
             return state;
     }
 };
-
-export const useStore = create((set) => {
-    return {
-        textProps: {},
-        setTextProps: (textProps) => set({ textProps }),
-    };
-});

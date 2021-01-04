@@ -1,18 +1,26 @@
 import React, { useEffect, useContext } from "react";
+import isEqual from "lodash/isEqual";
 import { Input } from "./input";
 import { FretBoard } from "./fretboard";
 import { Piano } from "./piano";
 import { KeyWheel } from "./keywheel";
-import { KeyCube } from "./keycube";
-import { getNotes, getEmptySet, dup, onCopyToClipboard } from "../util";
+import {
+    getNotes,
+    getEmptySet,
+    dup,
+    onCopyToClipboard,
+    getPegs,
+} from "../util";
 import {
     EMPTY,
     ROOT_REFERENCES,
     ORDERINGS,
     NOTE_NAMES,
     SHAPES,
+    VERTICES,
 } from "../consts";
-import { KeyWheelContext } from "../store";
+import { COLORS } from "../colors";
+import { KeyWheelContext, useStore } from "../store";
 
 const mainStyle = {
     boxSizing: "border-box",
@@ -48,8 +56,45 @@ const linkContainerStyle = {
     alignItems: "center",
 };
 
+// builds object with key pointing to textGeometry props for specific vertix
+const buildTextProps = (selected) => {
+    const getHighlightColor = (root, scaleType) => {
+        const defaultColor = "grey";
+        const rootIdx = NOTE_NAMES.indexOf(root);
+        if (rootIdx === -1) return defaultColor;
+
+        for (let i in selected) {
+            const selectedPegs = getPegs(selected[i]);
+            const scaleNotes = getNotes(
+                SHAPES[scaleType].map((note) => (note + rootIdx) % 12).sort()
+            );
+
+            if (
+                selectedPegs.length &&
+                selectedPegs.every((val) => scaleNotes[val])
+            ) {
+                return COLORS(1)[i];
+            }
+        }
+
+        return defaultColor;
+    };
+
+    const nextTextProps = {};
+    for (let key in VERTICES) {
+        let { root, scaleType } = VERTICES[key];
+        const color = getHighlightColor(root, scaleType);
+        nextTextProps[key] = {
+            color,
+        };
+    }
+
+    return nextTextProps;
+};
+
 export const App = ({ oldState }) => {
     const { state, dispatch } = useContext(KeyWheelContext);
+    const store = useStore((store) => store);
 
     useEffect(() => {
         rehydrateState();
@@ -85,6 +130,7 @@ export const App = ({ oldState }) => {
             }
         }
 
+        updateThreeProps(newState.selected || getEmptySet());
         dispatch({ type: "REHYDRATE", payload: newState });
     };
 
@@ -139,14 +185,26 @@ export const App = ({ oldState }) => {
         dispatch({ type: "SHIFT_SCALE", payload: inc });
     };
 
+    const updateThreeProps = (selected) => {
+        const nextTextProps = buildTextProps(selected);
+        for (let key in nextTextProps) {
+            if (!isEqual(nextTextProps[key], store[key])) {
+                store.set({ [key]: nextTextProps[key] });
+            }
+        }
+    };
+
     const clearNotes = (i = -1) => {
         if (i >= 0) {
             const selected = dup(state.selected);
             selected[i] = dup(EMPTY);
 
+            updateThreeProps(selected);
             dispatch({ type: "SET_SELECTED", payload: selected });
         } else {
-            dispatch({ type: "SET_SELECTED", payload: getEmptySet() });
+            const empty = getEmptySet();
+            updateThreeProps(empty);
+            dispatch({ type: "SET_SELECTED", payload: empty });
         }
     };
 
@@ -156,6 +214,7 @@ export const App = ({ oldState }) => {
             selected.push(dup(notes));
         });
         selected[id][i] = !selected[id][i];
+        updateThreeProps(selected);
         dispatch({ type: "SET_SELECTED", payload: selected });
     };
 
@@ -165,6 +224,7 @@ export const App = ({ oldState }) => {
             selected.push(dup(notes));
         });
         selected[id] = notes;
+        updateThreeProps(selected);
         dispatch({ type: "SET_SELECTED", payload: selected });
     };
 
@@ -194,6 +254,11 @@ export const App = ({ oldState }) => {
     const toggleKeyWheel = () => {
         const keyWheelVisible = !state.keyWheelVisible;
         dispatch({ type: "TOGGLE_KEY_WHEEL", payload: keyWheelVisible });
+    };
+
+    const toggleInstruments = () => {
+        const instrumentsVisible = !state.instrumentsVisible;
+        dispatch({ type: "TOGGLE_INSTRUMENTS", payload: instrumentsVisible });
     };
 
     const { selected, scales, mute, mode, rootReference, ordering } = state;
@@ -277,6 +342,42 @@ export const App = ({ oldState }) => {
                     margin: "0 auto",
                 }}
             >
+                <button style={buttonStyle} onClick={toggleInstruments}>
+                    {state.instrumentsVisible ? "Hide" : "Show"} Instruments
+                </button>
+            </div>
+            {state.instrumentsVisible && (
+                <>
+                    <div style={{ margin: "50px auto", width: "fit-content" }}>
+                        <FretBoard
+                            selected={selected}
+                            style={{
+                                width: "80vw",
+                                height: "10vw",
+                            }}
+                        />
+                    </div>
+
+                    <div style={{ margin: "50px auto", width: "fit-content" }}>
+                        <Piano
+                            selected={selected}
+                            octaves={3}
+                            style={{
+                                width: "80vw",
+                                height: "10vw",
+                            }}
+                        />
+                    </div>
+                </>
+            )}
+
+            <div
+                style={{
+                    ...linkContainerStyle,
+                    width: "80%",
+                    margin: "0 auto",
+                }}
+            >
                 <button style={buttonStyle} onClick={toggleKeyCube}>
                     {state.keyCubeVisible ? "Hide" : "Show"} Key Cube
                 </button>
@@ -284,12 +385,6 @@ export const App = ({ oldState }) => {
                     {state.keyWheelVisible ? "Hide" : "Show"} Key Wheel
                 </button>
             </div>
-
-            {state.keyCubeVisible && (
-                <div style={{ margin: "50px auto", width: "fit-content" }}>
-                    <KeyCube />
-                </div>
-            )}
 
             {state.keyWheelVisible && (
                 <div style={{ margin: "50px auto", width: "fit-content" }}>
@@ -303,27 +398,6 @@ export const App = ({ oldState }) => {
                     />
                 </div>
             )}
-
-            <div style={{ margin: "50px auto", width: "fit-content" }}>
-                <FretBoard
-                    selected={selected}
-                    style={{
-                        width: "80vw",
-                        height: "10vw",
-                    }}
-                />
-            </div>
-
-            <div style={{ margin: "50px auto", width: "fit-content" }}>
-                <Piano
-                    selected={selected}
-                    octaves={3}
-                    style={{
-                        width: "80vw",
-                        height: "10vw",
-                    }}
-                />
-            </div>
         </div>
     );
 };
