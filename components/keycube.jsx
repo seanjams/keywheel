@@ -1,24 +1,28 @@
-import React, { useRef, useEffect, useContext } from "react";
+import React, { useRef, useEffect } from "react";
 import * as THREE from "three";
 import { OrbitControls } from "three-orbitcontrols";
 import { Canvas, extend, useThree, useFrame } from "react-three-fiber";
-import { useSpring, animated } from "react-spring/three";
 import {
-    NOTE_NAMES,
-    VERTEX_POSITIONS,
     CUBE_POSITIONS,
     CUBE_SIZE,
-    SHAPES,
+    VERTEX_KEYS,
+    NAME_TO_LABEL,
+    VERTEX_POSITIONS_BY_KEY,
 } from "../consts";
-import { getNotes, getPegs } from "../util";
 import { fontJSON } from "../font";
-import { COLORS } from "../colors";
-import { KeyWheelContext, useStore } from "../store";
+import { api } from "../store";
 
 extend({ OrbitControls });
 
 const loader = new THREE.FontLoader();
 const font = loader.parse(fontJSON);
+
+const DEFAULT_OPTIONS = {
+    position: [],
+    color: "",
+    label: "",
+    options: {},
+};
 
 // TODO: add drag reposition controls
 const Controls = () => {
@@ -34,71 +38,18 @@ const Controls = () => {
             // maxPolarAngle={Math.PI / 3}
             // minPolarAngle={Math.PI / 3}
             args={[camera, gl.domElement]}
+            rotateSpeed={5}
+            panSpeed={3}
             ref={orbitRef}
         />
     );
 };
 
-// builds object with key pointing to textGeometry props for specific vertix
-const buildTextProps = (selected) => {
-    const getHighlightOptions = (root, scaleType) => {
-        const DEFAULT_OPTIONS = {
-            color: "grey",
-            size: 10,
-        };
-
-        const rootIdx = NOTE_NAMES.indexOf(root);
-        if (rootIdx === -1) return DEFAULT_OPTIONS;
-
-        for (let i in selected) {
-            const selectedPegs = getPegs(selected[i]);
-            const scaleNotes = getNotes(
-                SHAPES[scaleType].map((note) => (note + rootIdx) % 12).sort()
-            );
-
-            if (
-                selectedPegs.length &&
-                selectedPegs.every((val) => scaleNotes[val])
-            ) {
-                return {
-                    color: COLORS(1)[i],
-                    size: 14,
-                };
-            }
-        }
-
-        return DEFAULT_OPTIONS;
-    };
-
-    const nextTextProps = {};
-    for (let scaleName in VERTEX_POSITIONS) {
-        // split only on first space
-        let [root, scaleType] = scaleName.split(/\s(.+)/);
-
-        const options = getHighlightOptions(root, scaleType);
-        const positions = VERTEX_POSITIONS[scaleName];
-
-        for (let j in positions) {
-            let key = `${root}-${scaleType}-${j}`;
-            let label = `${root}\n${scaleType}`;
-            nextTextProps[key] = {
-                position: positions[j],
-                color: options.color,
-                label,
-                options,
-            };
-        }
-    }
-
-    return nextTextProps;
-};
-
 // Scale Vertices
 export const TextNodes = () => {
-    const textProps = useStore((state) => state.textProps);
     return (
         <>
-            {Object.keys(textProps).map((key) => (
+            {VERTEX_KEYS.map((key) => (
                 <Text key={key} name={key} />
             ))}
         </>
@@ -109,36 +60,39 @@ export const Text = ({ name }) => {
     const meshRef = useRef();
     const geometryRef = useRef();
     const materialRef = useRef();
+    const optionsRef = useRef(DEFAULT_OPTIONS);
+    const label = NAME_TO_LABEL[name];
+    const position = VERTEX_POSITIONS_BY_KEY[name];
 
-    const { position = [], color = "", label = "", options = {} } = useStore(
-        (state) => state.textProps[name] || {}
+    useEffect(() =>
+        api.subscribe(
+            (options) => (optionsRef.current = options),
+            (store) => store[name]
+        )
     );
-    const textOptions = {
-        font,
-        height: 5,
-        ...options,
-    };
 
     useFrame((state) => {
         if (meshRef.current) {
             meshRef.current.lookAt(state.camera.position);
-            meshRef.current.position.set(...position);
+        }
+        if (materialRef.current) {
+            materialRef.current.color.set(optionsRef.current.color);
         }
     });
 
     return (
-        <animated.mesh position={position} castShadow ref={meshRef}>
+        <mesh position={position} castShadow ref={meshRef}>
             <textBufferGeometry
                 ref={geometryRef}
                 attach="geometry"
-                args={[label, textOptions]}
+                args={[label, { font, height: 5, size: 10 }]}
             />
-            <animated.meshPhysicalMaterial
+            <meshPhysicalMaterial
                 ref={materialRef}
                 attach="material"
-                color={color}
+                color="grey"
             />
-        </animated.mesh>
+        </mesh>
     );
 };
 
@@ -155,10 +109,10 @@ export const Box = ({ position, color }) => {
     );
 
     return (
-        <animated.lineSegments position={[x, y, z]}>
+        <lineSegments position={[x, y, z]}>
             <edgesGeometry attach="geometry" args={[boxGeometry]} />
-            <animated.lineBasicMaterial attach="material" color={color} />
-        </animated.lineSegments>
+            <lineBasicMaterial attach="material" color={color} />
+        </lineSegments>
     );
 };
 
@@ -174,16 +128,6 @@ export const Boxes = () => {
 
 // KeyCube
 export const KeyCube = () => {
-    const { state } = useContext(KeyWheelContext);
-    const { selected } = state;
-    const setTextProps = useStore((store) => store.setTextProps);
-
-    useEffect(() => {
-        if (!selected) return;
-        const nextTextProps = buildTextProps(selected);
-        setTextProps(nextTextProps);
-    }, [selected]);
-
     return (
         <Canvas
             orthographic

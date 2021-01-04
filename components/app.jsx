@@ -1,18 +1,26 @@
 import React, { useEffect, useContext } from "react";
+import isEqual from "lodash/isEqual";
 import { Input } from "./input";
 import { FretBoard } from "./fretboard";
 import { Piano } from "./piano";
 import { KeyWheel } from "./keywheel";
-import { KeyCube } from "./keycube";
-import { getNotes, getEmptySet, dup, onCopyToClipboard } from "../util";
+import {
+    getNotes,
+    getEmptySet,
+    dup,
+    onCopyToClipboard,
+    getPegs,
+} from "../util";
 import {
     EMPTY,
     ROOT_REFERENCES,
     ORDERINGS,
     NOTE_NAMES,
     SHAPES,
+    VERTEX_POSITIONS,
 } from "../consts";
-import { KeyWheelContext } from "../store";
+import { COLORS } from "../colors";
+import { KeyWheelContext, useStore } from "../store";
 
 const mainStyle = {
     boxSizing: "border-box",
@@ -48,8 +56,63 @@ const linkContainerStyle = {
     alignItems: "center",
 };
 
+// builds object with key pointing to textGeometry props for specific vertix
+const buildTextProps = (selected) => {
+    const getHighlightOptions = (root, scaleType) => {
+        const DEFAULT_OPTIONS = {
+            color: "grey",
+            size: 10,
+        };
+
+        const rootIdx = NOTE_NAMES.indexOf(root);
+        if (rootIdx === -1) return DEFAULT_OPTIONS;
+
+        for (let i in selected) {
+            const selectedPegs = getPegs(selected[i]);
+            const scaleNotes = getNotes(
+                SHAPES[scaleType].map((note) => (note + rootIdx) % 12).sort()
+            );
+
+            if (
+                selectedPegs.length &&
+                selectedPegs.every((val) => scaleNotes[val])
+            ) {
+                return {
+                    color: COLORS(1)[i],
+                    size: 14,
+                };
+            }
+        }
+
+        return DEFAULT_OPTIONS;
+    };
+
+    const nextTextProps = {};
+    for (let scaleName in VERTEX_POSITIONS) {
+        // split only on first space
+        let [root, scaleType] = scaleName.split(/\s(.+)/);
+
+        const options = getHighlightOptions(root, scaleType);
+        const positions = VERTEX_POSITIONS[scaleName];
+
+        for (let j in positions) {
+            let key = `${root}-${scaleType}-${j}`;
+            let label = `${root}\n${scaleType}`;
+            nextTextProps[key] = {
+                position: positions[j],
+                color: options.color,
+                label,
+                options,
+            };
+        }
+    }
+
+    return nextTextProps;
+};
+
 export const App = ({ oldState }) => {
     const { state, dispatch } = useContext(KeyWheelContext);
+    const store = useStore((store) => store);
 
     useEffect(() => {
         rehydrateState();
@@ -85,6 +148,7 @@ export const App = ({ oldState }) => {
             }
         }
 
+        updateThreeProps(newState.selected || getEmptySet());
         dispatch({ type: "REHYDRATE", payload: newState });
     };
 
@@ -139,14 +203,26 @@ export const App = ({ oldState }) => {
         dispatch({ type: "SHIFT_SCALE", payload: inc });
     };
 
+    const updateThreeProps = (selected) => {
+        const nextTextProps = buildTextProps(selected);
+        for (let key in nextTextProps) {
+            if (!isEqual(nextTextProps[key], store[key])) {
+                store.set({ [key]: nextTextProps[key] });
+            }
+        }
+    };
+
     const clearNotes = (i = -1) => {
         if (i >= 0) {
             const selected = dup(state.selected);
             selected[i] = dup(EMPTY);
 
+            updateThreeProps(selected);
             dispatch({ type: "SET_SELECTED", payload: selected });
         } else {
-            dispatch({ type: "SET_SELECTED", payload: getEmptySet() });
+            const empty = getEmptySet();
+            updateThreeProps(empty);
+            dispatch({ type: "SET_SELECTED", payload: empty });
         }
     };
 
@@ -156,6 +232,7 @@ export const App = ({ oldState }) => {
             selected.push(dup(notes));
         });
         selected[id][i] = !selected[id][i];
+        updateThreeProps(selected);
         dispatch({ type: "SET_SELECTED", payload: selected });
     };
 
@@ -165,6 +242,7 @@ export const App = ({ oldState }) => {
             selected.push(dup(notes));
         });
         selected[id] = notes;
+        updateThreeProps(selected);
         dispatch({ type: "SET_SELECTED", payload: selected });
     };
 
@@ -270,40 +348,6 @@ export const App = ({ oldState }) => {
                 />
             </div>
 
-            <div
-                style={{
-                    ...linkContainerStyle,
-                    width: "80%",
-                    margin: "0 auto",
-                }}
-            >
-                <button style={buttonStyle} onClick={toggleKeyCube}>
-                    {state.keyCubeVisible ? "Hide" : "Show"} Key Cube
-                </button>
-                <button style={buttonStyle} onClick={toggleKeyWheel}>
-                    {state.keyWheelVisible ? "Hide" : "Show"} Key Wheel
-                </button>
-            </div>
-
-            {state.keyCubeVisible && (
-                <div style={{ margin: "50px auto", width: "fit-content" }}>
-                    <KeyCube />
-                </div>
-            )}
-
-            {state.keyWheelVisible && (
-                <div style={{ margin: "50px auto", width: "fit-content" }}>
-                    <KeyWheel
-                        selected={selected}
-                        scales={scales}
-                        rootReference={rootReference}
-                        mode={mode}
-                        mute={mute}
-                        ordering={ordering}
-                    />
-                </div>
-            )}
-
             <div style={{ margin: "50px auto", width: "fit-content" }}>
                 <FretBoard
                     selected={selected}
@@ -324,6 +368,34 @@ export const App = ({ oldState }) => {
                     }}
                 />
             </div>
+
+            <div
+                style={{
+                    ...linkContainerStyle,
+                    width: "80%",
+                    margin: "0 auto",
+                }}
+            >
+                <button style={buttonStyle} onClick={toggleKeyCube}>
+                    {state.keyCubeVisible ? "Hide" : "Show"} Key Cube
+                </button>
+                <button style={buttonStyle} onClick={toggleKeyWheel}>
+                    {state.keyWheelVisible ? "Hide" : "Show"} Key Wheel
+                </button>
+            </div>
+
+            {state.keyWheelVisible && (
+                <div style={{ margin: "50px auto", width: "fit-content" }}>
+                    <KeyWheel
+                        selected={selected}
+                        scales={scales}
+                        rootReference={rootReference}
+                        mode={mode}
+                        mute={mute}
+                        ordering={ordering}
+                    />
+                </div>
+            )}
         </div>
     );
 };

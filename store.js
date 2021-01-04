@@ -24,6 +24,10 @@ const keyWheelFromStart = (start) => {
     return scaleNodes;
 };
 
+export const [useStore, api] = create((set) => {
+    return { set };
+});
+
 export const reducer = (state, action) => {
     Object.freeze(state);
     switch (action.type) {
@@ -63,10 +67,3 @@ export const reducer = (state, action) => {
             return state;
     }
 };
-
-export const useStore = create((set) => {
-    return {
-        textProps: {},
-        setTextProps: (textProps) => set({ textProps }),
-    };
-});
