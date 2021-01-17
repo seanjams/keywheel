@@ -19,7 +19,7 @@ import {
     SHAPES,
     VERTICES,
 } from "../consts";
-import { COLORS, DEFAULT_TEXT_COLOR } from "../colors";
+import { COLORS, DEFAULT_TEXT_COLOR, offWhite, grey } from "../colors";
 import { KeyWheelContext, useStore } from "../store";
 
 const mainStyle = {
@@ -27,19 +27,20 @@ const mainStyle = {
 };
 
 const titleStyle = {
-    fontSize: "26px",
+    fontSize: "1.75rem",
     padding: "10px",
 };
 
 const buttonStyle = {
     padding: "5px",
-    backgroundColor: "#aaa",
-    borderRadius: 0,
+    backgroundColor: grey,
     margin: "5px",
     textAlign: "center",
     minWidth: "60px",
     height: "30px",
-    fontSize: "14px",
+    fontSize: "0.8rem",
+    border: 0,
+    borderRadius: "3px",
 };
 
 const navBarStyle = {
@@ -48,7 +49,28 @@ const navBarStyle = {
     alignItems: "center",
     width: "100%",
     borderBottom: "2px solid black",
-    marginBottom: "20px",
+    position: "fixed",
+    top: 0,
+    height: 50,
+    zIndex: 9999,
+    background: offWhite,
+};
+
+const leftPanelStyle = {
+    position: "fixed",
+    top: 50,
+    overflowY: "scroll",
+    zIndex: 9998,
+    background: offWhite,
+    width: "10vw",
+    height: "calc(100vh - 50px)",
+    boxShadow: "5px 0 10px 0 #888",
+};
+
+const mainContentStyle = {
+    marginTop: 50,
+    marginLeft: "10vw",
+    background: offWhite,
 };
 
 const linkContainerStyle = {
@@ -107,10 +129,7 @@ export const App = ({ oldState }) => {
     }, []);
 
     const saveToLocalStorage = () => {
-        for (let key in state) {
-            if (key !== "scales")
-                localStorage.setItem(key, JSON.stringify(state[key]));
-        }
+        dispatch({ type: "SAVE_TO_LOCAL_STORAGE" });
     };
 
     const rehydrateState = () => {
@@ -318,7 +337,7 @@ export const App = ({ oldState }) => {
                 </div>
             </div>
 
-            <div style={{ margin: "30px auto", width: "fit-content" }}>
+            <div style={leftPanelStyle}>
                 <Input
                     selected={selected}
                     handleClick={handleClick}
@@ -333,61 +352,73 @@ export const App = ({ oldState }) => {
                 />
             </div>
 
-            <div
-                style={{
-                    ...linkContainerStyle,
-                    width: "80%",
-                    margin: "0 auto",
-                }}
-            >
-                <button style={buttonStyle} onClick={toggleInstruments}>
-                    {state.instrumentsVisible ? "Hide" : "Show"} Instruments
-                </button>
-                <button style={buttonStyle} onClick={toggleKeyWheel}>
-                    {state.keyWheelVisible ? "Hide" : "Show"} Key Wheel
-                </button>
-                <button style={buttonStyle} onClick={toggleKeyCube}>
-                    {store.keyCubeVisible ? "Hide" : "Show"} Key Cube
-                </button>
-            </div>
-
-            {state.instrumentsVisible && (
-                <>
-                    <div style={{ margin: "30px auto", width: "fit-content" }}>
-                        <FretBoard
-                            selected={selected}
-                            style={{
-                                width: "80vw",
-                                height: "10vw",
-                            }}
-                        />
-                    </div>
-
-                    <div style={{ margin: "30px auto", width: "fit-content" }}>
-                        <Piano
-                            selected={selected}
-                            octaves={3}
-                            style={{
-                                width: "80vw",
-                                height: "10vw",
-                            }}
-                        />
-                    </div>
-                </>
-            )}
-
-            {state.keyWheelVisible && (
-                <div style={{ margin: "30px auto", width: "fit-content" }}>
-                    <KeyWheel
-                        selected={selected}
-                        scales={scales}
-                        rootReference={rootReference}
-                        mode={mode}
-                        mute={mute}
-                        ordering={ordering}
-                    />
+            <div style={mainContentStyle}>
+                <div
+                    style={{
+                        ...linkContainerStyle,
+                        width: "80vw",
+                        paddingTop: "20px",
+                        margin: "0 auto",
+                    }}
+                >
+                    <button style={buttonStyle} onClick={toggleInstruments}>
+                        {state.instrumentsVisible ? "Hide" : "Show"} Instruments
+                    </button>
+                    <button style={buttonStyle} onClick={toggleKeyWheel}>
+                        {state.keyWheelVisible ? "Hide" : "Show"} Key Wheel
+                    </button>
+                    <button style={buttonStyle} onClick={toggleKeyCube}>
+                        {store.keyCubeVisible ? "Hide" : "Show"} Key Cube
+                    </button>
                 </div>
-            )}
+
+                {state.instrumentsVisible && (
+                    <>
+                        <div
+                            style={{
+                                margin: "30px auto",
+                                width: "fit-content",
+                            }}
+                        >
+                            <FretBoard
+                                selected={selected}
+                                style={{
+                                    width: "80vw",
+                                    height: "10vw",
+                                }}
+                            />
+                        </div>
+                        <div
+                            style={{
+                                margin: "30px auto",
+                                width: "fit-content",
+                            }}
+                        >
+                            <Piano
+                                selected={selected}
+                                octaves={3}
+                                style={{
+                                    width: "80vw",
+                                    height: "10vw",
+                                }}
+                            />
+                        </div>
+                    </>
+                )}
+
+                {state.keyWheelVisible && (
+                    <div style={{ margin: "30px auto", width: "fit-content" }}>
+                        <KeyWheel
+                            selected={selected}
+                            scales={scales}
+                            rootReference={rootReference}
+                            mode={mode}
+                            mute={mute}
+                            ordering={ordering}
+                        />
+                    </div>
+                )}
+            </div>
         </div>
     );
 };

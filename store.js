@@ -58,6 +58,11 @@ export const reducer = (state, action) => {
             return { ...state, keyWheelVisible: action.payload };
         case "TOGGLE_INSTRUMENTS":
             return { ...state, instrumentsVisible: action.payload };
+        case "SAVE_TO_LOCAL_STORAGE":
+            for (let key in state) {
+                if (key !== "scales")
+                    localStorage.setItem(key, JSON.stringify(state[key]));
+            }
         default:
             return state;
     }

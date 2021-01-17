@@ -122,7 +122,7 @@ export const Boxes = () => {
 export const KeyCube = () => {
     const keyCubeVisible = useStore((store) => store.keyCubeVisible);
     return (
-        <>
+        <div style={{ marginLeft: "10vw" }}>
             {keyCubeVisible && (
                 <Canvas
                     orthographic
@@ -141,7 +141,7 @@ export const KeyCube = () => {
                     }}
                     style={{
                         height: "50vw",
-                        width: "90vw",
+                        width: "80vw",
                         margin: "0 auto",
                     }}
                     onCreated={({ gl }) => {
@@ -156,6 +156,6 @@ export const KeyCube = () => {
                     <Boxes />
                 </Canvas>
             )}
-        </>
+        </div>
     );
 };

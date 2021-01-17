@@ -1,14 +1,14 @@
 body {
-	background: #eee;
-	font-family: "Helvetica";
+    background: #fefefe;
+    font-family: "Helvetica";
 }
 
 a {
-	margin-right: 30px;
-	color: blue;
-	text-decoration: none;
+    margin-right: 30px;
+    color: blue;
+    text-decoration: none;
 }
 
 .selected:hover {
-	background: purple;
+    background: purple;
 }

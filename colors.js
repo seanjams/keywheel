@@ -1,8 +1,10 @@
 export const darkGrey = "#333";
 
+export const mediumGrey = "#666";
+
 export const grey = "#BBB";
 
-export const offWhite = "#EEE";
+export const offWhite = "#FEFEFE";
 
 export const buttonBlue = "rgba(100,100,255,0.5)";
 

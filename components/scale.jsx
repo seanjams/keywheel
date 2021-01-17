@@ -27,7 +27,7 @@ const textStyle = {
     top: "34%",
     textAlign: "center",
     height: 0,
-    fontSize: "1.1vw",
+    fontSize: "0.95vw",
 };
 
 const svgContainerStyle = {
@@ -181,7 +181,7 @@ export const Scale = (props) => {
 
             const numLabelStyle = {
                 color,
-                fontSize: "0.8vw",
+                fontSize: "0.7vw",
                 textAlign: "center",
                 position: "relative",
                 top: "50%",

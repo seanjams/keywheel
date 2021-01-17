@@ -1,18 +1,7 @@
 import isEqual from "lodash/isEqual";
 import Tone from "tone";
-import { COLORS, CHORD_COLOR, INTERVAL_COLORS, grey, offWhite } from "./colors";
-import {
-    SCALE_SPACING,
-    WHEEL_CENTER,
-    DIRS,
-    C,
-    EMPTY,
-    NOTE_NAMES,
-    MAJOR,
-    MELMINOR,
-    NEAPOLITAN,
-    SHAPES,
-} from "./consts";
+import { COLORS, CHORD_COLOR, offWhite, mediumGrey } from "./colors";
+import { DIRS, C, EMPTY, NOTE_NAMES, MAJOR, SHAPES } from "./consts";
 
 export class ScaleNode {
     constructor(notes = C, center = { x: 0, y: 0 }) {
@@ -444,7 +433,7 @@ export const getLabelColors = (notesArr, isPiano) => {
         } else {
             result[name] = {
                 background: isPiano ? (flat ? "black" : "white") : "#ddd",
-                color: "#666",
+                color: mediumGrey,
             };
         }
     });
