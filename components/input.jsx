@@ -1,7 +1,7 @@
 import React, { useEffect } from "react";
 import { Scale } from "./scale";
 import { EMPTY, SHAPES, NOTE_NAMES } from "../consts";
-import { grey } from "../colors";
+import { lightGrey } from "../colors";
 import { getPegs, soundNotes, chordReader, dup } from "../util";
 
 const containerStyle = {
@@ -14,7 +14,7 @@ const containerStyle = {
 
 const buttonStyle = {
     padding: "3px",
-    backgroundColor: grey,
+    backgroundColor: lightGrey,
     borderRadius: 0,
     margin: "2px",
     textAlign: "center",

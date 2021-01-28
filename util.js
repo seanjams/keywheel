@@ -1,7 +1,9 @@
 import isEqual from "lodash/isEqual";
 import Tone from "tone";
-import { COLORS, CHORD_COLOR, offWhite, mediumGrey } from "./colors";
+import { COLORS, CHORD_COLOR, offWhite, mediumGrey, lightGrey } from "./colors";
 import { DIRS, C, EMPTY, NOTE_NAMES, MAJOR, SHAPES } from "./consts";
+
+export const DEFAULT_NOTE_COLOR_OPTIONS = EMPTY.map(() => [lightGrey]);
 
 export class ScaleNode {
     constructor(notes = C, center = { x: 0, y: 0 }) {

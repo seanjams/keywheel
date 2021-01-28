@@ -1,8 +1,7 @@
 import React from "react";
-import isEqual from "lodash/isEqual";
 import {
     darkGrey,
-    grey,
+    lightGrey,
     offWhite,
     gold,
     brown,
@@ -65,7 +64,7 @@ export const Scale = (props) => {
             let pegs = getPegs(arr);
             if (pegs.length < 3) return null;
 
-            const style = { stroke: grey, strokeWidth: 1 };
+            const style = { stroke: lightGrey, strokeWidth: 1 };
             style.fill =
                 result.length > 1 ? COLORS(0.5)[i] : COLORS(0.5)[colorIdx];
 
@@ -147,7 +146,7 @@ export const Scale = (props) => {
                     backgroundColor = noteColor;
                     color = offWhite;
                 } else if (note) {
-                    backgroundColor = grey;
+                    backgroundColor = lightGrey;
                 }
 
                 if (pegs.includes(m)) {

@@ -48,16 +48,31 @@ export const EMPTY = [
 
 export const NOTE_NAMES = [
     "C",
-    "Db",
+    "D♭",
     "D",
-    "Eb",
+    "E♭",
     "E",
     "F",
-    "Gb",
+    "G♭",
     "G",
-    "Ab",
+    "A♭",
     "A",
-    "Bb",
+    "B♭",
+    "B",
+];
+
+export const SHARP_NOTE_NAMES = [
+    "C",
+    "C♯",
+    "D",
+    "D♯",
+    "E",
+    "F",
+    "F♯",
+    "G",
+    "G♯",
+    "A",
+    "A♯",
     "B",
 ];
 
@@ -151,11 +166,11 @@ const PATTERN_MAP = {
     ],
 };
 
-export const CUBE_RANGE = [-3, -2, -1, 0, 1, 2, 3];
-export const CUBE_ORIGIN = [0, 0, 0];
+export const CUBE_RANGE = [-2, -1, 0, 1];
 export const CUBE_SIZE = 150;
 export const CUBE_POSITIONS = [];
 export const VERTICES = {};
+export const STARTING_POS = [CUBE_SIZE * -30, CUBE_SIZE * 10, CUBE_SIZE * 20];
 
 for (let i in NOTE_NAMES) {
     // traverse in circle of fifths

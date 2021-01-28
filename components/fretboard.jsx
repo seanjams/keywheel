@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import isEqual from "lodash/isEqual";
 import { NOTE_NAMES } from "../consts";
-import { COLORS, grey, mediumGrey } from "../colors";
+import { COLORS, lightGrey, mediumGrey } from "../colors";
 import {
     rotate,
     dup,
@@ -13,7 +13,7 @@ import {
 
 const buttonStyle = {
     padding: "5px",
-    backgroundColor: grey,
+    backgroundColor: lightGrey,
     borderRadius: "3px",
     margin: "5px",
     textAlign: "center",

@@ -1,9 +1,16 @@
-import React, { useRef, useEffect } from "react";
+import React, { useRef, useEffect, useLayoutEffect } from "react";
 import * as THREE from "three";
 import { OrbitControls } from "three-orbitcontrols";
 import { Canvas, extend, useThree, useFrame } from "react-three-fiber";
-import { CUBE_POSITIONS, CUBE_SIZE, VERTICES } from "../consts";
-import { DEFAULT_TEXT_COLOR } from "../colors";
+import {
+    CUBE_POSITIONS,
+    CUBE_SIZE,
+    STARTING_POS,
+    NOTE_NAMES,
+    VERTICES,
+} from "../consts";
+import { DEFAULT_NOTE_COLOR_OPTIONS } from "../util";
+import { grey, darkGrey, lightGrey, lighterGrey } from "../colors";
 import { fontJSON } from "../font";
 import { useStore, api } from "../store";
 
@@ -11,10 +18,6 @@ extend({ OrbitControls });
 
 const loader = new THREE.FontLoader();
 const font = loader.parse(fontJSON);
-
-const DEFAULT_OPTIONS = {
-    color: DEFAULT_TEXT_COLOR,
-};
 
 // TODO: add drag reposition controls
 const Controls = () => {
@@ -30,30 +33,63 @@ const Controls = () => {
             // maxPolarAngle={Math.PI / 3}
             // minPolarAngle={Math.PI / 3}
             args={[camera, gl.domElement]}
-            rotateSpeed={5}
-            panSpeed={3}
+            rotateSpeed={3}
+            panSpeed={1}
             ref={orbitRef}
         />
     );
 };
 
+const Lights = () => {
+    const lightRef = useRef();
+
+    useFrame((state) => {
+        if (lightRef.current) {
+            lightRef.current.position.copy(state.camera.position);
+        }
+    });
+
+    return (
+        <>
+            <spotLight ref={lightRef} penumbra={0.7} castShadow />
+            <ambientLight intensity={0.1} />
+        </>
+    );
+};
+
 // Scale Vertices
-export const TextNodes = () => {
+export const ScaleVertices = () => {
     return (
         <>
             {Object.keys(VERTICES).map((key) => (
-                <Text key={key} name={key} />
+                <ScaleVertex key={key} name={key} />
             ))}
         </>
     );
 };
 
-export const Text = ({ name }) => {
-    const meshRef = useRef();
-    const geometryRef = useRef();
-    const materialRef = useRef();
+export const ScaleVertex = ({ name }) => {
+    const groupRef = useRef();
+
+    const scaleMeshRef = useRef();
+    const scaleGeometryRef = useRef();
+    const scaleMaterialRef = useRef();
+
+    const scaleTextMeshRef = useRef();
+    const scaleTextGeometryRef = useRef();
+    const scaleTextMaterialRef = useRef();
+
+    const noteBalls = [];
+    const noteBallRefs = [];
+
+    const noteTexts = [];
+    const noteTextRefs = [];
+
+    const optionsRef = useRef(
+        useStore.getState()[name] || DEFAULT_NOTE_COLOR_OPTIONS
+    );
+
     const { label, position } = VERTICES[name];
-    const optionsRef = useRef(useStore.getState()[name] || DEFAULT_OPTIONS);
 
     useEffect(() => {
         return api.subscribe(
@@ -63,56 +99,285 @@ export const Text = ({ name }) => {
     }, []);
 
     useFrame((state) => {
-        if (meshRef.current) {
-            meshRef.current.lookAt(state.camera.position);
-            // console.log(state.camera.position);
+        // things that should happen on every render
+
+        if (groupRef.current) {
+            groupRef.current.lookAt(state.camera.position);
         }
-        if (materialRef.current) {
-            materialRef.current.color.set(optionsRef.current.color);
+
+        for (let i = 0; i < noteBallRefs.length; i++) {
+            const [
+                ballMeshRef,
+                ballGeometryRef,
+                ballMaterialRef,
+            ] = noteBallRefs[i];
+
+            if (ballMaterialRef.current) {
+                const options = optionsRef.current[i];
+                ballMaterialRef.current.color.set(options[options.length - 1]);
+            }
         }
     });
 
-    return (
-        <mesh position={position} castShadow ref={meshRef}>
-            <textBufferGeometry
-                ref={geometryRef}
+    useLayoutEffect(() => {
+        // things that should happen on first render cylce after mounting
+
+        for (let i = 0; i < noteBallRefs.length; i++) {
+            const [
+                ballMeshRef,
+                ballGeometryRef,
+                ballMaterialRef,
+            ] = noteBallRefs[i];
+
+            const [
+                textMeshRef,
+                textGeometryRef,
+                textMaterialRef,
+            ] = noteTextRefs[i];
+
+            let x = Math.sin((2 * i * Math.PI) / 12);
+            let y = Math.cos((2 * i * Math.PI) / 12);
+
+            const v = new THREE.Vector3(x, y, 1);
+            const z = new THREE.Vector3(x, y, 1.25); // leads to slightly narrower cone
+            v.normalize();
+            z.normalize();
+
+            if (ballMeshRef.current) {
+                ballMeshRef.current.translateOnAxis(v, 20);
+            }
+
+            if (textMeshRef.current) {
+                textMeshRef.current.translateOnAxis(z, 23);
+            }
+
+            if (textGeometryRef.current) {
+                textGeometryRef.current.center();
+            }
+        }
+
+        if (scaleTextMeshRef.current) {
+            const t = new THREE.Vector3(0, 0, 1);
+            scaleTextMeshRef.current.translateOnAxis(t, 19.5);
+        }
+
+        if (scaleTextGeometryRef.current) {
+            scaleTextGeometryRef.current.center();
+        }
+    });
+
+    const scaleBall = (
+        <mesh castShadow ref={scaleMeshRef} key={`corner-${name}`}>
+            <sphereBufferGeometry
+                ref={scaleGeometryRef}
                 attach="geometry"
-                args={[label, { font, height: 5, size: 10 }]}
+                args={[20, 32, 16]}
             />
-            <meshPhysicalMaterial
-                ref={materialRef}
+            <meshPhongMaterial
+                ref={scaleMaterialRef}
                 attach="material"
-                color={DEFAULT_TEXT_COLOR}
+                color={lightGrey}
             />
         </mesh>
+    );
+
+    const scaleText = (
+        <mesh castShadow ref={scaleTextMeshRef}>
+            <textBufferGeometry
+                ref={scaleTextGeometryRef}
+                attach="geometry"
+                args={[label, { font, height: 2, size: 4 }]}
+            />
+            <meshPhysicalMaterial
+                ref={scaleTextMaterialRef}
+                attach="material"
+                color={darkGrey}
+            />
+        </mesh>
+    );
+
+    for (let i = 0; i < 12; i++) {
+        const noteBallMeshRef = useRef();
+        const noteBallGeometryRef = useRef();
+        const noteBallMaterialRef = useRef();
+
+        const noteTextMeshRef = useRef();
+        const noteTextGeometryRef = useRef();
+        const noteTextMaterialRef = useRef();
+
+        const noteBall = (
+            <mesh
+                castShadow
+                ref={noteBallMeshRef}
+                key={`note-ball-${name}-${i}`}
+            >
+                <sphereBufferGeometry
+                    ref={noteBallGeometryRef}
+                    attach="geometry"
+                    args={[4, 32, 16]}
+                />
+                <meshPhongMaterial
+                    ref={noteBallMaterialRef}
+                    attach="material"
+                    color={lightGrey}
+                    reflectivity={1}
+                />
+            </mesh>
+        );
+
+        const noteText = (
+            <mesh
+                castShadow
+                ref={noteTextMeshRef}
+                key={`note-text-${name}-${i}`}
+            >
+                <textBufferGeometry
+                    ref={noteTextGeometryRef}
+                    attach="geometry"
+                    args={[NOTE_NAMES[i], { font, height: 1, size: 2 }]}
+                />
+                <meshPhysicalMaterial
+                    ref={noteTextMaterialRef}
+                    attach="material"
+                    color={darkGrey}
+                />
+            </mesh>
+        );
+
+        noteBallRefs.push([
+            noteBallMeshRef,
+            noteBallGeometryRef,
+            noteBallMaterialRef,
+        ]);
+
+        noteTextRefs.push([
+            noteTextMeshRef,
+            noteTextGeometryRef,
+            noteTextMaterialRef,
+        ]);
+
+        noteBalls.push(noteBall);
+        noteTexts.push(noteText);
+    }
+
+    return (
+        <group ref={groupRef} position={position}>
+            {scaleText}
+            {scaleBall}
+            {noteBalls}
+            {noteTexts}
+        </group>
     );
 };
 
 // Boxes
-export const Box = ({ position, color }) => {
-    const x = position[0] + CUBE_SIZE / 2;
-    const y = position[1] + CUBE_SIZE / 2;
-    const z = position[2] - CUBE_SIZE / 2;
+export const Edge = ({ position, color }) => {
+    const edgeRefs = [];
 
-    const boxGeometry = new THREE.BoxBufferGeometry(
-        CUBE_SIZE,
-        CUBE_SIZE,
-        CUBE_SIZE
-    );
+    const cornerPositions = [
+        [0, 0, 0],
+        [1, 0, 0],
+        [0, 1, 0],
+        [0, 0, -1],
+        [1, 1, 0],
+        [1, 0, -1],
+        [0, 1, -1],
+        [1, 1, -1],
+    ];
 
-    return (
-        <lineSegments position={[x, y, z]}>
-            <edgesGeometry attach="geometry" args={[boxGeometry]} />
-            <lineBasicMaterial attach="material" color={color} />
-        </lineSegments>
-    );
+    const edgePairs = [
+        [0, 1],
+        [0, 2],
+        [1, 4],
+        [2, 4],
+        [0, 3],
+        [1, 5],
+        [4, 7],
+        [2, 6],
+        [3, 5],
+        [3, 6],
+        [5, 7],
+        [6, 7],
+    ];
+
+    const x = position[0];
+    const y = position[1];
+    const z = position[2];
+
+    const edges = [];
+    for (let pair of edgePairs) {
+        const edgeMeshRef = useRef();
+        const edgeGeometryRef = useRef();
+        const edgeMaterialRef = useRef();
+        const d = cornerPositions[pair[0]];
+
+        const edgePosition = [
+            x + d[0] * CUBE_SIZE,
+            y + d[1] * CUBE_SIZE,
+            z + d[2] * CUBE_SIZE,
+        ];
+
+        const edge = (
+            <mesh
+                position={edgePosition}
+                ref={edgeMeshRef}
+                key={`edge-${pair}`}
+                castShadow
+            >
+                <cylinderBufferGeometry
+                    ref={edgeGeometryRef}
+                    attach="geometry"
+                    args={[3, 3, CUBE_SIZE, 16]}
+                />
+                <meshPhongMaterial
+                    ref={edgeMaterialRef}
+                    attach="material"
+                    color={lighterGrey}
+                />
+            </mesh>
+        );
+
+        edges.push(edge);
+        edgeRefs.push([edgeMeshRef, edgeMaterialRef, edgeGeometryRef]);
+    }
+
+    useLayoutEffect((state) => {
+        for (let j = 0; j < edgeRefs.length; j++) {
+            let start = cornerPositions[edgePairs[j][0]];
+            start = new THREE.Vector3(
+                x + start[0] * CUBE_SIZE,
+                y + start[1] * CUBE_SIZE,
+                z + start[2] * CUBE_SIZE
+            );
+
+            let end = cornerPositions[edgePairs[j][1]];
+            end = new THREE.Vector3(
+                x + end[0] * CUBE_SIZE,
+                y + end[1] * CUBE_SIZE,
+                z + end[2] * CUBE_SIZE
+            );
+
+            const [meshRef, materialRef, geometryRef] = edgeRefs[j];
+            if (meshRef.current) {
+                meshRef.current.position.copy(start);
+                meshRef.current.lookAt(end);
+            }
+
+            if (geometryRef.current) {
+                geometryRef.current.translate(0, CUBE_SIZE / 2, 0);
+                geometryRef.current.rotateX(Math.PI / 2);
+            }
+        }
+    });
+
+    return <>{edges}</>;
 };
 
-export const Boxes = () => {
+export const Edges = () => {
     return (
         <>
             {CUBE_POSITIONS.map((position, i) => (
-                <Box position={position} key={`box-${i}`} color="grey" />
+                <Edge position={position} key={`box-${i}`} color={grey} />
             ))}
         </>
     );
@@ -127,15 +392,7 @@ export const KeyCube = () => {
                 <Canvas
                     orthographic
                     camera={{
-                        position: [
-                            CUBE_SIZE * -20,
-                            CUBE_SIZE * -12,
-                            CUBE_SIZE * 29,
-                        ],
-                        // left: (CUBE_SIZE * 1) / -0.2,
-                        // right: (CUBE_SIZE * 1) / -0.2,
-                        // top: CUBE_SIZE / 0.2,
-                        // bottom: CUBE_SIZE / -0.2,
+                        position: STARTING_POS,
                         far: 100000,
                         near: CUBE_SIZE,
                     }}
@@ -145,15 +402,23 @@ export const KeyCube = () => {
                         margin: "0 auto",
                     }}
                     onCreated={({ gl }) => {
+                        gl.setClearColor("#000");
                         gl.shadowMap.enabled = true;
                         gl.shadowMap.type = THREE.PCFSoftShadowMap;
                     }}
                 >
-                    <ambientLight intensity={0.5} />
-                    <spotLight position={[15, 20, 5]} penumbra={1} castShadow />
+                    <Lights />
                     <Controls />
-                    <TextNodes />
-                    <Boxes />
+                    <ScaleVertices />
+                    <Edges />
+                    {/* <axesHelper
+                        args={[
+                            100 * CUBE_SIZE,
+                            100 * CUBE_SIZE,
+                            `white`,
+                            `gray`,
+                        ]}
+                    /> */}
                 </Canvas>
             )}
         </div>

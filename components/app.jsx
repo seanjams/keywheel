@@ -10,6 +10,7 @@ import {
     dup,
     onCopyToClipboard,
     getPegs,
+    DEFAULT_NOTE_COLOR_OPTIONS,
 } from "../util";
 import {
     EMPTY,
@@ -19,7 +20,7 @@ import {
     SHAPES,
     VERTICES,
 } from "../consts";
-import { COLORS, DEFAULT_TEXT_COLOR, offWhite, grey } from "../colors";
+import { COLORS, offWhite, lightGrey, darkGrey } from "../colors";
 import { KeyWheelContext, useStore } from "../store";
 
 const mainStyle = {
@@ -33,7 +34,7 @@ const titleStyle = {
 
 const buttonStyle = {
     padding: "5px",
-    backgroundColor: grey,
+    backgroundColor: lightGrey,
     margin: "5px",
     textAlign: "center",
     minWidth: "60px",
@@ -79,38 +80,41 @@ const linkContainerStyle = {
 };
 
 // builds object with key pointing to textGeometry props for specific vertix
-const buildTextProps = (selected) => {
-    const getHighlightColor = (root, scaleType) => {
+const buildThreeProps = (selected) => {
+    const getNoteColors = (root, scaleType) => {
         const rootIdx = NOTE_NAMES.indexOf(root);
-        if (rootIdx === -1) return DEFAULT_TEXT_COLOR;
+        if (rootIdx === -1) return DEFAULT_NOTE_COLOR_OPTIONS;
 
-        for (let i in selected) {
+        const scaleNotes = getNotes(
+            SHAPES[scaleType].map((note) => (note + rootIdx) % 12).sort()
+        );
+
+        const noteColors = scaleNotes.map((note) =>
+            note ? [darkGrey] : [lightGrey]
+        );
+
+        for (let i = selected.length - 1; i >= 0; i--) {
             const selectedPegs = getPegs(selected[i]);
-            const scaleNotes = getNotes(
-                SHAPES[scaleType].map((note) => (note + rootIdx) % 12).sort()
-            );
-
             if (
                 selectedPegs.length &&
                 selectedPegs.every((val) => scaleNotes[val])
             ) {
-                return COLORS(1)[i];
+                for (let peg of selectedPegs) {
+                    noteColors[peg].push(COLORS(1)[i]);
+                }
             }
         }
 
-        return DEFAULT_TEXT_COLOR;
+        return noteColors;
     };
 
-    const nextTextProps = {};
+    const nextThreeProps = {};
     for (let key in VERTICES) {
         let { root, scaleType } = VERTICES[key];
-        const color = getHighlightColor(root, scaleType);
-        nextTextProps[key] = {
-            color,
-        };
+        nextThreeProps[key] = getNoteColors(root, scaleType);
     }
 
-    return nextTextProps;
+    return nextThreeProps;
 };
 
 export const App = ({ oldState }) => {
@@ -204,10 +208,10 @@ export const App = ({ oldState }) => {
     };
 
     const updateThreeProps = (selected) => {
-        const nextTextProps = buildTextProps(selected);
-        for (let key in nextTextProps) {
-            if (!isEqual(nextTextProps[key], store[key])) {
-                store.set({ [key]: nextTextProps[key] });
+        const nextThreeProps = buildThreeProps(selected);
+        for (let key in nextThreeProps) {
+            if (!isEqual(nextThreeProps[key], store[key])) {
+                store.set({ [key]: nextThreeProps[key] });
             }
         }
     };

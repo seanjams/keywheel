@@ -2,7 +2,11 @@ export const darkGrey = "#333";
 
 export const mediumGrey = "#666";
 
-export const grey = "#BBB";
+export const grey = "#999";
+
+export const lightGrey = "#BBB";
+
+export const lighterGrey = "#EEE";
 
 export const offWhite = "#FEFEFE";
 
