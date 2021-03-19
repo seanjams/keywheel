@@ -10,6 +10,8 @@ export const lighterGrey = "#EEE";
 
 export const offWhite = "#FEFEFE";
 
+export const white = "#FFF";
+
 export const buttonBlue = "rgba(100,100,255,0.5)";
 
 export const gold = "gold";

@@ -168,7 +168,7 @@ const PATTERN_MAP = {
 
 export const CUBE_RANGE = [-2, -1, 0, 1];
 export const CUBE_SIZE = 150;
-export const CUBE_POSITIONS = [];
+export const CUBE_POSITIONS = {};
 export const VERTICES = {};
 export const STARTING_POS = [CUBE_SIZE * -30, CUBE_SIZE * 10, CUBE_SIZE * 20];
 
@@ -180,16 +180,17 @@ for (let i in NOTE_NAMES) {
     const patternDelta = Math.floor(i / 3);
 
     for (let name of [majorScale, melMinScale, harMinScale, harMajScale]) {
+        const label = `${root}\n${name}`;
         const coordinates = PATTERN_MAP[name][patternIndex];
-        const cubePositions = CUBE_RANGE.map((i, index) => {
+        const cubePositions = CUBE_RANGE.map((k, index) => {
             const key = `${root}-${name}-${index}`;
             const position = coordinates.map((coord, j) => {
-                return (4 * i + (coord + patternDelta)) * CUBE_SIZE;
+                return (4 * k + (coord + patternDelta)) * CUBE_SIZE;
             });
 
             VERTICES[key] = {
                 key,
-                label: `${root}\n${name}`,
+                label,
                 root,
                 scaleType: name,
                 position,
@@ -198,7 +199,7 @@ for (let i in NOTE_NAMES) {
         });
 
         if (i % 3 === 0 && name !== harMajScale) {
-            CUBE_POSITIONS.push(...cubePositions);
+            CUBE_POSITIONS[label] = cubePositions;
         }
     }
 }
