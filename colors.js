@@ -2,9 +2,15 @@ export const darkGrey = "#333";
 
 export const mediumGrey = "#666";
 
-export const grey = "#BBB";
+export const grey = "#999";
+
+export const lightGrey = "#BBB";
+
+export const lighterGrey = "#EEE";
 
 export const offWhite = "#FEFEFE";
+
+export const white = "#FFF";
 
 export const buttonBlue = "rgba(100,100,255,0.5)";
 
@@ -13,6 +19,10 @@ export const gold = "gold";
 export const brown = "brown";
 
 export const transparent = "transparent";
+
+export const red = "#FF0000";
+
+export const yellow = "#FFFF00";
 
 export const DEFAULT_TEXT_COLOR = darkGrey;
 

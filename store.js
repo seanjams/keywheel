@@ -11,8 +11,8 @@ export const DEFAULT_STATE = {
     mute: false,
     noteNames: Array(8).fill("C"),
     chordNames: Array(8).fill("Major"),
-    keyWheelVisible: true,
-    instrumentsVisible: true,
+    keyWheelVisible: false,
+    instrumentsVisible: false,
 };
 
 export const KeyWheelContext = createContext(DEFAULT_STATE);
