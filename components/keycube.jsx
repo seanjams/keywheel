@@ -19,17 +19,10 @@ import {
     melMinScale,
     harMajScale,
 } from "../consts";
-import { DEFAULT_NOTE_COLOR_OPTIONS, mod } from "../util";
-import {
-    grey,
-    darkGrey,
-    lightGrey,
-    lighterGrey,
-    white,
-    mediumGrey,
-} from "../colors";
+import { grey, darkGrey, lightGrey, mediumGrey, red, yellow } from "../colors";
 import { fontJSON } from "../font";
 import { useStore, api } from "../store";
+import { DEFAULT_NOTE_COLOR_OPTIONS, mod } from "../util";
 
 extend({ OrbitControls });
 
@@ -110,7 +103,8 @@ const Lights = () => {
 //     );
 // };
 
-export const ScaleBall = ({ name }) => {
+// main sphere of scale vertex
+export const ScaleBall = ({ name, layoutKey }) => {
     const meshRef = useRef();
     const geometryRef = useRef();
     const materialRef = useRef();
@@ -133,7 +127,7 @@ export const ScaleBall = ({ name }) => {
         if (materialRef.current) {
             const options = optionsRef.current;
             if (options.some((option) => option.length > 1)) {
-                materialRef.current.color.set("#8add6f");
+                materialRef.current.color.set(yellow);
             } else {
                 materialRef.current.color.set(mediumGrey);
             }
@@ -161,10 +155,24 @@ export const ScaleBall = ({ name }) => {
     );
 };
 
-export const ScaleText = ({ label }) => {
+// text on scale ball
+export const ScaleText = ({ label, name, layoutKey }) => {
     const meshRef = useRef();
     const geometryRef = useRef();
     const materialRef = useRef();
+    const { set, [layoutKey]: layoutDisabled } = useStore.getState() || {};
+    const layoutDisabledRef = useRef(layoutDisabled || false);
+
+    useEffect(() => {
+        return api.subscribe(
+            ({ layoutDisabled }) => {
+                layoutDisabledRef.current = layoutDisabled;
+            },
+            (store) => ({
+                layoutDisabled: store[layoutKey],
+            })
+        );
+    }, []);
 
     // useFrame((state) => {
     //     // things that should happen on every render
@@ -172,6 +180,7 @@ export const ScaleText = ({ label }) => {
 
     useLayoutEffect(() => {
         // things that should happen on first render cylce after mounting
+        if (layoutDisabledRef.current) return;
 
         if (meshRef.current) {
             // move scale name along the z axis of sphere to its edge
@@ -183,6 +192,9 @@ export const ScaleText = ({ label }) => {
             // make scale name centered on outer sphere
             geometryRef.current.center();
         }
+
+        layoutDisabledRef.current = true;
+        set({ [layoutKey]: layoutDisabledRef.current });
     });
 
     return (
@@ -201,20 +213,28 @@ export const ScaleText = ({ label }) => {
     );
 };
 
-export const NoteBall = ({ name, index }) => {
+// little notes for each scale
+export const NoteBall = ({ name, index, layoutKey }) => {
     const meshRef = useRef();
     const geometryRef = useRef();
     const materialRef = useRef();
-    const [active, setActive] = useState(false);
+    const { set, [layoutKey]: layoutDisabled, [name]: options } =
+        useStore.getState() || {};
+    // const [active, setActive] = useState(false);
 
-    const optionsRef = useRef(
-        useStore.getState()[name] || DEFAULT_NOTE_COLOR_OPTIONS
-    );
+    const optionsRef = useRef(options || DEFAULT_NOTE_COLOR_OPTIONS);
+    const layoutDisabledRef = useRef(layoutDisabled || false);
 
     useEffect(() => {
         return api.subscribe(
-            (options) => (optionsRef.current = options),
-            (store) => store[name]
+            ({ options, layoutDisabled }) => {
+                optionsRef.current = options;
+                layoutDisabledRef.current = layoutDisabled;
+            },
+            (store) => ({
+                options: store[name],
+                layoutDisabled: store[layoutKey],
+            })
         );
     }, []);
 
@@ -230,6 +250,7 @@ export const NoteBall = ({ name, index }) => {
 
     useLayoutEffect(() => {
         // things that should happen on first render cylce after mounting
+        if (layoutDisabledRef.current) return;
 
         // create directional vectors from center of outer sphere to build note clock
         let x = Math.sin((2 * index * Math.PI) / 12);
@@ -241,6 +262,9 @@ export const NoteBall = ({ name, index }) => {
         if (meshRef.current) {
             meshRef.current.translateOnAxis(v, 20);
         }
+
+        layoutDisabledRef.current = true;
+        set({ [layoutKey]: layoutDisabledRef.current });
     });
 
     return (
@@ -262,10 +286,24 @@ export const NoteBall = ({ name, index }) => {
     );
 };
 
-export const NoteText = ({ index }) => {
+// text on note ball
+export const NoteText = ({ name, index, layoutKey }) => {
     const meshRef = useRef();
     const geometryRef = useRef();
     const materialRef = useRef();
+    const { set, [layoutKey]: layoutDisabled } = useStore.getState() || {};
+    const layoutDisabledRef = useRef(layoutDisabled || false);
+
+    useEffect(() => {
+        return api.subscribe(
+            ({ layoutDisabled }) => {
+                layoutDisabledRef.current = layoutDisabled;
+            },
+            (store) => ({
+                layoutDisabled: store[layoutKey],
+            })
+        );
+    }, []);
 
     // useFrame((state) => {
     // things that should happen on every render
@@ -273,6 +311,7 @@ export const NoteText = ({ index }) => {
 
     useLayoutEffect(() => {
         // things that should happen on first render cylce after mounting
+        if (layoutDisabledRef.current) return;
 
         // create directional vectors from center of outer sphere to build note clock
         let x = Math.sin((2 * index * Math.PI) / 12);
@@ -289,6 +328,9 @@ export const NoteText = ({ index }) => {
             // make note names centered on note balls
             geometryRef.current.center();
         }
+
+        layoutDisabledRef.current = true;
+        set({ [layoutKey]: layoutDisabledRef.current });
     });
 
     return (
@@ -307,12 +349,9 @@ export const NoteText = ({ index }) => {
     );
 };
 
+// a sphere with text and little noteballs on it
 export const ScaleVertex = ({ name }) => {
     const groupRef = useRef();
-
-    const noteBalls = [];
-    const noteTexts = [];
-
     const { label, position } = VERTICES[name];
 
     useFrame((state) => {
@@ -325,15 +364,32 @@ export const ScaleVertex = ({ name }) => {
     });
 
     // build default outer sphere
-    const scaleBall = <ScaleBall key={`scale-ball-${name}`} name={name} />;
-    const scaleText = <ScaleText key={`scale-text-${name}`} label={label} />;
+    let ballKey = `scale-ball-${name}`;
+    let textKey = `scale-text-${name}`;
+    const scaleBall = (
+        <ScaleBall key={ballKey} layoutKey={ballKey} name={name} />
+    );
+    const scaleText = (
+        <ScaleText
+            key={textKey}
+            layoutKey={textKey}
+            name={name}
+            label={label}
+        />
+    );
 
     // build default noteballs
+    const noteBalls = [];
+    const noteTexts = [];
     for (let i = 0; i < 12; i++) {
+        ballKey = `note-ball-${name}-${i}`;
+        textKey = `note-text-${name}-${i}`;
         noteBalls.push(
-            <NoteBall key={`note-ball-${name}-${i}`} name={name} index={i} />
+            <NoteBall key={ballKey} layoutKey={ballKey} name={name} index={i} />
         );
-        noteTexts.push(<NoteText key={`note-text-${name}-${i}`} index={i} />);
+        noteTexts.push(
+            <NoteText key={textKey} layoutKey={textKey} name={name} index={i} />
+        );
     }
 
     return (
@@ -346,7 +402,7 @@ export const ScaleVertex = ({ name }) => {
     );
 };
 
-// Scale Vertices
+// Create Scale Vertices for every scale
 export const ScaleVertices = () => {
     return (
         <>
@@ -357,28 +413,35 @@ export const ScaleVertices = () => {
     );
 };
 
-// create Edge class that abstracts away hooks
-export const Edge = ({ color, startOptions, endOptions }) => {
+// An edge from start node => end node
+export const Edge = ({ color, startVertex, endVertex, layoutKey }) => {
     const meshRef = useRef();
     const geometryRef = useRef();
     const materialRef = useRef();
-    const startKey = `${startOptions.root}-${startOptions.label}-0`;
-    const endKey = `${endOptions.root}-${endOptions.label}-0`;
-
-    const startOptionsRef = useRef(
-        useStore.getState()[startKey] || DEFAULT_NOTE_COLOR_OPTIONS
-    );
-    const endOptionsRef = useRef(
-        useStore.getState()[endKey] || DEFAULT_NOTE_COLOR_OPTIONS
-    );
+    const startKey = `${startVertex.root}-${startVertex.label}-0`;
+    const endKey = `${endVertex.root}-${endVertex.label}-0`;
+    const {
+        set,
+        [startKey]: startOpts,
+        [endKey]: endOpts,
+        [layoutKey]: layoutDisabled,
+    } = useStore.getState() || {};
+    const startOptionsRef = useRef(startOpts || DEFAULT_NOTE_COLOR_OPTIONS);
+    const endOptionsRef = useRef(endOpts || DEFAULT_NOTE_COLOR_OPTIONS);
+    const layoutDisabledRef = useRef(layoutDisabled || false);
 
     useEffect(() => {
         return api.subscribe(
-            ({ startOpts, endOpts }) => {
+            ({ startOpts, endOpts, layoutDisabled }) => {
                 startOptionsRef.current = startOpts;
                 endOptionsRef.current = endOpts;
+                layoutDisabledRef.current = layoutDisabled;
             },
-            (store) => ({ startOpts: store[startKey], endOpts: store[endKey] })
+            (store) => ({
+                startOpts: store[startKey],
+                endOpts: store[endKey],
+                layoutDisabled: store[layoutKey],
+            })
         );
     }, []);
 
@@ -391,7 +454,7 @@ export const Edge = ({ color, startOptions, endOptions }) => {
                 startOptionsRef.current.some((option) => option.length > 1) &&
                 endOptionsRef.current.some((option) => option.length > 1)
             ) {
-                materialRef.current.color.set("#FF0000");
+                materialRef.current.color.set(red);
             } else {
                 materialRef.current.color.set(mediumGrey);
             }
@@ -400,10 +463,11 @@ export const Edge = ({ color, startOptions, endOptions }) => {
 
     useLayoutEffect((state) => {
         // things that should happen on first render cylce after mounting
+        if (layoutDisabledRef.current) return;
 
         // get corners from edgePair and orient the mesh/geometry of each edge to look from start => end
-        let start = new THREE.Vector3(...startOptions.position);
-        let end = new THREE.Vector3(...endOptions.position);
+        let start = new THREE.Vector3(...startVertex.position);
+        let end = new THREE.Vector3(...endVertex.position);
 
         if (meshRef.current) {
             // position and orient the axes for the geometry, start => end
@@ -417,10 +481,13 @@ export const Edge = ({ color, startOptions, endOptions }) => {
             geometryRef.current.translate(0, CUBE_SIZE / 2, 0);
             geometryRef.current.rotateX(Math.PI / 2);
         }
+
+        layoutDisabledRef.current = true;
+        set({ [layoutKey]: layoutDisabledRef.current });
     });
 
     return (
-        <mesh position={startOptions.position} ref={meshRef} castShadow>
+        <mesh position={startVertex.position} ref={meshRef} castShadow>
             <cylinderBufferGeometry
                 ref={geometryRef}
                 attach="geometry"
@@ -435,25 +502,13 @@ export const Edge = ({ color, startOptions, endOptions }) => {
     );
 };
 
-// Boxes
-export const EdgeCube = ({ position, color, name }) => {
+// Boxes of edges
+export const EdgeCube = ({ position, color, name, index }) => {
     const edges = [];
     const [root, label] = name.split("\n");
     const rootIdx = NOTE_NAMES.indexOf(root);
 
-    // relative coordinates of surrounding corners
-    const cornerPositions = [
-        [0, 0, 0],
-        [1, 0, 0],
-        [0, 1, 0],
-        [0, 0, -1],
-        [1, 1, 0],
-        [1, 0, -1],
-        [0, 1, -1],
-        [1, 1, -1],
-    ];
-
-    // pairs of indices of cornerPositions array that should have an edge between them
+    // pairs of indices of adjustmentBank positions that should have an edge between them
     const edgePairs = [
         [0, 1],
         [0, 2],
@@ -471,6 +526,7 @@ export const EdgeCube = ({ position, color, name }) => {
 
     const adjustmentBank = [
         {
+            position: [0, 0, 0],
             [majorScale]: {
                 root: NOTE_NAMES[mod(rootIdx + 0, 12)],
                 label: majorScale,
@@ -485,6 +541,7 @@ export const EdgeCube = ({ position, color, name }) => {
             },
         },
         {
+            position: [1, 0, 0],
             [majorScale]: {
                 root: NOTE_NAMES[mod(rootIdx + 2, 12)],
                 label: melMinScale,
@@ -499,6 +556,7 @@ export const EdgeCube = ({ position, color, name }) => {
             },
         },
         {
+            position: [0, 1, 0],
             [majorScale]: {
                 root: NOTE_NAMES[mod(rootIdx + 7, 12)],
                 label: majorScale,
@@ -513,6 +571,7 @@ export const EdgeCube = ({ position, color, name }) => {
             },
         },
         {
+            position: [0, 0, -1],
             [majorScale]: {
                 root: NOTE_NAMES[mod(rootIdx + 5, 12)],
                 label: majorScale,
@@ -527,6 +586,7 @@ export const EdgeCube = ({ position, color, name }) => {
             },
         },
         {
+            position: [1, 1, 0],
             [majorScale]: {
                 root: NOTE_NAMES[mod(rootIdx + 2, 12)],
                 label: majorScale,
@@ -541,6 +601,7 @@ export const EdgeCube = ({ position, color, name }) => {
             },
         },
         {
+            position: [1, 0, -1],
             [majorScale]: {
                 root: NOTE_NAMES[mod(rootIdx + 2, 12)],
                 label: harMinScale,
@@ -555,6 +616,7 @@ export const EdgeCube = ({ position, color, name }) => {
             },
         },
         {
+            position: [0, 1, -1],
             [majorScale]: {
                 root: NOTE_NAMES[mod(rootIdx + 7, 12)],
                 label: melMinScale,
@@ -569,6 +631,7 @@ export const EdgeCube = ({ position, color, name }) => {
             },
         },
         {
+            position: [1, 1, -1],
             [majorScale]: {
                 root: NOTE_NAMES[mod(rootIdx + 2, 12)],
                 label: harMajScale,
@@ -584,54 +647,39 @@ export const EdgeCube = ({ position, color, name }) => {
         },
     ];
 
-    const x = position[0];
-    const y = position[1];
-    const z = position[2];
-
     // loop over edgePairs, created default edge for each pair
     for (let i = 0; i < edgePairs.length; i++) {
         const pair = edgePairs[i];
-        const start = cornerPositions[pair[0]];
-        const end = cornerPositions[pair[1]];
+        const start = adjustmentBank[pair[0]].position;
+        const end = adjustmentBank[pair[1]].position;
 
-        const startPosition = [
-            x + start[0] * CUBE_SIZE,
-            y + start[1] * CUBE_SIZE,
-            z + start[2] * CUBE_SIZE,
-        ];
+        const ignoreMajor =
+            name.endsWith(majorScale) && start[0] === 0 && end[0] === 0;
+        const ignoreMelMinor =
+            name.endsWith(melMinScale) && start[1] === 0 && end[1] === 0;
+        const ignoreHarMinor =
+            name.endsWith(harMinScale) && start[2] === -1 && end[2] === -1;
 
-        const endPosition = [
-            x + end[0] * CUBE_SIZE,
-            y + end[1] * CUBE_SIZE,
-            z + end[2] * CUBE_SIZE,
-        ];
-
-        if (name.endsWith(melMinScale)) {
-            // dont make edges for y-side
-            if (start[1] === 0 && end[1] === 0) continue;
-        } else if (
-            name.endsWith(harMinScale) &&
-            start[2] === -1 &&
-            end[2] === -1
-        ) {
-            // dont make edges for z-side
-            continue;
-        } else if (
-            name.endsWith(majorScale) &&
-            start[0] === 0 &&
-            end[0] === 0
-        ) {
-            // dont make edges for x-side
+        if (ignoreMajor || ignoreMelMinor || ignoreHarMinor) {
+            // dont make edges for ignored side of cube
             continue;
         }
 
-        const startOptions = {
-            position: startPosition,
+        const startVertex = {
+            position: [
+                position[0] + start[0] * CUBE_SIZE,
+                position[1] + start[1] * CUBE_SIZE,
+                position[2] + start[2] * CUBE_SIZE,
+            ],
             ...adjustmentBank[pair[0]][label],
         };
 
-        const endOptions = {
-            position: endPosition,
+        const endVertex = {
+            position: [
+                position[0] + end[0] * CUBE_SIZE,
+                position[1] + end[1] * CUBE_SIZE,
+                position[2] + end[2] * CUBE_SIZE,
+            ],
             ...adjustmentBank[pair[1]][label],
         };
 
@@ -639,8 +687,10 @@ export const EdgeCube = ({ position, color, name }) => {
             <Edge
                 key={`edge-group-${pair}`}
                 color={color}
-                startOptions={startOptions}
-                endOptions={endOptions}
+                layoutKey={`edge-${startVertex.root}-${startVertex.label}-${endVertex.root}-${endVertex.label}-${index}`}
+                index={index}
+                startVertex={startVertex}
+                endVertex={endVertex}
             />
         );
 
@@ -650,6 +700,7 @@ export const EdgeCube = ({ position, color, name }) => {
     return <>{edges}</>;
 };
 
+// create EdgeCubes for every cube of vertices/edges
 export const Edges = () => {
     return (
         <>
@@ -659,6 +710,7 @@ export const Edges = () => {
                     <EdgeCube
                         position={position}
                         key={`box-${i}`}
+                        index={i}
                         name={name}
                         color={grey}
                     />

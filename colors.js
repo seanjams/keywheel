@@ -20,6 +20,10 @@ export const brown = "brown";
 
 export const transparent = "transparent";
 
+export const red = "#FF0000";
+
+export const yellow = "#FFFF00";
+
 export const DEFAULT_TEXT_COLOR = darkGrey;
 
 export const COLORS = (opacity) => [
