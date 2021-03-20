@@ -40,7 +40,7 @@ export const Piano = (props) => {
     const keys = names.map((name, i) => {
         const style = Object.assign(
             {},
-            name.endsWith("b") ? blackKey : whiteKey,
+            name.length > 1 ? blackKey : whiteKey,
             colors[name]
         );
 

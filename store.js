@@ -18,7 +18,19 @@ export const DEFAULT_STATE = {
 export const KeyWheelContext = createContext(DEFAULT_STATE);
 
 export const [useStore, api] = create((set) => {
-    return { keyCubeVisible: true, set };
+    return {
+        keyCubeVisible: true,
+        set,
+        reset: () =>
+            set((state) => {
+                const newState = {};
+                for (let key in state) {
+                    if (key === "set" || key === "reset") continue;
+                    newState[key] = undefined;
+                }
+                set(newState);
+            }),
+    };
 });
 
 export const reducer = (state, action) => {

@@ -68,12 +68,6 @@ const leftPanelStyle = {
     boxShadow: "5px 0 10px 0 #888",
 };
 
-const mainContentStyle = {
-    marginTop: 50,
-    marginLeft: "10vw",
-    background: offWhite,
-};
-
 const linkContainerStyle = {
     display: "flex",
     alignItems: "center",
@@ -133,6 +127,7 @@ export const App = ({ oldState }) => {
     }, []);
 
     const saveToLocalStorage = () => {
+        // handle react context
         dispatch({ type: "SAVE_TO_LOCAL_STORAGE" });
     };
 
@@ -153,7 +148,13 @@ export const App = ({ oldState }) => {
         }
 
         updateThreeProps(newState.selected || getEmptySet());
+        // handle react context
         dispatch({ type: "REHYDRATE", payload: newState });
+        // handle zustand context
+        store.set({
+            keyCubeVisible:
+                !newState.keyWheelVisible && !newState.instrumentsVisible,
+        });
     };
 
     const onSaveToClipboard = (e) => {
@@ -271,6 +272,7 @@ export const App = ({ oldState }) => {
     const toggleKeyCube = () => {
         const keyCubeVisible = !store.keyCubeVisible;
         if (keyCubeVisible) {
+            updateThreeProps(state.selected);
             dispatch({ type: "TOGGLE_KEY_WHEEL", payload: false });
             dispatch({ type: "TOGGLE_INSTRUMENTS", payload: false });
         }
@@ -280,7 +282,7 @@ export const App = ({ oldState }) => {
     const toggleKeyWheel = () => {
         const keyWheelVisible = !state.keyWheelVisible;
         if (keyWheelVisible) {
-            store.set({ keyCubeVisible: false });
+            store.reset();
             dispatch({ type: "TOGGLE_INSTRUMENTS", payload: false });
         }
         dispatch({ type: "TOGGLE_KEY_WHEEL", payload: keyWheelVisible });
@@ -289,7 +291,7 @@ export const App = ({ oldState }) => {
     const toggleInstruments = () => {
         const instrumentsVisible = !state.instrumentsVisible;
         if (instrumentsVisible) {
-            store.set({ keyCubeVisible: false });
+            store.reset();
             dispatch({ type: "TOGGLE_KEY_WHEEL", payload: false });
         }
         dispatch({ type: "TOGGLE_INSTRUMENTS", payload: instrumentsVisible });
@@ -378,7 +380,16 @@ export const App = ({ oldState }) => {
                 />
             </div>
 
-            <div style={mainContentStyle}>
+            <div
+                style={{
+                    marginLeft: "10vw",
+                    background: offWhite,
+                    marginTop:
+                        state.keyWheelVisible || state.instrumentsVisible
+                            ? 100
+                            : 50,
+                }}
+            >
                 {state.instrumentsVisible && (
                     <>
                         <div

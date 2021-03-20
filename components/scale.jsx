@@ -151,7 +151,7 @@ export const Scale = (props) => {
 
                 if (pegs.includes(m)) {
                     const idx = pegs.indexOf(m);
-                    numLabel = m === relMajor[idx] ? "" : "b";
+                    numLabel = m === relMajor[idx] ? "" : "♭";
                     numLabel += `${idx + 1}`;
                 }
             }

@@ -419,7 +419,7 @@ export const getLabelColors = (notesArr, isPiano) => {
 
     NOTE_NAMES.forEach((name) => {
         const colors = selectedNotesByInput[name].map((i) => COLORS(1)[i]);
-        const flat = name.endsWith("b");
+        const flat = name.length > 1;
 
         if (colors.length > 1) {
             const stripes = [];
