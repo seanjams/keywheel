@@ -161,6 +161,14 @@ export const chordReader = (notes) => {
     return { color, name, rootIdx };
 };
 
+// get notes array from root + shape
+export const getNotesFromName = (root, scaleType) => {
+    if (!SHAPES.hasOwnProperty(scaleType)) return null;
+    if (!NOTE_NAMES.includes(root)) return null;
+    const rootIdx = NOTE_NAMES.indexOf(root);
+    return getNotes(SHAPES[scaleType].map((peg) => mod(rootIdx + peg, 12)));
+};
+
 export const soundNotes = (pegs, modeIdx = 0, poly = false) => {
     Tone.Transport.cancel(0);
     if (Tone.context.state !== "running") Tone.context.resume();

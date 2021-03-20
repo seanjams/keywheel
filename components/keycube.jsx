@@ -22,7 +22,7 @@ import {
 import { grey, darkGrey, lightGrey, mediumGrey, red, yellow } from "../colors";
 import { fontJSON } from "../font";
 import { useStore, api } from "../store";
-import { DEFAULT_NOTE_COLOR_OPTIONS, mod } from "../util";
+import { DEFAULT_NOTE_COLOR_OPTIONS, getNotesFromName, mod } from "../util";
 
 extend({ OrbitControls });
 
@@ -352,7 +352,8 @@ export const NoteText = ({ name, index, layoutKey }) => {
 // a sphere with text and little noteballs on it
 export const ScaleVertex = ({ name }) => {
     const groupRef = useRef();
-    const { label, position } = VERTICES[name];
+    const { root, label, position, scaleType } = VERTICES[name];
+    const notes = getNotesFromName(root, scaleType);
 
     useFrame((state) => {
         // things that should happen on every render
@@ -387,9 +388,17 @@ export const ScaleVertex = ({ name }) => {
         noteBalls.push(
             <NoteBall key={ballKey} layoutKey={ballKey} name={name} index={i} />
         );
-        noteTexts.push(
-            <NoteText key={textKey} layoutKey={textKey} name={name} index={i} />
-        );
+
+        if (notes && notes[i]) {
+            noteTexts.push(
+                <NoteText
+                    key={textKey}
+                    layoutKey={textKey}
+                    name={name}
+                    index={i}
+                />
+            );
+        }
     }
 
     return (
@@ -734,8 +743,8 @@ export const KeyCube = () => {
                         near: CUBE_SIZE,
                     }}
                     style={{
-                        height: "50vw",
-                        width: "80vw",
+                        height: "calc(100vh - 50px)",
+                        width: "90vw",
                         margin: "0 auto",
                     }}
                     onCreated={({ gl }) => {

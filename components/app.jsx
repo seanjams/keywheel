@@ -269,16 +269,29 @@ export const App = ({ oldState }) => {
     };
 
     const toggleKeyCube = () => {
-        store.set({ keyCubeVisible: !store.keyCubeVisible });
+        const keyCubeVisible = !store.keyCubeVisible;
+        if (keyCubeVisible) {
+            dispatch({ type: "TOGGLE_KEY_WHEEL", payload: false });
+            dispatch({ type: "TOGGLE_INSTRUMENTS", payload: false });
+        }
+        store.set({ keyCubeVisible });
     };
 
     const toggleKeyWheel = () => {
         const keyWheelVisible = !state.keyWheelVisible;
+        if (keyWheelVisible) {
+            store.set({ keyCubeVisible: false });
+            dispatch({ type: "TOGGLE_INSTRUMENTS", payload: false });
+        }
         dispatch({ type: "TOGGLE_KEY_WHEEL", payload: keyWheelVisible });
     };
 
     const toggleInstruments = () => {
         const instrumentsVisible = !state.instrumentsVisible;
+        if (instrumentsVisible) {
+            store.set({ keyCubeVisible: false });
+            dispatch({ type: "TOGGLE_KEY_WHEEL", payload: false });
+        }
         dispatch({ type: "TOGGLE_INSTRUMENTS", payload: instrumentsVisible });
     };
 
@@ -296,6 +309,15 @@ export const App = ({ oldState }) => {
                         justifyContent: "flex-end",
                     }}
                 >
+                    <button style={buttonStyle} onClick={toggleInstruments}>
+                        {state.instrumentsVisible ? "Hide" : "Show"} Instruments
+                    </button>
+                    <button style={buttonStyle} onClick={toggleKeyWheel}>
+                        {state.keyWheelVisible ? "Hide" : "Show"} Key Wheel
+                    </button>
+                    <button style={buttonStyle} onClick={toggleKeyCube}>
+                        {store.keyCubeVisible ? "Hide" : "Show"} Key Cube
+                    </button>
                     <button style={buttonStyle} onClick={onSaveToClipboard}>
                         Save To Clipboard
                     </button>
@@ -357,25 +379,6 @@ export const App = ({ oldState }) => {
             </div>
 
             <div style={mainContentStyle}>
-                <div
-                    style={{
-                        ...linkContainerStyle,
-                        width: "80vw",
-                        paddingTop: "20px",
-                        margin: "0 auto",
-                    }}
-                >
-                    <button style={buttonStyle} onClick={toggleInstruments}>
-                        {state.instrumentsVisible ? "Hide" : "Show"} Instruments
-                    </button>
-                    <button style={buttonStyle} onClick={toggleKeyWheel}>
-                        {state.keyWheelVisible ? "Hide" : "Show"} Key Wheel
-                    </button>
-                    <button style={buttonStyle} onClick={toggleKeyCube}>
-                        {store.keyCubeVisible ? "Hide" : "Show"} Key Cube
-                    </button>
-                </div>
-
                 {state.instrumentsVisible && (
                     <>
                         <div
