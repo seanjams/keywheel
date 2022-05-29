@@ -2,7 +2,7 @@ import { createContext } from "react";
 import { mod, getEmptySet, buildKeyWheel } from "./util";
 import create from "zustand";
 
-export const DEFAULT_STATE = {
+export const DEFAULT_STATE = () => ({
     start: 0,
     selected: getEmptySet(),
     mode: "union",
@@ -11,11 +11,12 @@ export const DEFAULT_STATE = {
     mute: false,
     noteNames: Array(8).fill("C"),
     chordNames: Array(8).fill("Major"),
-    keyWheelVisible: false,
+    keyCubeVisible: false,
+    keyWheelVisible: true,
     instrumentsVisible: false,
-};
+});
 
-export const KeyWheelContext = createContext(DEFAULT_STATE);
+export const KeyWheelContext = createContext(DEFAULT_STATE());
 
 export const [useStore, api] = create((set) => {
     return {
@@ -37,9 +38,10 @@ export const reducer = (state, action) => {
     Object.freeze(state);
     switch (action.type) {
         case "CLEAR":
-            return { ...DEFAULT_STATE };
+            return { ...DEFAULT_STATE() };
         case "REHYDRATE":
             return {
+                ...state,
                 ...action.payload,
                 scales: buildKeyWheel(action.payload.start || 0),
             };
