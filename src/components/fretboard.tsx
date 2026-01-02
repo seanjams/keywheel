@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { CSSProperties, useState } from "react";
 import isEqual from "lodash/isEqual";
 import { NOTE_NAMES } from "../consts";
 import { COLORS, lightGrey, mediumGrey } from "../colors";
@@ -10,8 +10,9 @@ import {
     bStringStep,
     getLabelColors,
 } from "../util";
+import { NoteNames } from "../store2/types";
 
-const buttonStyle = {
+const buttonStyle: CSSProperties = {
     padding: "5px",
     backgroundColor: lightGrey,
     borderRadius: "3px",
@@ -28,24 +29,24 @@ const byString = (a, b) => {
 
 export const FretBoard = (props) => {
     const [chordGroups, setChordGroups] = useState({});
-    const [previewPoints, setPreviewPoints] = useState([]);
-    const [currentGroup, setCurrentGroup] = useState(null);
+    const [previewPoints, setPreviewPoints] = useState<[number, number][]>([]);
+    const [currentGroup, setCurrentGroup] = useState<NoteNames | null>(null);
 
     const getCurrentChordGroup = () => {
-        return chordGroups[currentGroup] || [];
+        return (currentGroup && chordGroups[currentGroup]) || [];
     };
 
     const fretComponents = () => {
-        const fretDivs = [];
-        const clickHandlers = [];
-        const colors = getLabelColors(props.selected);
-        const eString = rotate(dup(NOTE_NAMES), 5);
+        const fretDivs: React.JSX.Element[] = [];
+        const clickHandlers: React.JSX.Element[] = [];
+        const colors = getLabelColors(props.selected, false);
+        const eString = rotate([...NOTE_NAMES], 5);
 
-        const strings = Array(6)
+        const strings: NoteNames[][] = Array(6)
             .fill(0)
             .map((_, i) => {
                 const times = i > 3 ? 5 * i - 1 : 5 * i;
-                let string = rotate(dup(eString), times);
+                let string = rotate([...eString], times);
                 string = string.concat(string.slice(0, 4));
                 return string;
             })
@@ -53,7 +54,7 @@ export const FretBoard = (props) => {
 
         strings.forEach((noteNames, i) => {
             noteNames.forEach((name, j) => {
-                const fretStyle = {
+                const fretStyle: CSSProperties = {
                     boxShadow: "0px 0px 0px 2px #777",
                     height: "100%",
                     color: colors[name].color,
@@ -67,7 +68,7 @@ export const FretBoard = (props) => {
                 const onClick = (e) => {
                     const groups = dup(chordGroups);
                     let chords = getCurrentChordGroup();
-                    let current = currentGroup;
+                    let current: NoteNames | null = currentGroup;
                     let previewPoints = [];
                     let handled = false;
 
@@ -88,7 +89,9 @@ export const FretBoard = (props) => {
                             if (isEqual(activeChord[k], [i, j])) {
                                 //clicked on same fret
                                 chords = chords.map((chord) =>
-                                    chord.slice(0, k).concat(chord.slice(k + 1))
+                                    chord
+                                        .slice(0, k)
+                                        .concat(chord.slice(k + 1)),
                                 );
                                 if (chords.every((chord) => !chord.length)) {
                                     delete groups[current];
@@ -115,7 +118,7 @@ export const FretBoard = (props) => {
 
                     // adding a fret to all chords in group
                     if (!handled) {
-                        if (activeChord[0][0] < i) {
+                        if (activeChord[0][0] < i && current) {
                             groups[name] = groups[current];
                             delete groups[current];
                             current = name;
@@ -146,7 +149,7 @@ export const FretBoard = (props) => {
                     let chords = getCurrentChordGroup();
                     if (!chords.length) return;
                     let points = dup(chords[0]);
-                    let previewPoints = [];
+                    let previewPoints: [number, number][] = [];
 
                     if (points[points.length - 1][0] > i) {
                         previewPoints = [points[points.length - 1], [i, j]];
@@ -194,10 +197,9 @@ export const FretBoard = (props) => {
                     <div
                         key={`fret-${noteNames.length * i + j}`}
                         style={fretStyle}
-                        name={name}
                     >
                         {name}
-                    </div>
+                    </div>,
                 );
 
                 clickHandlers.push(
@@ -205,10 +207,9 @@ export const FretBoard = (props) => {
                         key={`handler-${noteNames.length * i + j}`}
                         style={{ height: "100%" }}
                         onClick={onClick}
-                        name={name}
                         onMouseEnter={onMouseEnter}
                         onMouseLeave={onMouseLeave}
-                    />
+                    />,
                 );
             });
         });
@@ -221,14 +222,14 @@ export const FretBoard = (props) => {
             return "";
         return points
             .map((point) =>
-                point ? `${point[1] * 100 + 50},${point[0] * 33 + 16.5}` : ""
+                point ? `${point[1] * 100 + 50},${point[0] * 33 + 16.5}` : "",
             )
             .join(" ");
     };
 
-    const removeGroup = (name) => {
+    const removeGroup = (name: NoteNames) => {
         let current = currentGroup;
-        let groups = dup(chordGroups);
+        let groups = { ...chordGroups };
         current = null;
         delete groups[name];
 
@@ -248,19 +249,19 @@ export const FretBoard = (props) => {
         pointGroups[key] = chordGroups[key].map((chord) => getPoints(chord));
     });
 
-    const style = Object.assign({}, props.style, {
+    const style: CSSProperties = Object.assign({}, props.style, {
         position: "relative",
         display: "grid",
         gridTemplateColumns: "repeat(16, 1fr)",
     });
 
-    const clickHandlerStyle = {
+    const clickHandlerStyle: CSSProperties = {
         ...style,
         zIndex: 60,
         marginBottom: `-${props.style.height}`,
     };
 
-    const svgContainerStyle = {
+    const svgContainerStyle: CSSProperties = {
         position: "absolute",
         float: "left",
         height: "100%",
@@ -270,7 +271,7 @@ export const FretBoard = (props) => {
         left: 0,
     };
 
-    const previewLineStyle = {
+    const previewLineStyle: CSSProperties = {
         stroke: "yellow",
         strokeWidth: "3",
         fill: "none",
@@ -278,7 +279,7 @@ export const FretBoard = (props) => {
         strokeLinecap: "round",
     };
 
-    const chooseButtonStyle = Object.assign({}, buttonStyle, {
+    const chooseButtonStyle: CSSProperties = Object.assign({}, buttonStyle, {
         color: mediumGrey,
         display: "flex",
         alignItems: "center",
@@ -359,14 +360,16 @@ export const FretBoard = (props) => {
                                     currentGroup === name
                                         ? "2px solid yellow"
                                         : "2px solid brown",
-                            }
+                            },
                         );
 
                         return (
                             <button
                                 key={`chord-button-${i}`}
                                 style={chordButtonStyle}
-                                onClick={() => setCurrentGroup(name)}
+                                onClick={() =>
+                                    setCurrentGroup(name as NoteNames)
+                                }
                             >
                                 <span
                                     style={{
@@ -377,13 +380,15 @@ export const FretBoard = (props) => {
                                     {name}
                                 </span>
                                 <span
-                                    name={name}
+                                    // name={name}
                                     style={{
                                         color: mediumGrey,
                                         fontSize: "1rem",
                                         lineHeight: "1rem",
                                     }}
-                                    onClick={() => removeGroup(name)}
+                                    onClick={() =>
+                                        removeGroup(name as NoteNames)
+                                    }
                                 >
                                     &times;
                                 </span>
@@ -402,7 +407,7 @@ export const FretBoard = (props) => {
                                 Choose A Root Note
                             </span>
                             <span
-                                name={name}
+                                // name={name}
                                 style={{
                                     color: mediumGrey,
                                     fontSize: "1rem",

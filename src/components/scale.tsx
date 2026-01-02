@@ -1,4 +1,4 @@
-import React from "react";
+import React, { CSSProperties } from "react";
 import {
     darkGrey,
     lightGrey,
@@ -20,8 +20,9 @@ import {
     getMajor,
     mod,
 } from "../util";
+import { Mode, Orderings, RootReferences } from "../store2/types";
 
-const textStyle = {
+const textStyle: CSSProperties = {
     position: "relative",
     top: "34%",
     textAlign: "center",
@@ -29,16 +30,39 @@ const textStyle = {
     fontSize: "0.95vw",
 };
 
-const svgContainerStyle = {
+const svgContainerStyle: CSSProperties = {
     position: "absolute",
     top: 0,
     left: 0,
 };
 
-export const Scale = (props) => {
+interface ScaleProps {
+    notes: boolean[]; //array of 12 bools, the notes that are part of the scale
+    selected: boolean[][]; //array of 8 separate notes objects for svg and coloring
+    isInput: boolean; //bool for styling svg and event handlers of input type scales
+    mode: Mode; //string for deciding how to render svg
+    rootReference: RootReferences; //bool for labeling notes
+    index: number; //int for color index of input type scales
+    mute: boolean; //bool for volume
+    style: CSSProperties; // scale container style
+    ordering: Orderings; //key representing what order to arrange notes
+    handleClick?: (i: number) => void;
+}
+
+export const Scale: React.FC<ScaleProps> = ({
+    notes,
+    selected,
+    mode,
+    rootReference,
+    index,
+    mute,
+    isInput,
+    style,
+    ordering,
+    handleClick,
+}) => {
     const getSVG = () => {
-        const { notes, selected, mode, index, isInput, ordering } = props;
-        let result = [];
+        let result: boolean[][] = [];
         let colorIdx = 8;
 
         if (isInput) {
@@ -64,7 +88,7 @@ export const Scale = (props) => {
             let pegs = getPegs(arr);
             if (pegs.length < 3) return null;
 
-            const style = { stroke: lightGrey, strokeWidth: 1 };
+            const style: CSSProperties = { stroke: lightGrey, strokeWidth: 1 };
             style.fill =
                 result.length > 1 ? COLORS(0.5)[i] : COLORS(0.5)[colorIdx];
 
@@ -91,10 +115,10 @@ export const Scale = (props) => {
         });
     };
 
-    const handleClick = (pegs, i) => {
-        if (props.handleClick) {
-            props.handleClick(i);
-        } else if (!props.mute) {
+    const onClick = (pegs, i) => {
+        if (handleClick) {
+            handleClick(i);
+        } else if (!mute) {
             if (i === "root") {
                 soundNotes(pegs, 0, false);
                 return;
@@ -105,8 +129,6 @@ export const Scale = (props) => {
     };
 
     const noteComponents = (notes, pegs, relMajor, rootIdx = -1) => {
-        const { selected, rootReference, isInput, index, ordering } = props;
-
         return notes.map((note, i) => {
             let m = i;
             if (ordering === "fifths") {
@@ -117,8 +139,8 @@ export const Scale = (props) => {
             let color = darkGrey;
             let borderColor = darkGrey;
             let backgroundColor = transparent;
-            let noteColor = null;
-            let numLabel = null;
+            let noteColor: string = "";
+            let numLabel: string = "";
 
             const isMatch = () =>
                 selected.some((arr, j) => {
@@ -156,12 +178,7 @@ export const Scale = (props) => {
                 }
             }
 
-            const onClick = (e) => {
-                e.stopPropagation();
-                handleClick(pegs, m);
-            };
-
-            const style = {
+            const style: CSSProperties = {
                 position: "relative",
                 display: "float",
                 width: `${2 * NOTE_RADIUS}%`,
@@ -178,7 +195,7 @@ export const Scale = (props) => {
                 cursor: "pointer",
             };
 
-            const numLabelStyle = {
+            const numLabelStyle: CSSProperties = {
                 color,
                 fontSize: "0.7vw",
                 textAlign: "center",
@@ -194,22 +211,27 @@ export const Scale = (props) => {
             };
 
             return (
-                <div key={m} onClick={onClick} style={style}>
+                <div
+                    key={m}
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        onClick(pegs, m);
+                    }}
+                    style={style}
+                >
                     <div style={numLabelStyle}>{refLabel[rootReference]}</div>
                 </div>
             );
         });
     };
 
-    const { notes, selected, isInput, index } = props;
     const { name: keyName, rootIdx: keyRootIdx } = chordReader(notes);
     const { name: chordName, rootIdx: chordRootIdx } = chordReader(
-        selected[index]
+        selected[index],
     );
     const relMajor = getMajor(keyRootIdx);
     let pegs = getPegs(notes);
-    let onClick;
-    let label;
+    let label: React.JSX.Element[];
 
     for (let i = 0; i < pegs.length; i++) {
         if (pegs[0] === keyRootIdx) break;
@@ -217,28 +239,27 @@ export const Scale = (props) => {
     }
 
     if (isInput) {
-        label =
-            chordName &&
-            chordName.split(" ").map((piece, i) => {
-                return <p key={i}>{piece}</p>;
-            });
-
-        onClick = () => {};
+        label = chordName
+            ? chordName.split(" ").map((piece, i) => {
+                  return <p key={i}>{piece}</p>;
+              })
+            : [];
     } else {
-        label =
-            keyName &&
-            keyName.split(" ").map((piece, i) => {
-                return <p key={i}>{piece}</p>;
-            });
-
-        onClick = () => handleClick(pegs, "root");
+        label = keyName
+            ? keyName.split(" ").map((piece, i) => {
+                  return <p key={i}>{piece}</p>;
+              })
+            : [];
     }
 
     const noteDivs = noteComponents(notes, pegs, relMajor, chordRootIdx);
     const svg = getSVG();
 
     return (
-        <div onClick={onClick} style={{ ...props.style }}>
+        <div
+            onClick={() => isInput && onClick(pegs, "root")}
+            style={{ ...style }}
+        >
             <div style={svgContainerStyle}>
                 <svg width="100%" height="100%" viewBox="0 0 100 100">
                     {Array(selected.length)

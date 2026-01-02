@@ -1,11 +1,17 @@
 import isEqual from "lodash/isEqual";
-import Tone from "tone";
+import Tone, { Scale } from "tone";
 import { COLORS, CHORD_COLOR, offWhite, mediumGrey, lightGrey } from "./colors";
 import { DIRS, C, EMPTY, NOTE_NAMES, MAJOR, SHAPES } from "./consts";
+import { ChordNames, Dirs, NoteNames } from "./store2/types";
 
 export const DEFAULT_NOTE_COLOR_OPTIONS = EMPTY.map(() => [lightGrey]);
 
 export class ScaleNode {
+    rank: number;
+    notes: boolean[];
+    center: { x: number; y: number };
+    parent: ScaleNode | null;
+
     constructor(notes = C, center = { x: 0, y: 0 }) {
         this.rank = 0;
         this.notes = notes;
@@ -27,9 +33,9 @@ export class ScaleNode {
     }
 }
 
-export const nodeFromRoot = (root) => {
+export function nodeFromRoot(root: number): ScaleNode {
     return new ScaleNode(getNotes(getMajor(root)));
-};
+}
 
 export const tweek = (notes, idx) => {
     const pegs = getPegs(notes);
@@ -53,13 +59,23 @@ export const tweek = (notes, idx) => {
     return { notes: getNotes(pegs), tweekStatus };
 };
 
-export const generateNeighbors = (node, visited, flip) => {
+export function generateNeighbors(
+    node: ScaleNode,
+    visited: ScaleNode[],
+    flip: 1 | -1,
+) {
+    type tweekType = {
+        notes: boolean[];
+        tweekStatus: number;
+        center?: { x: number; y: number };
+    };
+
     const { notes, parent, center } = node;
     const parentNotes = parent ? parent.notes : null;
-    const adjustedPegs = [];
-    let neighbors = [];
+    const adjustedPegs: number[] = [];
+    let neighbors: tweekType[] = [];
     let parentTweekStatus;
-    let temp;
+    let temp: tweekType;
 
     // Checks if tweek changes the key, then checks to see if
     // changed key is either parent or other visited neighbor,
@@ -80,7 +96,7 @@ export const generateNeighbors = (node, visited, flip) => {
     //Generate the neighbors so that top and bottom neighbor pairs are same type.
     //If parentNotes, use tweekStatus and isSameType to calculate centers
 
-    if (!parentNotes) {
+    if (!parent) {
         while (!isSameType(neighbors[0].notes, neighbors[1].notes)) {
             neighbors = rotate(neighbors);
         }
@@ -91,7 +107,7 @@ export const generateNeighbors = (node, visited, flip) => {
         const deltaX = 2 * center.x - parent.center.x;
         const deltaY = 2 * center.y - parent.center.y;
         neighbors.forEach((neighbor) => {
-            if (isSameType(parentNotes, neighbor.notes)) {
+            if (parentNotes && isSameType(parentNotes, neighbor.notes)) {
                 neighbor.center = { x: deltaX, y: parent.center.y };
             } else if (neighbor.tweekStatus === parentTweekStatus) {
                 neighbor.center = { x: parent.center.x, y: deltaY };
@@ -102,9 +118,11 @@ export const generateNeighbors = (node, visited, flip) => {
     }
 
     return { neighbors, adjustedPegs };
-};
+}
 
-export const buildKeyWheel = (start) => {
+export const buildKeyWheel: (start: number) => ScaleNode | ScaleNode[] = (
+    start: number,
+) => {
     const flip = start > 6 ? -1 : 1;
     const startNode = nodeFromRoot(start);
     const queue = [startNode];
@@ -133,10 +151,15 @@ export const buildKeyWheel = (start) => {
 };
 
 //returns chord color, name, and rootIdx from dictionary
-export const chordReader = (notes) => {
+export function chordReader(notes: boolean[]): {
+    color: string;
+    name: string;
+    rootIdx: number;
+} {
     const chords = Object.keys(SHAPES);
     let color = "transparent";
     let rootIdx = 0;
+    let name = "";
     let chordShape;
 
     for (let i = 0; i < chords.length; i++) {
@@ -159,15 +182,18 @@ export const chordReader = (notes) => {
     }
 
     return { color, name, rootIdx };
-};
+}
 
 // get notes array from root + shape
-export const getNotesFromName = (root, scaleType) => {
+export function getNotesFromName(
+    root: NoteNames,
+    scaleType: ChordNames,
+): boolean[] | null {
     if (!SHAPES.hasOwnProperty(scaleType)) return null;
     if (!NOTE_NAMES.includes(root)) return null;
     const rootIdx = NOTE_NAMES.indexOf(root);
     return getNotes(SHAPES[scaleType].map((peg) => mod(rootIdx + peg, 12)));
-};
+}
 
 export const soundNotes = (pegs, modeIdx = 0, poly = false) => {
     Tone.Transport.cancel(0);
@@ -202,16 +228,16 @@ export const soundNotes = (pegs, modeIdx = 0, poly = false) => {
     let scale = dup(pegs);
     for (let i = 0; i < modeIdx; i++) scale = rotate(scale);
 
-    const freqs = [];
+    const freqs: number[] = [];
     for (let i = 0; i < scale.length; i++) {
         if (scale[i + 1] < scale[i]) scale[i + 1] += 12;
-        freqs.push(Tone.Frequency().midiToFrequency(60 + scale[i]));
+        freqs.push(Tone.Frequency(60 + scale[i]).toFrequency());
     }
     if (!poly) freqs.push(freqs[0] * 2);
     let pattern;
 
     if (poly) {
-        pattern = new Tone.Event((time, chord) => {
+        pattern = new Tone.ToneEvent((time, chord) => {
             synth.triggerAttackRelease(chord, "4t", time, 0.3);
         }, freqs);
     } else {
@@ -220,7 +246,7 @@ export const soundNotes = (pegs, modeIdx = 0, poly = false) => {
                 synth.triggerAttackRelease(note, "8n", time, 0.3);
             },
             freqs,
-            "8n"
+            "8n",
         );
     }
 
@@ -254,29 +280,29 @@ export const chordFingerMachine = (tabArr) => {
 //helper methods
 //////////////////////////////////////////////////////////////////
 
-export const dup = (obj) => {
+export function dup<T>(obj: T): T {
     return JSON.parse(JSON.stringify(obj));
-};
+}
 
-export const includesKey = (nodes, notes) => {
+export function includesKey(nodes: ScaleNode[], notes: boolean[]): boolean {
     const notesArr = nodes.map((node) => node.notes);
     for (let i = 0; i < notesArr.length; i++) {
         if (isEqual(notesArr[i], notes)) return true;
     }
 
     return false;
-};
+}
 
-export const getPegs = (notes) => {
-    const pegs = [];
+export function getPegs(notes: boolean[]): number[] {
+    const pegs: number[] = [];
     notes.forEach((note, i) => {
         if (note) pegs.push(i);
     });
 
     return pegs;
-};
+}
 
-export const getNotes = (pegs) => {
+export function getNotes(pegs: number[]): boolean[] {
     const notes = Array(...EMPTY);
     pegs.forEach((peg) => {
         peg = mod(peg, 12);
@@ -284,10 +310,10 @@ export const getNotes = (pegs) => {
     });
 
     return notes;
-};
+}
 
-export const mergeNotes = (notesArr) => {
-    const result = dup(EMPTY);
+export function mergeNotes(notesArr: boolean[][]): boolean[] {
+    const result = [...EMPTY];
     notesArr.forEach((notes) => {
         notes.forEach((note, i) => {
             if (note) result[i] = true;
@@ -295,9 +321,9 @@ export const mergeNotes = (notesArr) => {
     });
 
     return result;
-};
+}
 
-export const isSameType = (notes1, notes2) => {
+export function isSameType(notes1: boolean[], notes2: boolean[]): boolean {
     let temp = dup(notes2);
     for (let i = 0; i < notes2.length; i++) {
         if (isEqual(notes1, temp)) {
@@ -308,18 +334,22 @@ export const isSameType = (notes1, notes2) => {
     }
 
     return false;
-};
+}
 
-export const rotate = (arr, times = 1) => {
+export function rotate<T>(arr: Array<T>, times: number = 1): Array<T> {
     let rotated = dup(arr);
     for (let i = 0; i < times; i++) {
         rotated = rotated.slice(1).concat(rotated[0]);
     }
 
     return rotated;
-};
+}
 
-export const getCenter = (center, parentDirection, dy) => {
+export function getCenter(
+    center: { x: number; y: number },
+    parentDirection: Dirs,
+    dy: number,
+): { x: number; y: number } {
     const deltas = {
         TL: { x: center.x + 1, y: center.y + dy },
         BL: { x: center.x + 1, y: center.y - dy },
@@ -328,10 +358,10 @@ export const getCenter = (center, parentDirection, dy) => {
     };
 
     return deltas[parentDirection];
-};
+}
 
-export const getIntervals = (pegs) => {
-    const intervals = [];
+export function getIntervals(pegs: number[]): number[] {
+    const intervals: number[] = [];
     for (let i = 0; i < pegs.length; i++) {
         if (i === pegs.length - 1) {
             intervals.push(12 + pegs[0] - pegs[i]);
@@ -341,10 +371,10 @@ export const getIntervals = (pegs) => {
     }
 
     return intervals;
-};
+}
 
-export const getMajor = (rootIdx) => {
-    if (!(0 <= rootIdx <= 11)) return;
+export function getMajor(rootIdx: number): number[] {
+    if (!(0 <= rootIdx && rootIdx <= 11)) return [];
     let temp = rootIdx;
     const pegs = [temp];
     for (let i = 0; i + 1 < MAJOR.length; i++) {
@@ -353,30 +383,32 @@ export const getMajor = (rootIdx) => {
     }
 
     return pegs;
-};
+}
 
-export const getEmptySet = () => [
-    dup(EMPTY),
-    dup(EMPTY),
-    dup(EMPTY),
-    dup(EMPTY),
-    dup(EMPTY),
-    dup(EMPTY),
-    dup(EMPTY),
-    dup(EMPTY),
-];
+export function getEmptySet(): boolean[][] {
+    return [
+        dup(EMPTY),
+        dup(EMPTY),
+        dup(EMPTY),
+        dup(EMPTY),
+        dup(EMPTY),
+        dup(EMPTY),
+        dup(EMPTY),
+        dup(EMPTY),
+    ];
+}
 
-export const mod = (a, m) => {
+export function mod(a: number, m: number): number {
     return ((a % m) + m) % m;
-};
+}
 
-export const bStringStep = (a, b) => {
+export function bStringStep(a: number, b: number): number {
     if (a < 2 && b >= 2) return -1;
     if (b < 2 && a >= 2) return 1;
     return 0;
-};
+}
 
-export const inRange = (point) => {
+export function inRange(point: [number, number]): boolean {
     return (
         point &&
         point[0] >= 0 &&
@@ -384,9 +416,9 @@ export const inRange = (point) => {
         point[1] >= 0 &&
         point[1] <= 16
     );
-};
+}
 
-export const getOctaveFrets = (point) => {
+export function getOctaveFrets(point: [number, number]): number[][][] {
     let activeString = point[0];
     let delta, step;
     let activeFret = activeString < 2 ? point[1] - 1 : point[1];
@@ -402,9 +434,12 @@ export const getOctaveFrets = (point) => {
     }
 
     return result;
-};
+}
 
-export const getLabelColors = (notesArr, isPiano) => {
+export function getLabelColors(
+    notesArr: boolean[][],
+    isPiano: boolean,
+): { [key in string]: { background: string; color: string } } {
     const selectedNotesByInput = {};
     const result = {};
     NOTE_NAMES.forEach((name) => {
@@ -422,12 +457,12 @@ export const getLabelColors = (notesArr, isPiano) => {
         const flat = name.length > 1;
 
         if (colors.length > 1) {
-            const stripes = [];
+            const stripes: string[] = [];
             for (let i = 0; i < colors.length; i++) {
                 stripes.push(`${colors[i]} ${(100 * i) / colors.length}%`);
                 if (colors[i + 1])
                     stripes.push(
-                        `${colors[i]} ${(100 * (i + 1)) / colors.length}%`
+                        `${colors[i]} ${(100 * (i + 1)) / colors.length}%`,
                     );
             }
 
@@ -449,10 +484,10 @@ export const getLabelColors = (notesArr, isPiano) => {
     });
 
     return result;
-};
+}
 
 // Save to Clipboard helpers
-export const fallbackCopyTextToClipboard = (text) => {
+export function fallbackCopyTextToClipboard(text: string): void {
     const textArea = document.createElement("textarea");
     textArea.value = text;
     document.body.appendChild(textArea);
@@ -468,9 +503,9 @@ export const fallbackCopyTextToClipboard = (text) => {
     }
 
     document.body.removeChild(textArea);
-};
+}
 
-export const onCopyToClipboard = (text) => {
+export function onCopyToClipboard(text: string): void {
     if (!navigator.clipboard) {
         fallbackCopyTextToClipboard(text);
         return;
@@ -478,6 +513,6 @@ export const onCopyToClipboard = (text) => {
 
     navigator.clipboard.writeText(text).then(
         () => console.log("Copying to clipboard was successful!"),
-        (err) => console.error("Could not copy text: ", err)
+        (err) => console.error("Could not copy text: ", err),
     );
-};
+}

@@ -1,14 +1,15 @@
-import React from "react";
+import React, { CSSProperties } from "react";
 import { Scale } from "./scale";
 
 export const KeyWheel = (props) => {
     const { selected, scales, rootReference, mode, mute, ordering } = props;
+
     const scaleComponents = scales.map((node, i) => {
         const rowShift = i % 12 > 5 ? 1 : 0;
         const colStart = 4 * (i % 6) + 2 * rowShift + 1;
         const rowStart = 2 * Math.floor(6 * (i / 36)) + 1;
 
-        const style = {
+        const style: CSSProperties = {
             position: "relative",
             gridColumn: `${colStart}/ span 3`,
             gridRow: `${rowStart}/ span 3`,

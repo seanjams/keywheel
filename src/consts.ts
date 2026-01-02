@@ -1,17 +1,26 @@
+import {
+    ChordNames,
+    Dirs,
+    NoteNames,
+    Orderings,
+    RootReferences,
+    SharpNoteNames,
+} from "./store2/types";
+
 // SCALE_RADIUS + NOTE_RADIUS === 50
 export const SCALE_RADIUS = 41;
 
 export const NOTE_RADIUS = 9;
 
-export const DIRS = ["TL", "TR", "BL", "BR"];
+export const DIRS: Dirs[] = ["TL", "TR", "BL", "BR"];
 
-export const ROOT_REFERENCES = {
+export const ROOT_REFERENCES: { [key in RootReferences]: string } = {
     numbers: "Numbers",
     degrees: "Scale Degrees",
     names: "Note Names",
 };
 
-export const ORDERINGS = {
+export const ORDERINGS: { [key in Orderings]: string } = {
     chromatic: "Chromatic",
     fifths: "Fifths",
 };
@@ -46,7 +55,7 @@ export const EMPTY = [
     false,
 ];
 
-export const NOTE_NAMES = [
+export const NOTE_NAMES: NoteNames[] = [
     "C",
     "D♭",
     "D",
@@ -61,7 +70,7 @@ export const NOTE_NAMES = [
     "B",
 ];
 
-export const SHARP_NOTE_NAMES = [
+export const SHARP_NOTE_NAMES: SharpNoteNames[] = [
     "C",
     "C♯",
     "D",
@@ -100,7 +109,7 @@ export const harMajScale = "Har Maj";
 export const harMinScale = "Har Min";
 export const NeoScale = "Neo";
 
-export const CHORD_NAMES = [
+export const CHORD_NAMES: ChordNames[] = [
     majorChord,
     minorChord,
     augChord,
@@ -120,7 +129,7 @@ export const CHORD_NAMES = [
     NeoScale,
 ];
 
-export const SHAPES = {
+export const SHAPES: { [key in ChordNames]: number[] } = {
     [majorChord]: [0, 4, 7],
     [minorChord]: [0, 3, 7],
     [augChord]: [0, 4, 8],
@@ -141,7 +150,7 @@ export const SHAPES = {
 };
 
 // Key Cube Experimental Constants
-const PATTERN_MAP = {
+const PATTERN_MAP: { [key in string]: number[][] } = {
     [majorScale]: [
         [0, 0, 0],
         [0, 1, 0],
@@ -170,14 +179,18 @@ export const CUBE_RANGE = [-2, -1, 0, 1];
 export const CUBE_SIZE = 150;
 export const CUBE_POSITIONS = {};
 export const VERTICES = {};
-export const STARTING_POS = [CUBE_SIZE * -30, CUBE_SIZE * 10, CUBE_SIZE * 20];
+export const STARTING_POS: [number, number, number] = [
+    CUBE_SIZE * -30,
+    CUBE_SIZE * 10,
+    CUBE_SIZE * 20,
+];
 
 for (let i in NOTE_NAMES) {
     // traverse in circle of fifths
     // get positions for every scale vertex and the cube positions for them
-    const root = NOTE_NAMES[(7 * i) % 12];
-    const patternIndex = i % 3;
-    const patternDelta = Math.floor(i / 3);
+    const root = NOTE_NAMES[(7 * +i) % 12];
+    const patternIndex = +i % 3;
+    const patternDelta = Math.floor(+i / 3);
 
     for (let name of [majorScale, melMinScale, harMinScale, harMajScale]) {
         const label = `${root}\n${name}`;
@@ -198,7 +211,7 @@ for (let i in NOTE_NAMES) {
             return position;
         });
 
-        if (i % 3 === 0 && name !== harMajScale) {
+        if (+i % 3 === 0 && name !== harMajScale) {
             CUBE_POSITIONS[label] = cubePositions;
         }
     }

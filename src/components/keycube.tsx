@@ -1,13 +1,8 @@
-import React, {
-    useState,
-    useRef,
-    useEffect,
-    useLayoutEffect,
-    useMemo,
-} from "react";
+import React, { useRef, useEffect, useLayoutEffect } from "react";
 import * as THREE from "three";
-import { OrbitControls } from "three-orbitcontrols";
-import { Canvas, extend, useThree, useFrame } from "react-three-fiber";
+import type { OrbitControls as OrbitControlsImpl } from "three-stdlib";
+import { Canvas, useFrame } from "@react-three/fiber";
+import { OrbitControls, Text3D, Center } from "@react-three/drei";
 import {
     CUBE_POSITIONS,
     CUBE_SIZE,
@@ -19,39 +14,28 @@ import {
     melMinScale,
     harMajScale,
 } from "../consts";
-import { grey, darkGrey, lightGrey, mediumGrey, red, yellow } from "../colors";
-import { fontJSON } from "../font";
-import { useStore, api } from "../store";
+import { darkGrey, grey, lightGrey, mediumGrey, red, yellow } from "../colors";
 import { DEFAULT_NOTE_COLOR_OPTIONS, getNotesFromName, mod } from "../util";
+import { AppStore } from "../store2/state";
+import { ChordNames, NoteNames } from "../store2/types";
 
-extend({ OrbitControls });
-
-const loader = new THREE.FontLoader();
-const font = loader.parse(fontJSON);
+interface KeyCubeProps {
+    appStore: AppStore;
+}
 
 // TODO: add drag reposition controls
-const Controls = () => {
-    const orbitRef = useRef();
-    const { camera, gl } = useThree();
+const Controls: React.FC = () => {
+    const orbitRef = useRef<OrbitControlsImpl>(null);
 
     useFrame(() => {
-        orbitRef.current.update();
+        orbitRef.current && orbitRef.current.update();
     });
 
-    return (
-        <orbitControls
-            // maxPolarAngle={Math.PI / 3}
-            // minPolarAngle={Math.PI / 3}
-            args={[camera, gl.domElement]}
-            rotateSpeed={3}
-            panSpeed={1}
-            ref={orbitRef}
-        />
-    );
+    return <OrbitControls rotateSpeed={3} panSpeed={1} ref={orbitRef} />;
 };
 
 const Lights = () => {
-    const lightRef = useRef();
+    const lightRef = useRef<THREE.PointLight>(null);
 
     useFrame((state) => {
         if (lightRef.current) {
@@ -61,8 +45,13 @@ const Lights = () => {
 
     return (
         <>
-            <spotLight ref={lightRef} penumbra={0.7} castShadow />
-            <ambientLight intensity={0.1} />
+            <pointLight
+                ref={lightRef}
+                intensity={6}
+                distance={100000}
+                decay={0}
+            />
+            <ambientLight intensity={1} />
         </>
     );
 };
@@ -70,7 +59,7 @@ const Lights = () => {
 // const context = React.createContext();
 // const Outline = ({ children, active }) => {
 //     const { gl, scene, camera, size } = useThree();
-//     const composer = useRef();
+//     const composer = useRef(null);
 //     // const [hovered, set] = useState([]);
 //     const aspect = useMemo(() => new THREE.Vector2(size.width, size.height), [
 //         size,
@@ -103,21 +92,24 @@ const Lights = () => {
 //     );
 // };
 
+interface ScaleBallProps extends KeyCubeProps {
+    name: string;
+}
+
 // main sphere of scale vertex
-export const ScaleBall = ({ name, layoutKey }) => {
-    const meshRef = useRef();
-    const geometryRef = useRef();
-    const materialRef = useRef();
+export const ScaleBall: React.FC<ScaleBallProps> = ({ appStore, name }) => {
+    const meshRef = useRef<THREE.Mesh>(null);
+    const geometryRef = useRef<THREE.SphereGeometry>(null);
+    const materialRef = useRef<THREE.MeshPhongMaterial>(null);
 
     const optionsRef = useRef(
-        useStore.getState()[name] || DEFAULT_NOTE_COLOR_OPTIONS
+        appStore.state.threeProps[name] || DEFAULT_NOTE_COLOR_OPTIONS,
     );
 
     useEffect(() => {
-        return api.subscribe(
-            (options) => (optionsRef.current = options),
-            (store) => store[name]
-        );
+        return appStore.addListener(({ threeProps }) => {
+            optionsRef.current = threeProps[name] || DEFAULT_NOTE_COLOR_OPTIONS;
+        });
     }, []);
 
     useFrame((state) => {
@@ -126,57 +118,44 @@ export const ScaleBall = ({ name, layoutKey }) => {
         // change outer sphere of scale vertex
         if (materialRef.current) {
             const options = optionsRef.current;
-            if (options.some((option) => option.length > 1)) {
+            if (options && options.some((option) => option.length > 1)) {
                 materialRef.current.color.set(yellow);
             } else {
-                materialRef.current.color.set(mediumGrey);
+                materialRef.current.color.set(grey);
             }
         }
     });
 
-    // useLayoutEffect(() => {
-    //     // things that should happen on first render cylce after mounting
-    // });
-
     // build default outer sphere
     return (
         <mesh castShadow ref={meshRef}>
-            <sphereBufferGeometry
-                ref={geometryRef}
-                attach="geometry"
-                args={[20, 32, 16]}
-            />
-            <meshPhongMaterial
-                ref={materialRef}
-                attach="material"
-                color={mediumGrey}
-            />
+            <sphereGeometry ref={geometryRef} args={[20, 32, 16]} />
+            <meshPhongMaterial ref={materialRef} color={mediumGrey} />
         </mesh>
     );
 };
 
+interface ScaleTextProps extends KeyCubeProps {
+    layoutKey: string;
+    label: string;
+}
+
 // text on scale ball
-export const ScaleText = ({ label, name, layoutKey }) => {
-    const meshRef = useRef();
-    const geometryRef = useRef();
-    const materialRef = useRef();
-    const { set, [layoutKey]: layoutDisabled } = useStore.getState() || {};
-    const layoutDisabledRef = useRef(layoutDisabled || false);
+export const ScaleText: React.FC<ScaleTextProps> = ({
+    appStore,
+    label,
+    layoutKey,
+}) => {
+    const meshRef = useRef<THREE.Mesh>(null);
+    const materialRef = useRef<THREE.MeshPhysicalMaterial>(null);
+    const { layoutDisabledKeys } = appStore.state;
+    const layoutDisabledRef = useRef(layoutDisabledKeys[layoutKey] || false);
 
     useEffect(() => {
-        return api.subscribe(
-            ({ layoutDisabled }) => {
-                layoutDisabledRef.current = layoutDisabled;
-            },
-            (store) => ({
-                layoutDisabled: store[layoutKey],
-            })
-        );
+        return appStore.addListener(({ layoutDisabledKeys }) => {
+            layoutDisabledRef.current = layoutDisabledKeys[layoutKey] || false;
+        });
     }, []);
-
-    // useFrame((state) => {
-    //     // things that should happen on every render
-    // });
 
     useLayoutEffect(() => {
         // things that should happen on first render cylce after mounting
@@ -188,54 +167,49 @@ export const ScaleText = ({ label, name, layoutKey }) => {
             meshRef.current.translateOnAxis(t, 19.5);
         }
 
-        if (geometryRef.current) {
-            // make scale name centered on outer sphere
-            geometryRef.current.center();
-        }
-
         layoutDisabledRef.current = true;
-        set({ [layoutKey]: layoutDisabledRef.current });
+        appStore.dispatch.setLayoutDisabledKey(
+            layoutKey,
+            layoutDisabledRef.current,
+        );
     });
 
     return (
-        <mesh castShadow ref={meshRef}>
-            <textBufferGeometry
-                ref={geometryRef}
-                attach="geometry"
-                args={[label, { font, height: 2, size: 4 }]}
-            />
-            <meshPhysicalMaterial
-                ref={materialRef}
-                attach="material"
-                color={darkGrey}
-            />
-        </mesh>
+        <Center>
+            <Text3D ref={meshRef} height={2} size={4} font="../font.json">
+                {label}
+                <meshPhysicalMaterial ref={materialRef} color={darkGrey} />
+            </Text3D>
+        </Center>
     );
 };
 
-// little notes for each scale
-export const NoteBall = ({ name, index, layoutKey }) => {
-    const meshRef = useRef();
-    const geometryRef = useRef();
-    const materialRef = useRef();
-    const { set, [layoutKey]: layoutDisabled, [name]: options } =
-        useStore.getState() || {};
-    // const [active, setActive] = useState(false);
+interface NoteBallProps extends KeyCubeProps {
+    name: string;
+    layoutKey: string;
+    index: number;
+}
 
-    const optionsRef = useRef(options || DEFAULT_NOTE_COLOR_OPTIONS);
-    const layoutDisabledRef = useRef(layoutDisabled || false);
+// little notes for each scale
+export const NoteBall: React.FC<NoteBallProps> = ({
+    appStore,
+    name,
+    index,
+    layoutKey,
+}) => {
+    const meshRef = useRef<THREE.Mesh>(null);
+    const geometryRef = useRef<THREE.SphereGeometry>(null);
+    const materialRef = useRef<THREE.MeshPhongMaterial>(null);
+    const { threeProps, layoutDisabledKeys } = appStore.state;
+
+    const optionsRef = useRef(threeProps[name] || DEFAULT_NOTE_COLOR_OPTIONS);
+    const layoutDisabledRef = useRef(layoutDisabledKeys[layoutKey] || false);
 
     useEffect(() => {
-        return api.subscribe(
-            ({ options, layoutDisabled }) => {
-                optionsRef.current = options;
-                layoutDisabledRef.current = layoutDisabled;
-            },
-            (store) => ({
-                options: store[name],
-                layoutDisabled: store[layoutKey],
-            })
-        );
+        return appStore.addListener(({ threeProps, layoutDisabledKeys }) => {
+            layoutDisabledRef.current = layoutDisabledKeys[layoutKey] || false;
+            optionsRef.current = threeProps[name] || DEFAULT_NOTE_COLOR_OPTIONS;
+        });
     }, []);
 
     useFrame((state) => {
@@ -264,50 +238,45 @@ export const NoteBall = ({ name, index, layoutKey }) => {
         }
 
         layoutDisabledRef.current = true;
-        set({ [layoutKey]: layoutDisabledRef.current });
+        appStore.dispatch.setLayoutDisabledKey(
+            layoutKey,
+            layoutDisabledRef.current,
+        );
     });
 
     return (
-        // <Outline active={active}>
         <mesh castShadow ref={meshRef}>
-            <sphereBufferGeometry
-                ref={geometryRef}
-                attach="geometry"
-                args={[4, 32, 16]}
-            />
+            <sphereGeometry ref={geometryRef} args={[4, 32, 16]} />
             <meshPhongMaterial
                 ref={materialRef}
-                attach="material"
                 color={lightGrey}
                 reflectivity={1}
             />
         </mesh>
-        // </Outline>
     );
 };
 
+interface NoteTextProps extends KeyCubeProps {
+    layoutKey: string;
+    index: number;
+}
+
 // text on note ball
-export const NoteText = ({ name, index, layoutKey }) => {
-    const meshRef = useRef();
-    const geometryRef = useRef();
-    const materialRef = useRef();
-    const { set, [layoutKey]: layoutDisabled } = useStore.getState() || {};
-    const layoutDisabledRef = useRef(layoutDisabled || false);
+export const NoteText: React.FC<NoteTextProps> = ({
+    appStore,
+    index,
+    layoutKey,
+}) => {
+    const meshRef = useRef<THREE.Mesh>(null);
+    const materialRef = useRef<THREE.MeshPhysicalMaterial>(null);
+    const { layoutDisabledKeys } = appStore.state;
+    const layoutDisabledRef = useRef(layoutDisabledKeys[layoutKey] || false);
 
     useEffect(() => {
-        return api.subscribe(
-            ({ layoutDisabled }) => {
-                layoutDisabledRef.current = layoutDisabled;
-            },
-            (store) => ({
-                layoutDisabled: store[layoutKey],
-            })
-        );
+        return appStore.addListener(({ layoutDisabledKeys }) => {
+            layoutDisabledRef.current = layoutDisabledKeys[layoutKey] || false;
+        });
     }, []);
-
-    // useFrame((state) => {
-    // things that should happen on every render
-    // });
 
     useLayoutEffect(() => {
         // things that should happen on first render cylce after mounting
@@ -324,34 +293,30 @@ export const NoteText = ({ name, index, layoutKey }) => {
             meshRef.current.translateOnAxis(z, 23);
         }
 
-        if (geometryRef.current) {
-            // make note names centered on note balls
-            geometryRef.current.center();
-        }
-
         layoutDisabledRef.current = true;
-        set({ [layoutKey]: layoutDisabledRef.current });
+        appStore.dispatch.setLayoutDisabledKey(
+            layoutKey,
+            layoutDisabledRef.current,
+        );
     });
 
     return (
-        <mesh castShadow ref={meshRef}>
-            <textBufferGeometry
-                ref={geometryRef}
-                attach="geometry"
-                args={[NOTE_NAMES[index], { font, height: 1, size: 2 }]}
-            />
-            <meshPhysicalMaterial
-                ref={materialRef}
-                attach="material"
-                color={darkGrey}
-            />
-        </mesh>
+        <Center>
+            <Text3D ref={meshRef} font="../font.json" height={1} size={2}>
+                {NOTE_NAMES[index]}
+                <meshPhysicalMaterial ref={materialRef} color={darkGrey} />
+            </Text3D>
+        </Center>
     );
 };
 
+interface ScaleVertexProps extends KeyCubeProps {
+    name: string;
+}
+
 // a sphere with text and little noteballs on it
-export const ScaleVertex = ({ name }) => {
-    const groupRef = useRef();
+export const ScaleVertex: React.FC<ScaleVertexProps> = ({ appStore, name }) => {
+    const groupRef = useRef<THREE.Group>(null);
     const { root, label, position, scaleType } = VERTICES[name];
     const notes = getNotesFromName(root, scaleType);
 
@@ -368,35 +333,41 @@ export const ScaleVertex = ({ name }) => {
     let ballKey = `scale-ball-${name}`;
     let textKey = `scale-text-${name}`;
     const scaleBall = (
-        <ScaleBall key={ballKey} layoutKey={ballKey} name={name} />
+        <ScaleBall key={ballKey} appStore={appStore} name={name} />
     );
     const scaleText = (
         <ScaleText
             key={textKey}
+            appStore={appStore}
             layoutKey={textKey}
-            name={name}
             label={label}
         />
     );
 
     // build default noteballs
-    const noteBalls = [];
-    const noteTexts = [];
+    const noteBalls: React.JSX.Element[] = [];
+    const noteTexts: React.JSX.Element[] = [];
     for (let i = 0; i < 12; i++) {
         ballKey = `note-ball-${name}-${i}`;
         textKey = `note-text-${name}-${i}`;
         noteBalls.push(
-            <NoteBall key={ballKey} layoutKey={ballKey} name={name} index={i} />
+            <NoteBall
+                key={ballKey}
+                appStore={appStore}
+                layoutKey={ballKey}
+                name={name}
+                index={i}
+            />,
         );
 
         if (notes && notes[i]) {
             noteTexts.push(
                 <NoteText
                     key={textKey}
+                    appStore={appStore}
                     layoutKey={textKey}
-                    name={name}
                     index={i}
-                />
+                />,
             );
         }
     }
@@ -412,46 +383,59 @@ export const ScaleVertex = ({ name }) => {
 };
 
 // Create Scale Vertices for every scale
-export const ScaleVertices = () => {
+export const ScaleVertices: React.FC<KeyCubeProps> = ({ appStore }) => {
     return (
         <>
             {Object.keys(VERTICES).map((key) => (
-                <ScaleVertex key={key} name={key} />
+                <ScaleVertex key={key} appStore={appStore} name={key} />
             ))}
         </>
     );
 };
 
+interface EdgeProps extends KeyCubeProps {
+    startVertex: {
+        root: NoteNames;
+        label: ChordNames;
+        position: [number, number, number];
+    };
+    endVertex: {
+        root: NoteNames;
+        label: ChordNames;
+        position: [number, number, number];
+    };
+    layoutKey: string;
+}
+
 // An edge from start node => end node
-export const Edge = ({ color, startVertex, endVertex, layoutKey }) => {
-    const meshRef = useRef();
-    const geometryRef = useRef();
-    const materialRef = useRef();
+export const Edge: React.FC<EdgeProps> = ({
+    appStore,
+    startVertex,
+    endVertex,
+    layoutKey,
+}) => {
+    const meshRef = useRef<THREE.Mesh>(null);
+    const geometryRef = useRef<THREE.CylinderGeometry>(null);
+    const materialRef = useRef<THREE.MeshPhongMaterial>(null);
     const startKey = `${startVertex.root}-${startVertex.label}-0`;
     const endKey = `${endVertex.root}-${endVertex.label}-0`;
-    const {
-        set,
-        [startKey]: startOpts,
-        [endKey]: endOpts,
-        [layoutKey]: layoutDisabled,
-    } = useStore.getState() || {};
-    const startOptionsRef = useRef(startOpts || DEFAULT_NOTE_COLOR_OPTIONS);
-    const endOptionsRef = useRef(endOpts || DEFAULT_NOTE_COLOR_OPTIONS);
-    const layoutDisabledRef = useRef(layoutDisabled || false);
+    const { threeProps, layoutDisabledKeys } = appStore.state;
+    const startOptionsRef = useRef(
+        threeProps[startKey] || DEFAULT_NOTE_COLOR_OPTIONS,
+    );
+    const endOptionsRef = useRef(
+        threeProps[endKey] || DEFAULT_NOTE_COLOR_OPTIONS,
+    );
+    const layoutDisabledRef = useRef(layoutDisabledKeys[layoutKey] || false);
 
     useEffect(() => {
-        return api.subscribe(
-            ({ startOpts, endOpts, layoutDisabled }) => {
-                startOptionsRef.current = startOpts;
-                endOptionsRef.current = endOpts;
-                layoutDisabledRef.current = layoutDisabled;
-            },
-            (store) => ({
-                startOpts: store[startKey],
-                endOpts: store[endKey],
-                layoutDisabled: store[layoutKey],
-            })
-        );
+        return appStore.addListener(({ threeProps, layoutDisabledKeys }) => {
+            startOptionsRef.current =
+                threeProps[startKey] || DEFAULT_NOTE_COLOR_OPTIONS;
+            endOptionsRef.current =
+                threeProps[endKey] || DEFAULT_NOTE_COLOR_OPTIONS;
+            layoutDisabledRef.current = layoutDisabledKeys[layoutKey] || false;
+        });
     }, []);
 
     useFrame((state) => {
@@ -470,7 +454,7 @@ export const Edge = ({ color, startVertex, endVertex, layoutKey }) => {
         }
     });
 
-    useLayoutEffect((state) => {
+    useLayoutEffect(() => {
         // things that should happen on first render cylce after mounting
         if (layoutDisabledRef.current) return;
 
@@ -492,30 +476,36 @@ export const Edge = ({ color, startVertex, endVertex, layoutKey }) => {
         }
 
         layoutDisabledRef.current = true;
-        set({ [layoutKey]: layoutDisabledRef.current });
+        appStore.dispatch.setLayoutDisabledKey(
+            layoutKey,
+            layoutDisabledRef.current,
+        );
     });
 
     return (
         <mesh position={startVertex.position} ref={meshRef} castShadow>
-            <cylinderBufferGeometry
-                ref={geometryRef}
-                attach="geometry"
-                args={[3, 3, CUBE_SIZE, 16]}
-            />
-            <meshPhongMaterial
-                ref={materialRef}
-                attach="material"
-                color={mediumGrey}
-            />
+            <cylinderGeometry ref={geometryRef} args={[3, 3, CUBE_SIZE, 16]} />
+            <meshPhongMaterial ref={materialRef} color={mediumGrey} />
         </mesh>
     );
 };
 
+interface EdgeCubeProps extends KeyCubeProps {
+    position: [number, number, number];
+    name: string;
+    index: number;
+}
+
 // Boxes of edges
-export const EdgeCube = ({ position, color, name, index }) => {
-    const edges = [];
+export const EdgeCube: React.FC<EdgeCubeProps> = ({
+    appStore,
+    position,
+    name,
+    index,
+}) => {
+    const edges: React.JSX.Element[] = [];
     const [root, label] = name.split("\n");
-    const rootIdx = NOTE_NAMES.indexOf(root);
+    const rootIdx = NOTE_NAMES.indexOf(root as NoteNames);
 
     // pairs of indices of adjustmentBank positions that should have an edge between them
     const edgePairs = [
@@ -695,9 +685,8 @@ export const EdgeCube = ({ position, color, name, index }) => {
         const edge = (
             <Edge
                 key={`edge-group-${pair}`}
-                color={color}
+                appStore={appStore}
                 layoutKey={`edge-${startVertex.root}-${startVertex.label}-${endVertex.root}-${endVertex.label}-${index}`}
-                index={index}
                 startVertex={startVertex}
                 endVertex={endVertex}
             />
@@ -710,18 +699,18 @@ export const EdgeCube = ({ position, color, name, index }) => {
 };
 
 // create EdgeCubes for every cube of vertices/edges
-export const Edges = () => {
+export const Edges: React.FC<KeyCubeProps> = ({ appStore }) => {
     return (
         <>
             {Object.keys(CUBE_POSITIONS).map((name) => {
                 const positions = CUBE_POSITIONS[name];
                 return positions.map((position, i) => (
                     <EdgeCube
-                        position={position}
                         key={`box-${i}`}
+                        appStore={appStore}
+                        position={position}
                         index={i}
                         name={name}
-                        color={grey}
                     />
                 ));
             })}
@@ -730,43 +719,32 @@ export const Edges = () => {
 };
 
 // KeyCube
-export const KeyCube = () => {
-    const keyCubeVisible = useStore((store) => store.keyCubeVisible);
+export const KeyCube: React.FC<KeyCubeProps> = ({ appStore }) => {
     return (
-        <div style={{ marginLeft: "10vw" }}>
-            {keyCubeVisible && (
-                <Canvas
-                    orthographic
-                    camera={{
-                        position: STARTING_POS,
-                        far: 100000,
-                        near: CUBE_SIZE,
-                    }}
-                    style={{
-                        height: "calc(100vh - 50px)",
-                        width: "90vw",
-                        margin: "0 auto",
-                    }}
-                    onCreated={({ gl }) => {
-                        gl.setClearColor("#000");
-                        gl.shadowMap.enabled = true;
-                        gl.shadowMap.type = THREE.PCFSoftShadowMap;
-                    }}
-                >
-                    <Lights />
-                    <Controls />
-                    <ScaleVertices />
-                    <Edges />
-                    {/* <axesHelper
-                        args={[
-                            100 * CUBE_SIZE,
-                            100 * CUBE_SIZE,
-                            `white`,
-                            `gray`,
-                        ]}
-                    /> */}
-                </Canvas>
-            )}
+        <div>
+            <Canvas
+                orthographic
+                camera={{
+                    position: STARTING_POS,
+                    far: 100000,
+                    near: CUBE_SIZE,
+                }}
+                style={{
+                    height: "calc(100vh - 50px)",
+                    width: "90vw",
+                    margin: "0 auto",
+                }}
+                onCreated={({ gl }) => {
+                    gl.setClearColor("#000");
+                    gl.shadowMap.enabled = true;
+                    gl.shadowMap.type = THREE.PCFSoftShadowMap;
+                }}
+            >
+                <Lights />
+                <Controls />
+                <ScaleVertices appStore={appStore} />
+                <Edges appStore={appStore} />
+            </Canvas>
         </div>
     );
 };

@@ -1,8 +1,8 @@
-import React from "react";
+import React, { CSSProperties } from "react";
 import { NOTE_NAMES } from "../consts";
 import { getLabelColors } from "../util";
 
-const blackKey = {
+const blackKey: CSSProperties = {
     width: "2%",
     height: "60%",
     zIndex: 1,
@@ -14,7 +14,7 @@ const blackKey = {
     flexBasis: 0,
 };
 
-const whiteKey = {
+const whiteKey: CSSProperties = {
     flex: 2,
     height: "100%",
     boxShadow: "inset 0 0 0 1px rgba(0,0,0,1)",
@@ -41,7 +41,7 @@ export const Piano = (props) => {
         const style = Object.assign(
             {},
             name.length > 1 ? blackKey : whiteKey,
-            colors[name]
+            colors[name],
         );
 
         return (

@@ -1,38 +1,31 @@
-import React, { useEffect, useContext } from "react";
-import isEqual from "lodash/isEqual";
+import React, { useEffect, CSSProperties } from "react";
 import { Input } from "./input";
 import { FretBoard } from "./fretboard";
 import { Piano } from "./piano";
 import { KeyWheel } from "./keywheel";
-import {
-    getNotes,
-    getEmptySet,
-    dup,
-    onCopyToClipboard,
-    getPegs,
-    DEFAULT_NOTE_COLOR_OPTIONS,
-} from "../util";
+import { getNotes, getEmptySet, dup, onCopyToClipboard } from "../util";
 import {
     EMPTY,
     ROOT_REFERENCES,
     ORDERINGS,
     NOTE_NAMES,
     SHAPES,
-    VERTICES,
 } from "../consts";
-import { COLORS, offWhite, lightGrey, darkGrey } from "../colors";
-import { KeyWheelContext, useStore } from "../store";
+import { offWhite, lightGrey } from "../colors";
+import { AppStateType, AppStore } from "../store2/state";
+import { useDerivedState } from "../store2/hooks";
+import { KeyCube } from "./keycube";
 
-const mainStyle = {
+const mainStyle: CSSProperties = {
     boxSizing: "border-box",
 };
 
-const titleStyle = {
+const titleStyle: CSSProperties = {
     fontSize: "1.75rem",
     padding: "10px",
 };
 
-const buttonStyle = {
+const buttonStyle: CSSProperties = {
     padding: "5px",
     backgroundColor: lightGrey,
     margin: "5px",
@@ -44,7 +37,7 @@ const buttonStyle = {
     borderRadius: "3px",
 };
 
-const navBarStyle = {
+const navBarStyle: CSSProperties = {
     display: "flex",
     justifyContent: "space-between",
     alignItems: "center",
@@ -57,7 +50,7 @@ const navBarStyle = {
     background: offWhite,
 };
 
-const leftPanelStyle = {
+const leftPanelStyle: CSSProperties = {
     position: "fixed",
     top: 50,
     overflowY: "scroll",
@@ -68,112 +61,92 @@ const leftPanelStyle = {
     boxShadow: "5px 0 10px 0 #888",
 };
 
-const linkContainerStyle = {
+const linkContainerStyle: CSSProperties = {
     display: "flex",
     alignItems: "center",
 };
 
-// builds object with key pointing to textGeometry props for specific vertix
-const buildThreeProps = (selected) => {
-    const getNoteColors = (root, scaleType) => {
-        const rootIdx = NOTE_NAMES.indexOf(root);
-        if (rootIdx === -1) return DEFAULT_NOTE_COLOR_OPTIONS;
+interface AppProps {
+    oldState: Partial<AppStateType>;
+    appStore: AppStore;
+}
 
-        const scaleNotes = getNotes(
-            SHAPES[scaleType].map((note) => (note + rootIdx) % 12).sort()
-        );
-
-        const noteColors = scaleNotes.map((note) =>
-            note ? [darkGrey] : [lightGrey]
-        );
-
-        for (let i = selected.length - 1; i >= 0; i--) {
-            const selectedPegs = getPegs(selected[i]);
-            if (
-                selectedPegs.length &&
-                selectedPegs.every((val) => scaleNotes[val])
-            ) {
-                for (let peg of selectedPegs) {
-                    noteColors[peg].push(COLORS(1)[i]);
-                }
-            }
-        }
-
-        return noteColors;
-    };
-
-    const nextThreeProps = {};
-    for (let key in VERTICES) {
-        let { root, scaleType } = VERTICES[key];
-        nextThreeProps[key] = getNoteColors(root, scaleType);
-    }
-
-    return nextThreeProps;
-};
-
-export const App = ({ oldState }) => {
-    const { state, dispatch } = useContext(KeyWheelContext);
-    const store = useStore((store) => store);
+export const App: React.FC<AppProps> = ({ oldState, appStore }) => {
+    const [getState] = useDerivedState(appStore, (state) => ({
+        ...state,
+    }));
+    const state = getState();
+    const {
+        selected,
+        scales,
+        mute,
+        mode,
+        rootReference,
+        ordering,
+        noteNames,
+        chordNames,
+    } = getState();
 
     useEffect(() => {
-        rehydrateState();
+        // rehydrateState();
         window.addEventListener("keydown", handleKeyPress);
-        window.addEventListener("beforeunload", saveToLocalStorage);
+        // window.addEventListener("beforeunload", saveToLocalStorage);
         return () => {
-            saveToLocalStorage();
-            window.removeEventListener("beforeunload", saveToLocalStorage);
+            // saveToLocalStorage();
+            // window.removeEventListener("beforeunload", saveToLocalStorage);
             window.removeEventListener("keydown", handleKeyPress);
         };
     }, []);
 
     const saveToLocalStorage = () => {
         // handle react context
-        dispatch({ type: "SAVE_TO_LOCAL_STORAGE" });
+        appStore.dispatch.saveToLocalStorage();
     };
 
     const rehydrateState = () => {
-        let newState = {};
-        for (let key in state) {
-            if (oldState) {
+        let newState: Partial<AppStateType> = {};
+        for (let key in getState()) {
+            if (
+                oldState &&
+                oldState[key] !== undefined &&
+                oldState[key] !== null
+            ) {
                 newState[key] = oldState[key];
             } else if (localStorage.hasOwnProperty(key)) {
                 let val = localStorage.getItem(key);
                 try {
-                    val = JSON.parse(val);
+                    val = val !== null && JSON.parse(val);
                     newState[key] = val;
                 } catch (e) {
-                    newState[key] = state[key];
+                    newState[key] = getState()[key];
                 }
             }
         }
 
-        updateThreeProps(newState.selected || getEmptySet());
-        // handle react context
-        dispatch({ type: "REHYDRATE", payload: newState });
-        // handle zustand context
-        store.set({
-            keyCubeVisible:
-                !newState.keyWheelVisible && !newState.instrumentsVisible,
-        });
+        appStore.dispatch.rehydrate(newState);
+        appStore.dispatch.setSelected(newState.selected || getEmptySet());
+        appStore.dispatch.toggleKeyCube(
+            !newState.keyWheelVisible && !newState.instrumentsVisible,
+        );
     };
 
     const onSaveToClipboard = (e) => {
         // save state to URL
-        const savedState = dup(state);
+        const savedState: Partial<AppStateType> = dup(getState());
         delete savedState.scales;
 
         history.pushState(
             "",
             "KeyWheel",
-            `?q=${encodeURIComponent(JSON.stringify(savedState))}`
+            `?q=${encodeURIComponent(JSON.stringify(savedState))}`,
         );
 
         // copy to clipboard
         onCopyToClipboard(window.location.href);
     };
 
-    const calculateChord = (i) => {
-        const { noteNames, chordNames } = state;
+    const calculateChord = (i: number) => {
+        const { noteNames, chordNames } = getState();
         const rootIdx = NOTE_NAMES.indexOf(noteNames[i]);
         const pegs = SHAPES[chordNames[i]]
             .map((note) => (note + rootIdx) % 12)
@@ -182,17 +155,16 @@ export const App = ({ oldState }) => {
     };
 
     const onNameChange = (e, i) => {
-        const noteNames = dup(state.noteNames);
-        noteNames[i] = e.target.value;
-
-        dispatch({ type: "CHANGE_NAME", payload: noteNames });
+        const newNoteNames = [...noteNames];
+        newNoteNames[i] = e.target.value;
+        appStore.dispatch.changeName(newNoteNames);
         calculateChord(i);
     };
 
     const onChordChange = (e, i) => {
-        const chordNames = dup(state.chordNames);
-        chordNames[i] = e.target.value;
-        dispatch({ type: "CHANGE_CHORD", payload: chordNames });
+        const newChordNames = [...chordNames];
+        newChordNames[i] = e.target.value;
+        appStore.dispatch.changeChord(newChordNames);
         calculateChord(i);
     };
 
@@ -204,102 +176,75 @@ export const App = ({ oldState }) => {
         }
     };
 
-    const shiftScale = (inc) => {
-        dispatch({ type: "SHIFT_SCALE", payload: inc });
-    };
-
-    const updateThreeProps = (selected) => {
-        const nextThreeProps = buildThreeProps(selected);
-        for (let key in nextThreeProps) {
-            if (!isEqual(nextThreeProps[key], store[key])) {
-                store.set({ [key]: nextThreeProps[key] });
-            }
-        }
+    const shiftScale = (inc: number) => {
+        appStore.dispatch.shiftScale(inc);
     };
 
     const clearNotes = (i = -1) => {
         if (i >= 0) {
             const selected = dup(state.selected);
             selected[i] = dup(EMPTY);
-
-            updateThreeProps(selected);
-            dispatch({ type: "SET_SELECTED", payload: selected });
+            appStore.dispatch.setSelected(selected);
         } else {
             const empty = getEmptySet();
-            updateThreeProps(empty);
-            dispatch({ type: "SET_SELECTED", payload: empty });
+            appStore.dispatch.setSelected(empty);
         }
     };
 
+    const clearAllNotes = () => {
+        return clearNotes();
+    };
+
     const handleClick = (i, id) => {
-        const selected = [];
+        const selected: boolean[][] = [];
         state.selected.forEach((notes) => {
-            selected.push(dup(notes));
+            selected.push([...notes]);
         });
         selected[id][i] = !selected[id][i];
-        updateThreeProps(selected);
-        dispatch({ type: "SET_SELECTED", payload: selected });
+        appStore.dispatch.setSelected(selected);
     };
 
     const handleGroup = (notes, id) => {
-        const selected = [];
+        const selected: boolean[][] = [];
         state.selected.forEach((notes) => {
             selected.push(dup(notes));
         });
         selected[id] = notes;
-        updateThreeProps(selected);
-        dispatch({ type: "SET_SELECTED", payload: selected });
+        appStore.dispatch.setSelected(selected);
     };
 
     const toggleMode = () => {
         const mode = state.mode === "union" ? "intersection" : "union";
-        dispatch({ type: "TOGGLE_MODE", payload: mode });
+        appStore.dispatch.toggleMode(mode);
     };
 
     const changeRef = (e) => {
-        dispatch({ type: "CHANGE_ROOT_REF", payload: e.currentTarget.value });
+        appStore.dispatch.changeRootReference(e.currentTarget.value);
     };
 
     const changeOrder = (e) => {
-        dispatch({ type: "CHANGE_ORDER", payload: e.currentTarget.value });
+        appStore.dispatch.changeOrder(e.currentTarget.value);
     };
 
     const toggleMute = () => {
         const mute = !state.mute;
-        dispatch({ type: "TOGGLE_MUTE", payload: mute });
+        appStore.dispatch.toggleMute(mute);
     };
 
     const toggleKeyCube = () => {
-        const keyCubeVisible = !store.keyCubeVisible;
-        if (keyCubeVisible) {
-            updateThreeProps(state.selected);
-            dispatch({ type: "TOGGLE_KEY_WHEEL", payload: false });
-            dispatch({ type: "TOGGLE_INSTRUMENTS", payload: false });
-        }
-        store.set({ keyCubeVisible });
+        const keyCubeVisible = !getState().keyCubeVisible;
+        appStore.dispatch.toggleKeyCube(keyCubeVisible);
     };
 
     const toggleKeyWheel = () => {
-        const keyWheelVisible = !state.keyWheelVisible;
-        if (keyWheelVisible) {
-            store.reset();
-            dispatch({ type: "TOGGLE_INSTRUMENTS", payload: false });
-        }
-        dispatch({ type: "TOGGLE_KEY_WHEEL", payload: keyWheelVisible });
+        const keyWheelVisible = !getState().keyWheelVisible;
+        appStore.dispatch.toggleKeyWheel(keyWheelVisible);
     };
 
     const toggleInstruments = () => {
-        const instrumentsVisible = !state.instrumentsVisible;
-        if (instrumentsVisible) {
-            store.reset();
-            dispatch({ type: "TOGGLE_KEY_WHEEL", payload: false });
-        }
-        dispatch({ type: "TOGGLE_INSTRUMENTS", payload: instrumentsVisible });
+        const instrumentsVisible = !getState().instrumentsVisible;
+        appStore.dispatch.toggleInstruments(instrumentsVisible);
     };
-
-    const { selected, scales, mute, mode, rootReference, ordering } = state;
-
-    if (!scales) return null;
 
     return (
         <div style={mainStyle}>
@@ -318,7 +263,7 @@ export const App = ({ oldState }) => {
                         {state.keyWheelVisible ? "Hide" : "Show"} Key Wheel
                     </button>
                     <button style={buttonStyle} onClick={toggleKeyCube}>
-                        {store.keyCubeVisible ? "Hide" : "Show"} Key Cube
+                        {state.keyCubeVisible ? "Hide" : "Show"} Key Cube
                     </button>
                     <button style={buttonStyle} onClick={onSaveToClipboard}>
                         Save To Clipboard
@@ -326,7 +271,7 @@ export const App = ({ oldState }) => {
                     <button style={buttonStyle} onClick={toggleMute}>
                         {state.mute ? "Unmute" : "Mute"}
                     </button>
-                    <button style={buttonStyle} onClick={clearNotes}>
+                    <button style={buttonStyle} onClick={clearAllNotes}>
                         Clear All
                     </button>
                     <select
@@ -436,6 +381,16 @@ export const App = ({ oldState }) => {
                         />
                     </div>
                 )}
+
+                <div
+                    style={{
+                        margin: "30px auto",
+                        width: "fit-content",
+                        display: state.keyCubeVisible ? "block" : "none", // don't unmount the Canvas when hiding
+                    }}
+                >
+                    <KeyCube appStore={appStore} />
+                </div>
             </div>
         </div>
     );

@@ -1,10 +1,10 @@
-import React, { useEffect } from "react";
+import React, { CSSProperties, useEffect } from "react";
 import { Scale } from "./scale";
 import { EMPTY, SHAPES, NOTE_NAMES } from "../consts";
 import { lightGrey } from "../colors";
 import { getPegs, soundNotes, chordReader, dup } from "../util";
 
-const containerStyle = {
+const containerStyle: CSSProperties = {
     display: "flex",
     flexDirection: "column",
     justifyContent: "center",
@@ -12,7 +12,7 @@ const containerStyle = {
     margin: "5px auto",
 };
 
-const buttonStyle = {
+const buttonStyle: CSSProperties = {
     padding: "3px",
     backgroundColor: lightGrey,
     borderRadius: 0,
@@ -22,13 +22,13 @@ const buttonStyle = {
     cursor: "pointer",
 };
 
-const buttonContainerStyle = {
+const buttonContainerStyle: CSSProperties = {
     display: "flex",
     justifyContent: "center",
     width: "100%",
 };
 
-const selectContainerStyle = {
+const selectContainerStyle: CSSProperties = {
     display: "flex",
     justifyContent: "center",
     height: 16,
