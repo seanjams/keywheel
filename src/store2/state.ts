@@ -19,7 +19,6 @@ import {
 } from "./types";
 
 // Types
-
 export interface AppStateType {
     start: number;
     selected: boolean[][];
@@ -32,7 +31,7 @@ export interface AppStateType {
     keyCubeVisible: boolean;
     keyWheelVisible: boolean;
     instrumentsVisible: boolean;
-    scales: ScaleNode | ScaleNode[];
+    scales: ScaleNode[];
     threeProps: {
         [x: string]: string[][];
     };
@@ -59,7 +58,9 @@ export const DEFAULT_APP_STATE: () => AppStateType = () => {
 };
 
 // builds object with key pointing to textGeometry props for specific vertix
-function buildThreeProps(selected): { [key in string]: string[][] } {
+function buildThreeProps(selected: boolean[][]): {
+    [key in string]: string[][];
+} {
     function getNoteColors(root: NoteNames, scaleType: ChordNames) {
         const rootIdx = NOTE_NAMES.indexOf(root);
         if (rootIdx === -1) return DEFAULT_NOTE_COLOR_OPTIONS;
@@ -103,14 +104,52 @@ export const reducers = {
             ...DEFAULT_APP_STATE(),
         };
     },
-    rehydrate(
-        state: AppStateType,
-        payload: Partial<AppStateType>,
-    ): AppStateType {
+    rehydrate(state: AppStateType): AppStateType {
+        console.log("rehydrate needs some TLC");
+        // let stateFromUrl = JSON.parse(
+        //     decodeURIComponent(window.location.search.slice(3)),
+        // );
+
+        // const newState = { ...state };
+        // if ("start" in stateFromUrl && typeof stateFromUrl.start === "number")
+        // let newState: Partial<AppStateType> = {};
+
+        // if (typeof stateFromUrl.start == "number") {
+        // newState.start = stateFromUrl.start;
+        // }
+
+        // Object.keys(state).forEach((key: keyof AppStateType) => {
+        //     if (
+        //         stateFromUrl &&
+        //         key in stateFromUrl &&
+        //         stateFromUrl[key] !== undefined &&
+        //         stateFromUrl[key] !== null
+        //     ) {
+        //         newState[key] = stateFromUrl[key];
+        //     } else if (localStorage.hasOwnProperty(key)) {
+        //         let val = localStorage.getItem(key);
+        //         try {
+        //             val = val !== null && JSON.parse(val);
+        //             newState[key] = val;
+        //         } catch (e) {
+        //             newState[key] = state[key];
+        //         }
+        //     } else {
+        //         newState[key] = state[key];
+        //     }
+        // });
+
+        // appStore.dispatch.rehydrate(newState);
+        // appStore.dispatch.setSelected(newState.selected || getEmptySet());
+        // appStore.dispatch.toggleKeyCube(
+        //     !newState.keyWheelVisible && !newState.instrumentsVisible,
+        // );
+
         return {
             ...state,
-            ...payload,
-            scales: buildKeyWheel(payload.start || 0),
+            // ...payload,
+            // scales: buildKeyWheel(payload.start || 0),
+            scales: buildKeyWheel(0),
         };
     },
     changeName(state: AppStateType, noteNames: NoteNames[]): AppStateType {
@@ -168,38 +207,37 @@ export const reducers = {
             scales: buildKeyWheel(start),
         };
     },
-    toggleKeyCube(state: AppStateType, keyCubeVisible: boolean): AppStateType {
+    toggleKeyCube(state: AppStateType): AppStateType {
         return {
             ...state,
-            keyWheelVisible: false,
             instrumentsVisible: false,
-            keyCubeVisible,
+            keyWheelVisible: false,
+            keyCubeVisible: true,
         };
     },
-    toggleKeyWheel(
-        state: AppStateType,
-        keyWheelVisible: boolean,
-    ): AppStateType {
+    toggleKeyWheel(state: AppStateType): AppStateType {
         return {
             ...state,
+            instrumentsVisible: false,
+            keyWheelVisible: true,
             keyCubeVisible: false,
-            keyWheelVisible,
         };
     },
-    toggleInstruments(
-        state: AppStateType,
-        instrumentsVisible: boolean,
-    ): AppStateType {
+    toggleInstruments(state: AppStateType): AppStateType {
         return {
             ...state,
+            instrumentsVisible: true,
+            keyWheelVisible: false,
             keyCubeVisible: false,
-            instrumentsVisible,
         };
     },
     saveToLocalStorage(state: AppStateType): AppStateType {
         for (let key in state) {
             if (key !== "scales")
-                localStorage.setItem(key, JSON.stringify(state[key]));
+                localStorage.setItem(
+                    key,
+                    JSON.stringify(state[key as keyof AppStateType]),
+                );
         }
         return {
             ...state,

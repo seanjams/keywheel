@@ -3,8 +3,10 @@ import {
     Dirs,
     NoteNames,
     Orderings,
+    PositionType,
     RootReferences,
     SharpNoteNames,
+    VertexType,
 } from "./store2/types";
 
 // SCALE_RADIUS + NOTE_RADIUS === 50
@@ -54,6 +56,21 @@ export const EMPTY = [
     false,
     false,
 ];
+
+// export enum NoteNamesEnum {
+//     C = "C",
+//     Db = "D♭",
+//     D = "D",
+//     Eb = "E♭",
+//     E = "E",
+//     F = "F",
+//     Gb = "G♭",
+//     G = "G",
+//     Ab = "A♭",
+//     A = "A",
+//     Bb = "B♭",
+//     B = "B",
+// }
 
 export const NOTE_NAMES: NoteNames[] = [
     "C",
@@ -150,7 +167,7 @@ export const SHAPES: { [key in ChordNames]: number[] } = {
 };
 
 // Key Cube Experimental Constants
-const PATTERN_MAP: { [key in string]: number[][] } = {
+const PATTERN_MAP: { [key in string]: [number, number, number][] } = {
     [majorScale]: [
         [0, 0, 0],
         [0, 1, 0],
@@ -177,9 +194,11 @@ const PATTERN_MAP: { [key in string]: number[][] } = {
 
 export const CUBE_RANGE = [-2, -1, 0, 1];
 export const CUBE_SIZE = 150;
-export const CUBE_POSITIONS = {};
-export const VERTICES = {};
-export const STARTING_POS: [number, number, number] = [
+export const CUBE_POSITIONS: { [key in string]: PositionType[] } = {};
+export const VERTICES: {
+    [key in string]: VertexType;
+} = {};
+export const STARTING_POS: PositionType = [
     CUBE_SIZE * -30,
     CUBE_SIZE * 10,
     CUBE_SIZE * 20,
@@ -199,13 +218,13 @@ for (let i in NOTE_NAMES) {
             const key = `${root}-${name}-${index}`;
             const position = coordinates.map((coord, j) => {
                 return (4 * k + (coord + patternDelta)) * CUBE_SIZE;
-            });
+            }) as PositionType;
 
             VERTICES[key] = {
                 key,
                 label,
                 root,
-                scaleType: name,
+                scaleType: name as ChordNames,
                 position,
             };
             return position;

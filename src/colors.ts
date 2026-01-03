@@ -1,3 +1,24 @@
+import {
+    augChord,
+    dim7Chord,
+    dimChord,
+    dimPentaScale,
+    domChord,
+    harMajScale,
+    harMinScale,
+    maj7Chord,
+    majorChord,
+    majorScale,
+    melMinScale,
+    min7b5Chord,
+    min7Chord,
+    minorChord,
+    NeoScale,
+    pentaScale,
+    susChord,
+} from "./consts";
+import { ChordNames } from "./store2/types";
+
 export const darkGrey = "#333";
 
 export const mediumGrey = "#666";
@@ -26,7 +47,7 @@ export const yellow = "#FFFF00";
 
 export const DEFAULT_TEXT_COLOR = darkGrey;
 
-export const COLORS = (opacity) => [
+export const COLORS = (opacity: number) => [
     `rgba(230, 25, 75, ${opacity})`,
     `rgba(60, 180, 75,${opacity})`,
     `rgba(0, 130, 200,${opacity})`,
@@ -47,23 +68,22 @@ export const INTERVAL_COLORS = [
     `rgba(255,155,0,1)`,
 ];
 
-export const CHORD_COLOR = {
-    major: "rgba(100,100,255,0.5)",
-    minor: "rgba(255,100,100,0.5)",
-    major7: "rgba(155,0,255,0.5)",
-    major9: "rgba(255,0,255,0.5)",
-    minor7: "rgba(255,0,155,0.5)",
-    dom: "rgba(255,100,0,0.5)",
-    dom5: "rgba(255,100,0,0.5)",
-    dom9: "rgba(255,155,0,0.5)",
-    dim: "rgba(100,255,100,0.5)",
-    dimbb7: "rgba(0,155,0,0.5)",
-    dimb7: "rgba(0,255,0,0.5)",
-    sus2: "rgba(255,255,0,0.5)",
-    sus4: "rgba(255,255,0,0.5)",
-    pentatonic: "rgba(255,0,0,0.5)",
-    dimPentatonic: "rgba(0,200,0,0.5)",
-    Maj: "rgba(0,100,255,0.5)",
-    Melmin: "rgba(0,200,255,0.5)",
-    Neo: "rgba(155,100,255,0.5)",
+export const CHORD_COLOR: { [key in ChordNames]: string } = {
+    [majorChord]: "rgba(100,100,255,0.5)",
+    [maj7Chord]: "rgba(155,0,255,0.5)",
+    [minorChord]: "rgba(255,100,100,0.5)",
+    [min7Chord]: "rgba(255,0,155,0.5)",
+    [domChord]: "rgba(255,100,0,0.5)",
+    [augChord]: "rgba(255,0,255,0.5)",
+    [dimChord]: "rgba(100,255,100,0.5)",
+    [dim7Chord]: "rgba(0,155,0,0.5)",
+    [min7b5Chord]: "rgba(0,255,0,0.5)",
+    [susChord]: "rgba(255,255,0,0.5)",
+    [pentaScale]: "rgba(255,0,0,0.5)",
+    [dimPentaScale]: "rgba(0,200,0,0.5)",
+    [majorScale]: "rgba(0,100,255,0.5)",
+    [melMinScale]: "rgba(0,200,255,0.5)",
+    [NeoScale]: "rgba(155,100,255,0.5)",
+    [harMajScale]: "rgba(255,155,0,0.5)",
+    [harMinScale]: "rgba(76, 35, 8, 0.5)",
 };

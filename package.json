@@ -35,6 +35,7 @@
         "zustand": "^5.0.9"
     },
     "devDependencies": {
+        "@types/lodash": "^4.17.21",
         "@types/react": "^19.2.7",
         "@types/react-dom": "^19.2.3",
         "@types/three": "^0.182.0",

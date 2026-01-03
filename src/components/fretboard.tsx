@@ -22,24 +22,32 @@ const buttonStyle: CSSProperties = {
     fontSize: "0.8rem",
 };
 
-const byString = (a, b) => {
+const byString = (a: number[], b: number[]) => {
     if (b[0] == a[0]) return b[1] - a[1];
     return b[0] - a[0];
 };
 
-export const FretBoard = (props) => {
-    const [chordGroups, setChordGroups] = useState({});
+interface FretBoardProps {
+    selected: boolean[][];
+    style: CSSProperties;
+}
+
+type ChordGroupsType = Partial<Record<NoteNames, [number, number][][]>>;
+type PointGroupsType = Partial<Record<NoteNames, string[]>>;
+
+export const FretBoard: React.FC<FretBoardProps> = ({ selected, style }) => {
+    const [chordGroups, setChordGroups] = useState<ChordGroupsType>({});
     const [previewPoints, setPreviewPoints] = useState<[number, number][]>([]);
     const [currentGroup, setCurrentGroup] = useState<NoteNames | null>(null);
 
-    const getCurrentChordGroup = () => {
+    function getCurrentChordGroup(): [number, number][][] {
         return (currentGroup && chordGroups[currentGroup]) || [];
-    };
+    }
 
     const fretComponents = () => {
         const fretDivs: React.JSX.Element[] = [];
         const clickHandlers: React.JSX.Element[] = [];
-        const colors = getLabelColors(props.selected, false);
+        const colors = getLabelColors(selected, false);
         const eString = rotate([...NOTE_NAMES], 5);
 
         const strings: NoteNames[][] = Array(6)
@@ -65,11 +73,11 @@ export const FretBoard = (props) => {
                     fontSize: "1vw",
                 };
 
-                const onClick = (e) => {
+                const onClick = () => {
                     const groups = dup(chordGroups);
                     let chords = getCurrentChordGroup();
                     let current: NoteNames | null = currentGroup;
-                    let previewPoints = [];
+                    let previewPoints: [number, number][] = [];
                     let handled = false;
 
                     // first click of chordGroup, get octaves and escape
@@ -217,7 +225,7 @@ export const FretBoard = (props) => {
         return { fretDivs, clickHandlers };
     };
 
-    const getPoints = (points) => {
+    const getPoints = (points: [number, number][]) => {
         if (!points.length || points.some((point) => !inRange(point)))
             return "";
         return points
@@ -244,21 +252,23 @@ export const FretBoard = (props) => {
     };
 
     const { fretDivs, clickHandlers } = fretComponents();
-    const pointGroups = {};
-    Object.keys(chordGroups).forEach((key) => {
-        pointGroups[key] = chordGroups[key].map((chord) => getPoints(chord));
+    const pointGroups: PointGroupsType = {};
+    Object.keys(chordGroups).forEach((key: NoteNames) => {
+        pointGroups[key] = chordGroups[key]
+            ? chordGroups[key].map((chord) => getPoints(chord))
+            : [];
     });
 
-    const style: CSSProperties = Object.assign({}, props.style, {
+    const fretboardStyle: CSSProperties = Object.assign({}, style, {
         position: "relative",
         display: "grid",
         gridTemplateColumns: "repeat(16, 1fr)",
     });
 
     const clickHandlerStyle: CSSProperties = {
-        ...style,
+        ...fretboardStyle,
         zIndex: 60,
-        marginBottom: `-${props.style.height}`,
+        marginBottom: `-${style.height}`,
     };
 
     const svgContainerStyle: CSSProperties = {
@@ -289,46 +299,50 @@ export const FretBoard = (props) => {
     return (
         <div>
             <div style={clickHandlerStyle}>{clickHandlers}</div>
-            <div style={style}>
+            <div style={fretboardStyle}>
                 <div style={svgContainerStyle}>
                     <svg width="100%" height="100%" viewBox="0 0 1600 198">
-                        {Object.keys(chordGroups).map((key, i) => {
-                            const chords = chordGroups[key];
-                            const points = pointGroups[key];
+                        {Object.keys(chordGroups).map(
+                            (key: NoteNames, i: number) => {
+                                const chords = chordGroups[key] || [];
+                                const points = pointGroups[key] || [];
 
-                            return chords.map((chord, j) => (
-                                <polyline
-                                    key={`line-${i}-${j}`}
-                                    style={{
-                                        stroke: "orange",
-                                        // stroke: COLORS(j ? 0.7 : 0.8)[i],
-                                        strokeWidth: "4",
-                                        strokeLinecap: "round",
-                                        fill: "none",
-                                    }}
-                                    points={points[j]}
-                                />
-                            ));
-                        })}
-                        {Object.keys(chordGroups).map((key, i) => {
-                            const chords = chordGroups[key];
-                            return chords.map((chord, j) => {
-                                const center = chord[0];
-                                return (
-                                    center && (
-                                        <circle
-                                            key={`circle-${i}-${j}`}
-                                            cx={`${center[1] * 100 + 50}`}
-                                            cy={`${center[0] * 33 + 16}`}
-                                            r="13"
-                                            stroke={COLORS(0.7)[i]}
-                                            strokeWidth="3"
-                                            fill={COLORS(0.2)[i]}
-                                        />
-                                    )
-                                );
-                            });
-                        })}
+                                return chords.map((chord, j) => (
+                                    <polyline
+                                        key={`line-${i}-${j}`}
+                                        style={{
+                                            stroke: "orange",
+                                            // stroke: COLORS(j ? 0.7 : 0.8)[i],
+                                            strokeWidth: "4",
+                                            strokeLinecap: "round",
+                                            fill: "none",
+                                        }}
+                                        points={points[j]}
+                                    />
+                                ));
+                            },
+                        )}
+                        {Object.keys(chordGroups).map(
+                            (key: NoteNames, i: number) => {
+                                const chords = chordGroups[key] || [];
+                                return chords.map((chord, j) => {
+                                    const center = chord[0];
+                                    return (
+                                        center && (
+                                            <circle
+                                                key={`circle-${i}-${j}`}
+                                                cx={`${center[1] * 100 + 50}`}
+                                                cy={`${center[0] * 33 + 16}`}
+                                                r="13"
+                                                stroke={COLORS(0.7)[i]}
+                                                strokeWidth="3"
+                                                fill={COLORS(0.2)[i]}
+                                            />
+                                        )
+                                    );
+                                });
+                            },
+                        )}
                         <polyline
                             style={previewLineStyle}
                             points={getPoints(previewPoints)}
@@ -347,54 +361,52 @@ export const FretBoard = (props) => {
                 }}
             >
                 <div style={{ display: "flex" }}>
-                    {Object.keys(chordGroups).map((name, i) => {
-                        const chordButtonStyle = Object.assign(
-                            {},
-                            buttonStyle,
-                            {
-                                backgroundColor: COLORS(0.5)[i],
-                                display: "flex",
-                                alignItems: "center",
-                                minWidth: "unset",
-                                border:
-                                    currentGroup === name
-                                        ? "2px solid yellow"
-                                        : "2px solid brown",
-                            },
-                        );
+                    {Object.keys(chordGroups).map(
+                        (name: NoteNames, i: number) => {
+                            const chordButtonStyle = Object.assign(
+                                {},
+                                buttonStyle,
+                                {
+                                    backgroundColor: COLORS(0.5)[i],
+                                    display: "flex",
+                                    alignItems: "center",
+                                    minWidth: "unset",
+                                    border:
+                                        currentGroup === name
+                                            ? "2px solid yellow"
+                                            : "2px solid brown",
+                                },
+                            );
 
-                        return (
-                            <button
-                                key={`chord-button-${i}`}
-                                style={chordButtonStyle}
-                                onClick={() =>
-                                    setCurrentGroup(name as NoteNames)
-                                }
-                            >
-                                <span
-                                    style={{
-                                        paddingRight: "40px",
-                                        fontSize: "0.7rem",
-                                    }}
+                            return (
+                                <button
+                                    key={`chord-button-${i}`}
+                                    style={chordButtonStyle}
+                                    onClick={() => setCurrentGroup(name)}
                                 >
-                                    {name}
-                                </span>
-                                <span
-                                    // name={name}
-                                    style={{
-                                        color: mediumGrey,
-                                        fontSize: "1rem",
-                                        lineHeight: "1rem",
-                                    }}
-                                    onClick={() =>
-                                        removeGroup(name as NoteNames)
-                                    }
-                                >
-                                    &times;
-                                </span>
-                            </button>
-                        );
-                    })}
+                                    <span
+                                        style={{
+                                            paddingRight: "40px",
+                                            fontSize: "0.7rem",
+                                        }}
+                                    >
+                                        {name}
+                                    </span>
+                                    <span
+                                        // name={name}
+                                        style={{
+                                            color: mediumGrey,
+                                            fontSize: "1rem",
+                                            lineHeight: "1rem",
+                                        }}
+                                        onClick={() => removeGroup(name)}
+                                    >
+                                        &times;
+                                    </span>
+                                </button>
+                            );
+                        },
+                    )}
 
                     {!currentGroup ? (
                         <button style={chooseButtonStyle}>

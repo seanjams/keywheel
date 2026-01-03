@@ -115,11 +115,11 @@ export const Scale: React.FC<ScaleProps> = ({
         });
     };
 
-    const onClick = (pegs, i) => {
+    const onClick = (pegs: number[], i: number) => {
         if (handleClick) {
             handleClick(i);
         } else if (!mute) {
-            if (i === "root") {
+            if (i === -1) {
                 soundNotes(pegs, 0, false);
                 return;
             }
@@ -128,8 +128,13 @@ export const Scale: React.FC<ScaleProps> = ({
         }
     };
 
-    const noteComponents = (notes, pegs, relMajor, rootIdx = -1) => {
-        return notes.map((note, i) => {
+    const noteComponents = (
+        notes: boolean[],
+        pegs: number[],
+        relMajor: number[],
+        rootIdx = -1,
+    ) => {
+        return notes.map((note: boolean, i: number) => {
             let m = i;
             if (ordering === "fifths") {
                 m = mod(7 * i, 12);
@@ -256,10 +261,7 @@ export const Scale: React.FC<ScaleProps> = ({
     const svg = getSVG();
 
     return (
-        <div
-            onClick={() => isInput && onClick(pegs, "root")}
-            style={{ ...style }}
-        >
+        <div onClick={() => isInput && onClick(pegs, -1)} style={{ ...style }}>
             <div style={svgContainerStyle}>
                 <svg width="100%" height="100%" viewBox="0 0 100 100">
                     {Array(selected.length)

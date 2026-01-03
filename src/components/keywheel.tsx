@@ -1,10 +1,26 @@
 import React, { CSSProperties } from "react";
 import { Scale } from "./scale";
+import { ScaleNode } from "../util";
+import { Orderings, RootReferences, Mode } from "../store2/types";
 
-export const KeyWheel = (props) => {
-    const { selected, scales, rootReference, mode, mute, ordering } = props;
+interface KeyWheelProps {
+    selected: boolean[][];
+    scales: ScaleNode[];
+    rootReference: RootReferences;
+    mode: Mode;
+    mute: boolean;
+    ordering: Orderings;
+}
 
-    const scaleComponents = scales.map((node, i) => {
+export const KeyWheel: React.FC<KeyWheelProps> = ({
+    selected,
+    scales,
+    rootReference,
+    mode,
+    mute,
+    ordering,
+}) => {
+    const scaleComponents = scales.map((node: ScaleNode, i: number) => {
         const rowShift = i % 12 > 5 ? 1 : 0;
         const colStart = 4 * (i % 6) + 2 * rowShift + 1;
         const rowStart = 2 * Math.floor(6 * (i / 36)) + 1;

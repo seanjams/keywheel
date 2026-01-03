@@ -15,6 +15,13 @@ import { offWhite, lightGrey } from "../colors";
 import { AppStateType, AppStore } from "../store2/state";
 import { useDerivedState } from "../store2/hooks";
 import { KeyCube } from "./keycube";
+import {
+    ChordNames,
+    NoteNames,
+    Orderings,
+    ReactChangeEvent,
+    RootReferences,
+} from "../store2/types";
 
 const mainStyle: CSSProperties = {
     boxSizing: "border-box",
@@ -67,15 +74,38 @@ const linkContainerStyle: CSSProperties = {
 };
 
 interface AppProps {
-    oldState: Partial<AppStateType>;
     appStore: AppStore;
 }
 
-export const App: React.FC<AppProps> = ({ oldState, appStore }) => {
-    const [getState] = useDerivedState(appStore, (state) => ({
-        ...state,
-    }));
-    const state = getState();
+export const App: React.FC<AppProps> = ({ appStore }) => {
+    const [getState] = useDerivedState(
+        appStore,
+        ({
+            selected,
+            scales,
+            mute,
+            mode,
+            rootReference,
+            ordering,
+            noteNames,
+            chordNames,
+            keyCubeVisible,
+            keyWheelVisible,
+            instrumentsVisible,
+        }) => ({
+            selected,
+            scales,
+            mute,
+            mode,
+            rootReference,
+            ordering,
+            noteNames,
+            chordNames,
+            keyCubeVisible,
+            keyWheelVisible,
+            instrumentsVisible,
+        }),
+    );
     const {
         selected,
         scales,
@@ -85,15 +115,18 @@ export const App: React.FC<AppProps> = ({ oldState, appStore }) => {
         ordering,
         noteNames,
         chordNames,
+        keyCubeVisible,
+        keyWheelVisible,
+        instrumentsVisible,
     } = getState();
 
     useEffect(() => {
-        // rehydrateState();
+        appStore.dispatch.rehydrate();
         window.addEventListener("keydown", handleKeyPress);
-        // window.addEventListener("beforeunload", saveToLocalStorage);
+        window.addEventListener("beforeunload", saveToLocalStorage);
         return () => {
-            // saveToLocalStorage();
-            // window.removeEventListener("beforeunload", saveToLocalStorage);
+            saveToLocalStorage();
+            window.removeEventListener("beforeunload", saveToLocalStorage);
             window.removeEventListener("keydown", handleKeyPress);
         };
     }, []);
@@ -103,34 +136,7 @@ export const App: React.FC<AppProps> = ({ oldState, appStore }) => {
         appStore.dispatch.saveToLocalStorage();
     };
 
-    const rehydrateState = () => {
-        let newState: Partial<AppStateType> = {};
-        for (let key in getState()) {
-            if (
-                oldState &&
-                oldState[key] !== undefined &&
-                oldState[key] !== null
-            ) {
-                newState[key] = oldState[key];
-            } else if (localStorage.hasOwnProperty(key)) {
-                let val = localStorage.getItem(key);
-                try {
-                    val = val !== null && JSON.parse(val);
-                    newState[key] = val;
-                } catch (e) {
-                    newState[key] = getState()[key];
-                }
-            }
-        }
-
-        appStore.dispatch.rehydrate(newState);
-        appStore.dispatch.setSelected(newState.selected || getEmptySet());
-        appStore.dispatch.toggleKeyCube(
-            !newState.keyWheelVisible && !newState.instrumentsVisible,
-        );
-    };
-
-    const onSaveToClipboard = (e) => {
+    const onSaveToClipboard = () => {
         // save state to URL
         const savedState: Partial<AppStateType> = dup(getState());
         delete savedState.scales;
@@ -154,21 +160,21 @@ export const App: React.FC<AppProps> = ({ oldState, appStore }) => {
         handleGroup(getNotes(pegs), i);
     };
 
-    const onNameChange = (e, i) => {
+    const onNameChange = (e: ReactChangeEvent, i: number) => {
         const newNoteNames = [...noteNames];
-        newNoteNames[i] = e.target.value;
+        newNoteNames[i] = e.target.value as NoteNames;
         appStore.dispatch.changeName(newNoteNames);
         calculateChord(i);
     };
 
-    const onChordChange = (e, i) => {
+    const onChordChange = (e: ReactChangeEvent, i: number) => {
         const newChordNames = [...chordNames];
-        newChordNames[i] = e.target.value;
+        newChordNames[i] = e.target.value as ChordNames;
         appStore.dispatch.changeChord(newChordNames);
         calculateChord(i);
     };
 
-    const handleKeyPress = (e) => {
+    const handleKeyPress = (e: KeyboardEvent) => {
         let inc = e.key === "ArrowLeft" ? 2 : e.key === "ArrowRight" ? -2 : 0;
         if (inc) {
             e.preventDefault();
@@ -182,9 +188,9 @@ export const App: React.FC<AppProps> = ({ oldState, appStore }) => {
 
     const clearNotes = (i = -1) => {
         if (i >= 0) {
-            const selected = dup(state.selected);
-            selected[i] = dup(EMPTY);
-            appStore.dispatch.setSelected(selected);
+            const newSelected = dup(selected);
+            newSelected[i] = dup(EMPTY);
+            appStore.dispatch.setSelected(newSelected);
         } else {
             const empty = getEmptySet();
             appStore.dispatch.setSelected(empty);
@@ -195,55 +201,51 @@ export const App: React.FC<AppProps> = ({ oldState, appStore }) => {
         return clearNotes();
     };
 
-    const handleClick = (i, id) => {
-        const selected: boolean[][] = [];
-        state.selected.forEach((notes) => {
-            selected.push([...notes]);
-        });
-        selected[id][i] = !selected[id][i];
-        appStore.dispatch.setSelected(selected);
+    const handleClick = (i: number, id: number) => {
+        const newSelected: boolean[][] = dup(selected);
+        newSelected[id][i] = !newSelected[id][i];
+        appStore.dispatch.setSelected(newSelected);
     };
 
-    const handleGroup = (notes, id) => {
-        const selected: boolean[][] = [];
-        state.selected.forEach((notes) => {
-            selected.push(dup(notes));
+    const handleGroup = (notes: boolean[], id: number) => {
+        const newSelected: boolean[][] = [];
+        selected.forEach((notes) => {
+            newSelected.push(dup(notes));
         });
-        selected[id] = notes;
-        appStore.dispatch.setSelected(selected);
+        newSelected[id] = notes;
+        appStore.dispatch.setSelected(newSelected);
     };
 
     const toggleMode = () => {
-        const mode = state.mode === "union" ? "intersection" : "union";
-        appStore.dispatch.toggleMode(mode);
+        appStore.dispatch.toggleMode(
+            mode === "union" ? "intersection" : "union",
+        );
     };
 
-    const changeRef = (e) => {
-        appStore.dispatch.changeRootReference(e.currentTarget.value);
+    const changeRef = (e: ReactChangeEvent) => {
+        appStore.dispatch.changeRootReference(
+            e.currentTarget.value as RootReferences,
+        );
     };
 
-    const changeOrder = (e) => {
-        appStore.dispatch.changeOrder(e.currentTarget.value);
+    const changeOrder = (e: ReactChangeEvent) => {
+        appStore.dispatch.changeOrder(e.currentTarget.value as Orderings);
     };
 
     const toggleMute = () => {
-        const mute = !state.mute;
-        appStore.dispatch.toggleMute(mute);
+        appStore.dispatch.toggleMute(!mute);
     };
 
     const toggleKeyCube = () => {
-        const keyCubeVisible = !getState().keyCubeVisible;
-        appStore.dispatch.toggleKeyCube(keyCubeVisible);
+        appStore.dispatch.toggleKeyCube();
     };
 
     const toggleKeyWheel = () => {
-        const keyWheelVisible = !getState().keyWheelVisible;
-        appStore.dispatch.toggleKeyWheel(keyWheelVisible);
+        appStore.dispatch.toggleKeyWheel();
     };
 
     const toggleInstruments = () => {
-        const instrumentsVisible = !getState().instrumentsVisible;
-        appStore.dispatch.toggleInstruments(instrumentsVisible);
+        appStore.dispatch.toggleInstruments();
     };
 
     return (
@@ -256,20 +258,32 @@ export const App: React.FC<AppProps> = ({ oldState, appStore }) => {
                         justifyContent: "flex-end",
                     }}
                 >
-                    <button style={buttonStyle} onClick={toggleInstruments}>
-                        {state.instrumentsVisible ? "Hide" : "Show"} Instruments
+                    <button
+                        style={buttonStyle}
+                        onClick={toggleInstruments}
+                        disabled={instrumentsVisible}
+                    >
+                        Show Instruments
                     </button>
-                    <button style={buttonStyle} onClick={toggleKeyWheel}>
-                        {state.keyWheelVisible ? "Hide" : "Show"} Key Wheel
+                    <button
+                        style={buttonStyle}
+                        onClick={toggleKeyWheel}
+                        disabled={keyWheelVisible}
+                    >
+                        Show Key Wheel
                     </button>
-                    <button style={buttonStyle} onClick={toggleKeyCube}>
-                        {state.keyCubeVisible ? "Hide" : "Show"} Key Cube
+                    <button
+                        style={buttonStyle}
+                        onClick={toggleKeyCube}
+                        disabled={keyCubeVisible}
+                    >
+                        Show Key Cube
                     </button>
                     <button style={buttonStyle} onClick={onSaveToClipboard}>
                         Save To Clipboard
                     </button>
                     <button style={buttonStyle} onClick={toggleMute}>
-                        {state.mute ? "Unmute" : "Mute"}
+                        {mute ? "Unmute" : "Mute"}
                     </button>
                     <button style={buttonStyle} onClick={clearAllNotes}>
                         Clear All
@@ -279,28 +293,30 @@ export const App: React.FC<AppProps> = ({ oldState, appStore }) => {
                         style={buttonStyle}
                         defaultValue={"numbers"}
                     >
-                        {Object.keys(ROOT_REFERENCES).map((key, i) => (
-                            <option key={`reference-${i}`} value={key}>
-                                Label: {ROOT_REFERENCES[key]}
-                            </option>
-                        ))}
+                        {Object.keys(ROOT_REFERENCES).map(
+                            (key: RootReferences, i: number) => (
+                                <option key={`reference-${i}`} value={key}>
+                                    Label: {ROOT_REFERENCES[key]}
+                                </option>
+                            ),
+                        )}
                     </select>
                     <select
                         onChange={changeOrder}
                         style={buttonStyle}
                         defaultValue={"chromatic"}
                     >
-                        {Object.keys(ORDERINGS).map((key, i) => (
-                            <option key={`ordering-${i}`} value={key}>
-                                {/* {When you return, fix this so the ordering is passed by prop down to Scale} */}
-                                {ORDERINGS[key]}
-                            </option>
-                        ))}
+                        {Object.keys(ORDERINGS).map(
+                            (key: Orderings, i: number) => (
+                                <option key={`ordering-${i}`} value={key}>
+                                    {/* {When you return, fix this so the ordering is passed by prop down to Scale} */}
+                                    {ORDERINGS[key]}
+                                </option>
+                            ),
+                        )}
                     </select>
                     <button style={buttonStyle} onClick={toggleMode}>
-                        {`Mode: ${
-                            state.mode === "union" ? "Union" : "Intersection"
-                        }`}
+                        {`Mode: ${mode === "union" ? "Union" : "Intersection"}`}
                     </button>
                     <button style={buttonStyle}>
                         <a href="https://github.com/seanjams/keywheel">
@@ -314,7 +330,6 @@ export const App: React.FC<AppProps> = ({ oldState, appStore }) => {
                 <Input
                     selected={selected}
                     handleClick={handleClick}
-                    handleGroup={handleGroup}
                     onNameChange={onNameChange}
                     onChordChange={onChordChange}
                     clearNotes={clearNotes}
@@ -329,13 +344,10 @@ export const App: React.FC<AppProps> = ({ oldState, appStore }) => {
                 style={{
                     marginLeft: "10vw",
                     background: offWhite,
-                    marginTop:
-                        state.keyWheelVisible || state.instrumentsVisible
-                            ? 100
-                            : 50,
+                    marginTop: keyWheelVisible || instrumentsVisible ? 100 : 50,
                 }}
             >
-                {state.instrumentsVisible && (
+                {instrumentsVisible && (
                     <>
                         <div
                             style={{
@@ -369,7 +381,7 @@ export const App: React.FC<AppProps> = ({ oldState, appStore }) => {
                     </>
                 )}
 
-                {state.keyWheelVisible && (
+                {keyWheelVisible && (
                     <div style={{ margin: "30px auto", width: "fit-content" }}>
                         <KeyWheel
                             selected={selected}
@@ -386,7 +398,7 @@ export const App: React.FC<AppProps> = ({ oldState, appStore }) => {
                     style={{
                         margin: "30px auto",
                         width: "fit-content",
-                        display: state.keyCubeVisible ? "block" : "none", // don't unmount the Canvas when hiding
+                        display: keyCubeVisible ? "block" : "none", // don't unmount the Canvas when hiding
                     }}
                 >
                     <KeyCube appStore={appStore} />

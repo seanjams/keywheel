@@ -1,8 +1,8 @@
 import isEqual from "lodash/isEqual";
-import Tone, { Scale } from "tone";
+import * as Tone from "tone";
 import { COLORS, CHORD_COLOR, offWhite, mediumGrey, lightGrey } from "./colors";
 import { DIRS, C, EMPTY, NOTE_NAMES, MAJOR, SHAPES } from "./consts";
-import { ChordNames, Dirs, NoteNames } from "./store2/types";
+import { ChordNames, Dirs, NoteNames, TweekType } from "./store2/types";
 
 export const DEFAULT_NOTE_COLOR_OPTIONS = EMPTY.map(() => [lightGrey]);
 
@@ -20,13 +20,13 @@ export class ScaleNode {
         // this.children = [];
     }
 
-    addChild(node) {
+    addChild(node: ScaleNode) {
         node.parent = this;
         node.rank = this.rank + 1;
         // this.children.push(node);
     }
 
-    removeChild(node) {
+    removeChild(node: ScaleNode) {
         node.parent = null;
         node.rank = 0;
         // this.children.splice(this.children.indexOf(node), 1);
@@ -37,7 +37,7 @@ export function nodeFromRoot(root: number): ScaleNode {
     return new ScaleNode(getNotes(getMajor(root)));
 }
 
-export const tweek = (notes, idx) => {
+export const tweek = (notes: boolean[], idx: number) => {
     const pegs = getPegs(notes);
     let temp = pegs[idx];
     let tweekStatus = 0;
@@ -64,18 +64,12 @@ export function generateNeighbors(
     visited: ScaleNode[],
     flip: 1 | -1,
 ) {
-    type tweekType = {
-        notes: boolean[];
-        tweekStatus: number;
-        center?: { x: number; y: number };
-    };
-
     const { notes, parent, center } = node;
     const parentNotes = parent ? parent.notes : null;
     const adjustedPegs: number[] = [];
-    let neighbors: tweekType[] = [];
-    let parentTweekStatus;
-    let temp: tweekType;
+    let neighbors: TweekType[] = [];
+    let parentTweekStatus: number;
+    let temp: TweekType;
 
     // Checks if tweek changes the key, then checks to see if
     // changed key is either parent or other visited neighbor,
@@ -120,18 +114,21 @@ export function generateNeighbors(
     return { neighbors, adjustedPegs };
 }
 
-export const buildKeyWheel: (start: number) => ScaleNode | ScaleNode[] = (
+export const buildKeyWheel: (start: number) => ScaleNode[] = (
     start: number,
 ) => {
     const flip = start > 6 ? -1 : 1;
     const startNode = nodeFromRoot(start);
     const queue = [startNode];
     const visited = [startNode];
-    let currentNode, neighbors, newNode;
+    let currentNode: ScaleNode;
+    let neighbors: TweekType[];
+    let newNode: ScaleNode;
 
     while (visited.length < 36) {
-        currentNode = queue.shift();
-        if (!currentNode) return startNode;
+        const node = queue.shift();
+        if (!node) return [startNode];
+        currentNode = node;
         neighbors = generateNeighbors(currentNode, visited, flip).neighbors;
 
         neighbors.forEach((neighbor) => {
@@ -156,7 +153,7 @@ export function chordReader(notes: boolean[]): {
     name: string;
     rootIdx: number;
 } {
-    const chords = Object.keys(SHAPES);
+    const chords = Object.keys(SHAPES) as ChordNames[];
     let color = "transparent";
     let rootIdx = 0;
     let name = "";
@@ -195,70 +192,62 @@ export function getNotesFromName(
     return getNotes(SHAPES[scaleType].map((peg) => mod(rootIdx + peg, 12)));
 }
 
-export const soundNotes = (pegs, modeIdx = 0, poly = false) => {
-    Tone.Transport.cancel(0);
-    if (Tone.context.state !== "running") Tone.context.resume();
-    let synth = new Tone.PolySynth(pegs.length).toMaster();
-    // synth.set({
-    // 	oscillator: {
-    // 		type: "amtriangle",
-    // 	},
-    // 	// filter: {
-    // 	// 	Q: 6,
-    // 	// 	type: "lowpass",
-    // 	// 	rolloff: -24,
-    // 	// },
-    // 	envelope: {
-    // 		attack: 0.1,
-    // 		decay: 0.2,
-    // 		sustain: 1,
-    // 		release: 0.8,
-    // 	},
-    // 	// filterEnvelope: {
-    // 	// 	attack: 0.06,
-    // 	// 	decay: 0.2,
-    // 	// 	sustain: 0.5,
-    // 	// 	release: 2,
-    // 	// 	baseFrequency: 200,
-    // 	// 	octaves: 7,
-    // 	// 	exponent: 2,
-    // 	// },
-    // });
+let currentSequence: Tone.Sequence | null = null;
+let currentSynth: Tone.PolySynth | null = null;
+
+export const soundNotes = async (pegs: number[], modeIdx = 0, poly = false) => {
+    await Tone.start();
+
+    const transport = Tone.getTransport();
+
+    // Cleanup previous playback
+    if (currentSequence) {
+        currentSequence.stop();
+        currentSequence.dispose();
+        currentSequence = null;
+    }
+    if (currentSynth) {
+        currentSynth.dispose();
+        currentSynth = null;
+    }
+
+    transport.stop();
+    transport.cancel(0);
+    transport.position = 0;
+
+    currentSynth = new Tone.PolySynth(Tone.Synth).toDestination();
 
     let scale = dup(pegs);
     for (let i = 0; i < modeIdx; i++) scale = rotate(scale);
 
-    const freqs: number[] = [];
+    const notes: string[] = [];
     for (let i = 0; i < scale.length; i++) {
         if (scale[i + 1] < scale[i]) scale[i + 1] += 12;
-        freqs.push(Tone.Frequency(60 + scale[i]).toFrequency());
+        notes.push(Tone.Frequency(60 + scale[i], "midi").toNote());
     }
-    if (!poly) freqs.push(freqs[0] * 2);
-    let pattern;
+    if (!poly) notes.push(Tone.Frequency(notes[0]).transpose(12).toNote());
 
     if (poly) {
-        pattern = new Tone.ToneEvent((time, chord) => {
-            synth.triggerAttackRelease(chord, "4t", time, 0.3);
-        }, freqs);
+        currentSynth.triggerAttackRelease(notes, "2n", Tone.now(), 0.5);
     } else {
-        pattern = new Tone.Sequence(
+        currentSequence = new Tone.Sequence(
             (time, note) => {
-                synth.triggerAttackRelease(note, "8n", time, 0.3);
+                currentSynth?.triggerAttackRelease(note, "8n", time, 0.5);
             },
-            freqs,
+            notes,
             "8n",
         );
-    }
 
-    pattern.loop = 0;
-    pattern.start();
-    Tone.Transport.start();
+        currentSequence.loop = false;
+        currentSequence.start(0);
+        transport.start();
+    }
 };
 
 //input: [0,2,2,1] relative tablature for Major chord
 //output: [1,3,4,2] corresponding finger to play each note with
 //(1 = index, 2 = middle, 3 = ring, 4 = pinky)
-export const chordFingerMachine = (tabArr) => {
+export function chordFingerMachine(tabArr: number[]): number[] {
     let done = false;
     const fingers = tabArr.map((_, i) => i);
     while (!done) {
@@ -275,7 +264,7 @@ export const chordFingerMachine = (tabArr) => {
         }
     }
     return fingers;
-};
+}
 
 //helper methods
 //////////////////////////////////////////////////////////////////
@@ -418,7 +407,7 @@ export function inRange(point: [number, number]): boolean {
     );
 }
 
-export function getOctaveFrets(point: [number, number]): number[][][] {
+export function getOctaveFrets(point: [number, number]): [number, number][][] {
     let activeString = point[0];
     let delta, step;
     let activeFret = activeString < 2 ? point[1] - 1 : point[1];
@@ -440,8 +429,9 @@ export function getLabelColors(
     notesArr: boolean[][],
     isPiano: boolean,
 ): { [key in string]: { background: string; color: string } } {
-    const selectedNotesByInput = {};
-    const result = {};
+    const selectedNotesByInput: { [key in string]: number[] } = {};
+    const result: { [key in string]: { background: string; color: string } } =
+        {};
     NOTE_NAMES.forEach((name) => {
         selectedNotesByInput[name] = [];
     });

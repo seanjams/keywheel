@@ -22,18 +22,24 @@ const whiteKey: CSSProperties = {
     flexBasis: 0,
 };
 
-export const Piano = (props) => {
-    const colors = getLabelColors(props.selected, true);
-    const octaves = props.octaves || 2;
+interface PianoProps {
+    selected: boolean[][];
+    style: CSSProperties;
+    octaves: number;
+}
+
+export const Piano: React.FC<PianoProps> = ({ octaves, selected, style }) => {
+    const colors = getLabelColors(selected, true);
+    const numOctaves = octaves || 2;
     const pianoStyle = {
-        width: props.style.width,
-        height: props.style.height,
+        width: style.width,
+        height: style.height,
         boxShadow: "0 0 0 2px rgba(0,0,0,1)",
         display: "flex",
     };
 
     let names = [...NOTE_NAMES];
-    for (let i = 1; i < octaves; i++) {
+    for (let i = 1; i < numOctaves; i++) {
         names = names.concat(names);
     }
 

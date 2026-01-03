@@ -19,15 +19,5 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const root = ReactDOM.createRoot(rootDiv);
 
-    const appStore = new AppStore();
-
-    try {
-        let oldState = JSON.parse(
-            decodeURIComponent(window.location.search.slice(3)),
-        );
-        root.render(<Container appStore={appStore} oldState={oldState} />);
-    } catch (e) {
-        console.warn("Unable to parse state from url, resorting to default", e);
-        root.render(<Container appStore={appStore} oldState={{}} />);
-    }
+    root.render(<Container />);
 });

@@ -53,8 +53,24 @@ export type ChordNames =
     | "Har Min"
     | "Neo";
 
+export type ReactChangeEvent = React.ChangeEvent<HTMLSelectElement>;
 export type ReactMouseEvent =
     | React.MouseEvent<HTMLDivElement, MouseEvent>
     | React.TouchEvent<HTMLDivElement>;
-// export type ReactScrollEvent = React.UIEvent<HTMLDivElement, UIEvent>;
 export type WindowMouseEvent = MouseEvent | TouchEvent;
+
+export type TweekType = {
+    notes: boolean[];
+    tweekStatus: number;
+    center?: { x: number; y: number };
+};
+
+export type PositionType = [number, number, number];
+
+export type VertexType = {
+    key: string;
+    label: string;
+    root: NoteNames;
+    scaleType: ChordNames;
+    position: PositionType;
+};

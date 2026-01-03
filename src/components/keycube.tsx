@@ -17,7 +17,7 @@ import {
 import { darkGrey, grey, lightGrey, mediumGrey, red, yellow } from "../colors";
 import { DEFAULT_NOTE_COLOR_OPTIONS, getNotesFromName, mod } from "../util";
 import { AppStore } from "../store2/state";
-import { ChordNames, NoteNames } from "../store2/types";
+import { ChordNames, NoteNames, PositionType } from "../store2/types";
 
 interface KeyCubeProps {
     appStore: AppStore;
@@ -397,12 +397,12 @@ interface EdgeProps extends KeyCubeProps {
     startVertex: {
         root: NoteNames;
         label: ChordNames;
-        position: [number, number, number];
+        position: PositionType;
     };
     endVertex: {
         root: NoteNames;
         label: ChordNames;
-        position: [number, number, number];
+        position: PositionType;
     };
     layoutKey: string;
 }
@@ -491,7 +491,7 @@ export const Edge: React.FC<EdgeProps> = ({
 };
 
 interface EdgeCubeProps extends KeyCubeProps {
-    position: [number, number, number];
+    position: PositionType;
     name: string;
     index: number;
 }
@@ -504,7 +504,10 @@ export const EdgeCube: React.FC<EdgeCubeProps> = ({
     index,
 }) => {
     const edges: React.JSX.Element[] = [];
-    const [root, label] = name.split("\n");
+    const [root, label] = name.split("\n") as [
+        NoteNames,
+        "Major" | "Mel min" | "Har Min",
+    ];
     const rootIdx = NOTE_NAMES.indexOf(root as NoteNames);
 
     // pairs of indices of adjustmentBank positions that should have an edge between them
@@ -523,7 +526,21 @@ export const EdgeCube: React.FC<EdgeCubeProps> = ({
         [6, 7],
     ];
 
-    const adjustmentBank = [
+    const adjustmentBank: {
+        position: PositionType;
+        [majorScale]: {
+            root: NoteNames;
+            label: ChordNames;
+        };
+        [melMinScale]: {
+            root: NoteNames;
+            label: ChordNames;
+        };
+        [harMinScale]: {
+            root: NoteNames;
+            label: ChordNames;
+        };
+    }[] = [
         {
             position: [0, 0, 0],
             [majorScale]: {
@@ -669,7 +686,7 @@ export const EdgeCube: React.FC<EdgeCubeProps> = ({
                 position[0] + start[0] * CUBE_SIZE,
                 position[1] + start[1] * CUBE_SIZE,
                 position[2] + start[2] * CUBE_SIZE,
-            ],
+            ] as PositionType,
             ...adjustmentBank[pair[0]][label],
         };
 
@@ -678,7 +695,7 @@ export const EdgeCube: React.FC<EdgeCubeProps> = ({
                 position[0] + end[0] * CUBE_SIZE,
                 position[1] + end[1] * CUBE_SIZE,
                 position[2] + end[2] * CUBE_SIZE,
-            ],
+            ] as PositionType,
             ...adjustmentBank[pair[1]][label],
         };
 
