@@ -1,9 +1,4 @@
 import React, { useEffect, CSSProperties } from "react";
-import { Input } from "./input";
-import { FretBoard } from "./fretboard";
-import { Piano } from "./piano";
-import { KeyWheel } from "./keywheel";
-import { getNotes, getEmptySet, dup, onCopyToClipboard } from "../util";
 import {
     EMPTY,
     ROOT_REFERENCES,
@@ -12,16 +7,22 @@ import {
     SHAPES,
 } from "../consts";
 import { offWhite, lightGrey } from "../colors";
-import { AppStateType, AppStore } from "../store2/state";
-import { useDerivedState } from "../store2/hooks";
-import { KeyCube } from "./keycube";
+import { useDerivedState } from "../store/hooks";
+import { AppStore } from "../store/state";
+import { AppStateType } from "../store/types";
 import {
     ChordNames,
     NoteNames,
     Orderings,
     ReactChangeEvent,
     RootReferences,
-} from "../store2/types";
+} from "../types";
+import { getNotes, getEmptySet, dup, onCopyToClipboard } from "../util";
+import { Input } from "./input";
+import { FretBoard } from "./fretboard";
+import { Piano } from "./piano";
+import { KeyWheel } from "./keywheel";
+import { KeyCube } from "./keycube";
 
 const mainStyle: CSSProperties = {
     boxSizing: "border-box",

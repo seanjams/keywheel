@@ -7,7 +7,7 @@ import {
     RootReferences,
     SharpNoteNames,
     VertexType,
-} from "./store2/types";
+} from "./types";
 
 // SCALE_RADIUS + NOTE_RADIUS === 50
 export const SCALE_RADIUS = 41;

@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef, useCallback } from "react";
+import { ReactMouseEvent, WindowMouseEvent } from "../types";
 import { AnyReducersType, Store } from "./store";
-import { ReactMouseEvent, WindowMouseEvent } from "./types";
 // import { AudioStore } from "./AudioStore";
 // import { TimedEffectStore } from "./TimedEffectStore";
 

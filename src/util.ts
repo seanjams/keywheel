@@ -2,7 +2,7 @@ import isEqual from "lodash/isEqual";
 import * as Tone from "tone";
 import { COLORS, CHORD_COLOR, offWhite, mediumGrey, lightGrey } from "./colors";
 import { DIRS, C, EMPTY, NOTE_NAMES, MAJOR, SHAPES } from "./consts";
-import { ChordNames, Dirs, NoteNames, TweekType } from "./store2/types";
+import { ChordNames, Dirs, NoteNames, TweekType } from "./types";
 
 export const DEFAULT_NOTE_COLOR_OPTIONS = EMPTY.map(() => [lightGrey]);
 

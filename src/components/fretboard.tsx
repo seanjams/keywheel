@@ -10,7 +10,7 @@ import {
     bStringStep,
     getLabelColors,
 } from "../util";
-import { NoteNames } from "../store2/types";
+import { NoteNames } from "../types";
 
 const buttonStyle: CSSProperties = {
     padding: "5px",

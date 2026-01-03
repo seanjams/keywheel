@@ -11,6 +11,7 @@ import {
 
 import { NOTE_RADIUS, SCALE_RADIUS, NOTE_NAMES, EMPTY } from "../consts";
 
+import { Mode, Orderings, RootReferences } from "../types";
 import {
     getPegs,
     mergeNotes,
@@ -20,7 +21,6 @@ import {
     getMajor,
     mod,
 } from "../util";
-import { Mode, Orderings, RootReferences } from "../store2/types";
 
 const textStyle: CSSProperties = {
     position: "relative",

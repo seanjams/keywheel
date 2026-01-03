@@ -1,42 +1,21 @@
 import { COLORS, lightGrey, mediumGrey } from "../colors";
 import { NOTE_NAMES, SHAPES, VERTICES } from "../consts";
 import {
+    ChordNames,
+    NoteNames,
+    Mode,
+    Orderings,
+    RootReferences,
+} from "../types";
+import {
     buildKeyWheel,
     DEFAULT_NOTE_COLOR_OPTIONS,
     getEmptySet,
     getNotes,
     getPegs,
     mod,
-    ScaleNode,
 } from "../util";
-import { Store } from "./store";
-import {
-    ChordNames,
-    Mode,
-    NoteNames,
-    Orderings,
-    RootReferences,
-} from "./types";
-
-// Types
-export interface AppStateType {
-    start: number;
-    selected: boolean[][];
-    mode: Mode;
-    rootReference: RootReferences;
-    ordering: Orderings;
-    mute: boolean;
-    noteNames: NoteNames[];
-    chordNames: ChordNames[];
-    keyCubeVisible: boolean;
-    keyWheelVisible: boolean;
-    instrumentsVisible: boolean;
-    scales: ScaleNode[];
-    threeProps: {
-        [x: string]: string[][];
-    };
-    layoutDisabledKeys: { [x: string]: boolean };
-}
+import { AppStateType } from "./types";
 
 export const DEFAULT_APP_STATE: () => AppStateType = () => {
     return {
@@ -266,10 +245,3 @@ export const reducers = {
         };
     },
 };
-
-// Store
-export class AppStore extends Store<AppStateType, typeof reducers> {
-    constructor() {
-        super(DEFAULT_APP_STATE(), reducers);
-    }
-}

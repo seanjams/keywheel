@@ -15,9 +15,9 @@ import {
     harMajScale,
 } from "../consts";
 import { darkGrey, grey, lightGrey, mediumGrey, red, yellow } from "../colors";
+import { AppStore } from "../store/state";
+import { ChordNames, NoteNames, PositionType } from "../types";
 import { DEFAULT_NOTE_COLOR_OPTIONS, getNotesFromName, mod } from "../util";
-import { AppStore } from "../store2/state";
-import { ChordNames, NoteNames, PositionType } from "../store2/types";
 
 interface KeyCubeProps {
     appStore: AppStore;

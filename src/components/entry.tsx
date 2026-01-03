@@ -4,7 +4,7 @@ import { Container } from "./container";
 import { KeyCube } from "./keycube";
 import "../css/reset.css";
 import "../css/static.css";
-import { AppStore } from "../store2/state";
+import { AppStore } from "../store/state";
 
 document.addEventListener("DOMContentLoaded", () => {
     const rootDiv = document.createElement("div");

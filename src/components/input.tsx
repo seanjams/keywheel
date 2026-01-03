@@ -1,14 +1,9 @@
 import React, { CSSProperties, useEffect } from "react";
-import { Scale } from "./scale";
 import { EMPTY, SHAPES, NOTE_NAMES } from "../consts";
 import { lightGrey } from "../colors";
+import { Mode, Orderings, ReactChangeEvent, RootReferences } from "../types";
 import { getPegs, soundNotes, chordReader, dup } from "../util";
-import {
-    Mode,
-    Orderings,
-    ReactChangeEvent,
-    RootReferences,
-} from "../store2/types";
+import { Scale } from "./scale";
 
 const containerStyle: CSSProperties = {
     display: "flex",

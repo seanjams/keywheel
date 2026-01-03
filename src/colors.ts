@@ -17,7 +17,7 @@ import {
     pentaScale,
     susChord,
 } from "./consts";
-import { ChordNames } from "./store2/types";
+import { ChordNames } from "./types";
 
 export const darkGrey = "#333";
 

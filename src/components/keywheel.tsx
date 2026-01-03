@@ -1,7 +1,7 @@
 import React, { CSSProperties } from "react";
-import { Scale } from "./scale";
+import { Orderings, RootReferences, Mode } from "../types";
 import { ScaleNode } from "../util";
-import { Orderings, RootReferences, Mode } from "../store2/types";
+import { Scale } from "./scale";
 
 interface KeyWheelProps {
     selected: boolean[][];

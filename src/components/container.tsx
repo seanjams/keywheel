@@ -1,6 +1,6 @@
 import * as React from "react";
 import { App } from "./app";
-import { AppStore } from "../store2/state";
+import { AppStore } from "../store/state";
 import { useMemo } from "react";
 
 export const Container: React.FC = () => {
