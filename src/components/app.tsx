@@ -18,6 +18,7 @@ import {
     RootReferences,
 } from "../types";
 import { getNotes, getEmptySet, dup, onCopyToClipboard } from "../util";
+import { ChordCube } from "./chordcube";
 import { Input } from "./input";
 import { FretBoard } from "./fretboard";
 import { Piano } from "./piano";
@@ -90,6 +91,7 @@ export const App: React.FC<AppProps> = ({ appStore }) => {
             ordering,
             noteNames,
             chordNames,
+            chordCubeVisible,
             keyCubeVisible,
             keyWheelVisible,
             instrumentsVisible,
@@ -102,6 +104,7 @@ export const App: React.FC<AppProps> = ({ appStore }) => {
             ordering,
             noteNames,
             chordNames,
+            chordCubeVisible,
             keyCubeVisible,
             keyWheelVisible,
             instrumentsVisible,
@@ -116,12 +119,14 @@ export const App: React.FC<AppProps> = ({ appStore }) => {
         ordering,
         noteNames,
         chordNames,
+        chordCubeVisible,
         keyCubeVisible,
         keyWheelVisible,
         instrumentsVisible,
     } = getState();
 
     useEffect(() => {
+        appStore.dispatch.initThreeProps();
         appStore.dispatch.rehydrate();
         window.addEventListener("keydown", handleKeyPress);
         window.addEventListener("beforeunload", saveToLocalStorage);
@@ -280,6 +285,13 @@ export const App: React.FC<AppProps> = ({ appStore }) => {
                     >
                         Show Key Cube
                     </button>
+                    <button
+                        style={buttonStyle}
+                        onClick={toggleKeyCube}
+                        disabled={keyCubeVisible}
+                    >
+                        Show Chord Cube
+                    </button>
                     <button style={buttonStyle} onClick={onSaveToClipboard}>
                         Save To Clipboard
                     </button>
@@ -403,6 +415,16 @@ export const App: React.FC<AppProps> = ({ appStore }) => {
                     }}
                 >
                     <KeyCube appStore={appStore} />
+                </div>
+
+                <div
+                    style={{
+                        margin: "30px auto",
+                        width: "fit-content",
+                        display: chordCubeVisible ? "block" : "none", // don't unmount the Canvas when hiding
+                    }}
+                >
+                    <ChordCube appStore={appStore} />
                 </div>
             </div>
         </div>

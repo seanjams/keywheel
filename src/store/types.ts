@@ -3,7 +3,9 @@ import {
     Mode,
     NoteNames,
     Orderings,
+    PositionType,
     RootReferences,
+    VertexType,
 } from "../types";
 import { ScaleNode } from "../util";
 
@@ -16,12 +18,20 @@ export interface AppStateType {
     mute: boolean;
     noteNames: NoteNames[];
     chordNames: ChordNames[];
+    chordCubeVisible: boolean;
     keyCubeVisible: boolean;
     keyWheelVisible: boolean;
     instrumentsVisible: boolean;
     scales: ScaleNode[];
-    threeProps: {
-        [x: string]: string[][];
-    };
-    layoutDisabledKeys: { [x: string]: boolean };
+    // keyCube / chordCube state props
+    keyCubeThreeProps: Record<string, string[][]>;
+    chordCubeThreeProps: Record<string, string[][]>;
+    layoutDisabledKeys: Record<string, boolean>;
+    edgeSize: number;
+    keyCubeVertices: Record<string, VertexType>;
+    keyCubePositions: Record<string, PositionType[]>;
+    keyCubeStartingPos: PositionType;
+    chordCubeVertices: Record<string, VertexType>;
+    chordCubeStartingPos: PositionType;
+    chordCubeConnections: [string, string][];
 }

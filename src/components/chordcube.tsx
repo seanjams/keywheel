@@ -6,10 +6,16 @@ import { OrbitControls, Text3D, Center } from "@react-three/drei";
 import { NOTE_NAMES } from "../consts";
 import { darkGrey, grey, lightGrey, mediumGrey, red, yellow } from "../colors";
 import { AppStore } from "../store/state";
-import { ChordNames, NoteNames, PositionType } from "../types";
-import { DEFAULT_NOTE_COLOR_OPTIONS, getNotesFromName, mod } from "../util";
+import { ReactMouseEvent, VertexType } from "../types";
+import {
+    DEFAULT_NOTE_COLOR_OPTIONS,
+    getNotesFromName,
+    getPegs,
+    mod,
+    soundNotes,
+} from "../util";
 
-interface KeyCubeProps {
+interface ChordCubeProps {
     appStore: AppStore;
 }
 
@@ -82,7 +88,7 @@ const Lights = () => {
 //     );
 // };
 
-interface ScaleBallProps extends KeyCubeProps {
+interface ScaleBallProps extends ChordCubeProps {
     name: string;
 }
 
@@ -91,15 +97,18 @@ export const ScaleBall: React.FC<ScaleBallProps> = ({ appStore, name }) => {
     const meshRef = useRef<THREE.Mesh>(null);
     const geometryRef = useRef<THREE.SphereGeometry>(null);
     const materialRef = useRef<THREE.MeshPhongMaterial>(null);
+    const { chordCubeVertices } = appStore.state;
+    const { scaleType } = chordCubeVertices[name];
 
     const optionsRef = useRef(
-        appStore.state.keyCubeThreeProps[name] || DEFAULT_NOTE_COLOR_OPTIONS(),
+        appStore.state.chordCubeThreeProps[name] ||
+            DEFAULT_NOTE_COLOR_OPTIONS(),
     );
 
     useEffect(() => {
-        return appStore.addListener(({ keyCubeThreeProps }) => {
+        return appStore.addListener(({ chordCubeThreeProps }) => {
             optionsRef.current =
-                keyCubeThreeProps[name] || DEFAULT_NOTE_COLOR_OPTIONS();
+                chordCubeThreeProps[name] || DEFAULT_NOTE_COLOR_OPTIONS();
         });
     }, []);
 
@@ -108,6 +117,7 @@ export const ScaleBall: React.FC<ScaleBallProps> = ({ appStore, name }) => {
 
         // change outer sphere of scale vertex
         if (materialRef.current) {
+            // materialRef.current.color.set(CHORD_COLOR[scaleType]);
             const options = optionsRef.current;
             if (options && options.some((option) => option.length > 1)) {
                 materialRef.current.color.set(yellow);
@@ -126,7 +136,7 @@ export const ScaleBall: React.FC<ScaleBallProps> = ({ appStore, name }) => {
     );
 };
 
-interface ScaleTextProps extends KeyCubeProps {
+interface ScaleTextProps extends ChordCubeProps {
     layoutKey: string;
     label: string;
 }
@@ -175,7 +185,7 @@ export const ScaleText: React.FC<ScaleTextProps> = ({
     );
 };
 
-interface NoteBallProps extends KeyCubeProps {
+interface NoteBallProps extends ChordCubeProps {
     name: string;
     layoutKey: string;
     index: number;
@@ -191,20 +201,20 @@ export const NoteBall: React.FC<NoteBallProps> = ({
     const meshRef = useRef<THREE.Mesh>(null);
     const geometryRef = useRef<THREE.SphereGeometry>(null);
     const materialRef = useRef<THREE.MeshPhongMaterial>(null);
-    const { keyCubeThreeProps, layoutDisabledKeys } = appStore.state;
+    const { chordCubeThreeProps, layoutDisabledKeys } = appStore.state;
 
     const optionsRef = useRef(
-        keyCubeThreeProps[name] || DEFAULT_NOTE_COLOR_OPTIONS(),
+        chordCubeThreeProps[name] || DEFAULT_NOTE_COLOR_OPTIONS(),
     );
     const layoutDisabledRef = useRef(layoutDisabledKeys[layoutKey] || false);
 
     useEffect(() => {
         return appStore.addListener(
-            ({ keyCubeThreeProps, layoutDisabledKeys }) => {
+            ({ chordCubeThreeProps, layoutDisabledKeys }) => {
                 layoutDisabledRef.current =
                     layoutDisabledKeys[layoutKey] || false;
                 optionsRef.current =
-                    keyCubeThreeProps[name] || DEFAULT_NOTE_COLOR_OPTIONS();
+                    chordCubeThreeProps[name] || DEFAULT_NOTE_COLOR_OPTIONS();
             },
         );
     }, []);
@@ -253,7 +263,7 @@ export const NoteBall: React.FC<NoteBallProps> = ({
     );
 };
 
-interface NoteTextProps extends KeyCubeProps {
+interface NoteTextProps extends ChordCubeProps {
     layoutKey: string;
     index: number;
 }
@@ -307,15 +317,15 @@ export const NoteText: React.FC<NoteTextProps> = ({
     );
 };
 
-interface ScaleVertexProps extends KeyCubeProps {
+interface ScaleVertexProps extends ChordCubeProps {
     name: string;
 }
 
 // a sphere with text and little noteballs on it
 export const ScaleVertex: React.FC<ScaleVertexProps> = ({ appStore, name }) => {
     const groupRef = useRef<THREE.Group>(null);
-    const { keyCubeVertices } = appStore.state;
-    const { root, label, position, scaleType } = keyCubeVertices[name];
+    const { chordCubeVertices } = appStore.state;
+    const { root, label, position, scaleType, key } = chordCubeVertices[name];
     const notes = getNotesFromName(root, scaleType);
 
     useFrame((state) => {
@@ -370,8 +380,16 @@ export const ScaleVertex: React.FC<ScaleVertexProps> = ({ appStore, name }) => {
         }
     }
 
+    const onClick = (e: ReactMouseEvent) => {
+        e.stopPropagation();
+        const notes = getNotesFromName(root, scaleType);
+        if (!notes) return;
+        const pegs = getPegs(notes);
+        soundNotes(pegs, 0, true);
+    };
+
     return (
-        <group ref={groupRef} position={position}>
+        <group ref={groupRef} position={position} onClick={onClick}>
             {scaleText}
             {scaleBall}
             {noteBalls}
@@ -381,28 +399,20 @@ export const ScaleVertex: React.FC<ScaleVertexProps> = ({ appStore, name }) => {
 };
 
 // Create Scale Vertices for every scale
-export const ScaleVertices: React.FC<KeyCubeProps> = ({ appStore }) => {
-    const { keyCubeVertices } = appStore.state;
+export const ScaleVertices: React.FC<ChordCubeProps> = ({ appStore }) => {
+    const { chordCubeVertices } = appStore.state;
     return (
         <>
-            {Object.keys(keyCubeVertices).map((key) => (
+            {Object.keys(chordCubeVertices).map((key) => (
                 <ScaleVertex key={key} appStore={appStore} name={key} />
             ))}
         </>
     );
 };
 
-interface EdgeProps extends KeyCubeProps {
-    startVertex: {
-        root: NoteNames;
-        label: ChordNames;
-        position: PositionType;
-    };
-    endVertex: {
-        root: NoteNames;
-        label: ChordNames;
-        position: PositionType;
-    };
+interface EdgeProps extends ChordCubeProps {
+    startVertex: VertexType;
+    endVertex: VertexType;
     layoutKey: string;
 }
 
@@ -416,24 +426,31 @@ export const Edge: React.FC<EdgeProps> = ({
     const meshRef = useRef<THREE.Mesh>(null);
     const geometryRef = useRef<THREE.CylinderGeometry>(null);
     const materialRef = useRef<THREE.MeshPhongMaterial>(null);
-    const startKey = `${startVertex.root}-${startVertex.label}-0`;
-    const endKey = `${endVertex.root}-${endVertex.label}-0`;
-    const { keyCubeThreeProps, layoutDisabledKeys, edgeSize } = appStore.state;
+    const { chordCubeThreeProps, layoutDisabledKeys, edgeSize } =
+        appStore.state;
     const startOptionsRef = useRef(
-        keyCubeThreeProps[startKey] || DEFAULT_NOTE_COLOR_OPTIONS(),
+        chordCubeThreeProps[startVertex.key] || DEFAULT_NOTE_COLOR_OPTIONS(),
     );
     const endOptionsRef = useRef(
-        keyCubeThreeProps[endKey] || DEFAULT_NOTE_COLOR_OPTIONS(),
+        chordCubeThreeProps[endVertex.key] || DEFAULT_NOTE_COLOR_OPTIONS(),
     );
     const layoutDisabledRef = useRef(layoutDisabledKeys[layoutKey] || false);
+    const size = Math.sqrt(2) * edgeSize - 30;
 
     useEffect(() => {
         return appStore.addListener(
-            ({ keyCubeThreeProps, layoutDisabledKeys }) => {
+            ({ chordCubeThreeProps, layoutDisabledKeys }) => {
+                console.log(
+                    endVertex.key,
+                    startVertex.key,
+                    chordCubeThreeProps,
+                );
                 startOptionsRef.current =
-                    keyCubeThreeProps[startKey] || DEFAULT_NOTE_COLOR_OPTIONS();
+                    chordCubeThreeProps[startVertex.key] ||
+                    DEFAULT_NOTE_COLOR_OPTIONS();
                 endOptionsRef.current =
-                    keyCubeThreeProps[endKey] || DEFAULT_NOTE_COLOR_OPTIONS();
+                    chordCubeThreeProps[endVertex.key] ||
+                    DEFAULT_NOTE_COLOR_OPTIONS();
                 layoutDisabledRef.current =
                     layoutDisabledKeys[layoutKey] || false;
             },
@@ -473,7 +490,7 @@ export const Edge: React.FC<EdgeProps> = ({
         if (geometryRef.current) {
             // edge starts as vertical pipe skewered through sphere at its center
             // we need to translate it upwards, and rotate it by 90 degrees towards x
-            geometryRef.current.translate(0, edgeSize / 2, 0);
+            geometryRef.current.translate(0, size / 2, 0);
             geometryRef.current.rotateX(Math.PI / 2);
         }
 
@@ -486,235 +503,37 @@ export const Edge: React.FC<EdgeProps> = ({
 
     return (
         <mesh position={startVertex.position} ref={meshRef} castShadow>
-            <cylinderGeometry ref={geometryRef} args={[3, 3, edgeSize, 16]} />
+            <cylinderGeometry ref={geometryRef} args={[3, 3, size, 16]} />
             <meshPhongMaterial ref={materialRef} color={mediumGrey} />
         </mesh>
     );
 };
 
-interface EdgeCubeProps extends KeyCubeProps {
-    position: PositionType;
-    name: string;
-    index: number;
-}
-
-// Boxes of edges
-export const EdgeCube: React.FC<EdgeCubeProps> = ({
-    appStore,
-    position,
-    name,
-    index,
-}) => {
+// create EdgeCubes for every cube of vertices/edges
+export const Edges: React.FC<ChordCubeProps> = ({ appStore }) => {
     const edges: React.JSX.Element[] = [];
-    const [root, label] = name.split("\n") as [
-        NoteNames,
-        "Major" | "Mel min" | "Har Min",
-    ];
-    const rootIdx = NOTE_NAMES.indexOf(root as NoteNames);
-    const { edgeSize } = appStore.state;
-
-    // pairs of indices of adjustmentBank positions that should have an edge between them
-    const edgePairs = [
-        [0, 1],
-        [0, 2],
-        [1, 4],
-        [2, 4],
-        [0, 3],
-        [1, 5],
-        [4, 7],
-        [2, 6],
-        [3, 5],
-        [3, 6],
-        [5, 7],
-        [6, 7],
-    ];
-
-    const adjustmentBank: {
-        position: PositionType;
-        [ChordNames.majorScale]: {
-            root: NoteNames;
-            label: ChordNames;
-        };
-        [ChordNames.melMinScale]: {
-            root: NoteNames;
-            label: ChordNames;
-        };
-        [ChordNames.harMinScale]: {
-            root: NoteNames;
-            label: ChordNames;
-        };
-    }[] = [
-        {
-            position: [0, 0, 0],
-            [ChordNames.majorScale]: {
-                root: NOTE_NAMES[mod(rootIdx + 0, 12)],
-                label: ChordNames.majorScale,
-            },
-            [ChordNames.melMinScale]: {
-                root: NOTE_NAMES[mod(rootIdx + 0, 12)],
-                label: ChordNames.melMinScale,
-            },
-            [ChordNames.harMinScale]: {
-                root: NOTE_NAMES[mod(rootIdx + 0, 12)],
-                label: ChordNames.harMinScale,
-            },
-        },
-        {
-            position: [1, 0, 0],
-            [ChordNames.majorScale]: {
-                root: NOTE_NAMES[mod(rootIdx + 2, 12)],
-                label: ChordNames.melMinScale,
-            },
-            [ChordNames.melMinScale]: {
-                root: NOTE_NAMES[mod(rootIdx + 0, 12)],
-                label: ChordNames.majorScale,
-            },
-            [ChordNames.harMinScale]: {
-                root: NOTE_NAMES[mod(rootIdx + 0, 12)],
-                label: ChordNames.harMajScale,
-            },
-        },
-        {
-            position: [0, 1, 0],
-            [ChordNames.majorScale]: {
-                root: NOTE_NAMES[mod(rootIdx + 7, 12)],
-                label: ChordNames.majorScale,
-            },
-            [ChordNames.melMinScale]: {
-                root: NOTE_NAMES[mod(rootIdx + 7, 12)],
-                label: ChordNames.harMajScale,
-            },
-            [ChordNames.harMinScale]: {
-                root: NOTE_NAMES[mod(rootIdx + 0, 12)],
-                label: ChordNames.melMinScale,
-            },
-        },
-        {
-            position: [0, 0, -1],
-            [ChordNames.majorScale]: {
-                root: NOTE_NAMES[mod(rootIdx + 5, 12)],
-                label: ChordNames.majorScale,
-            },
-            [ChordNames.melMinScale]: {
-                root: NOTE_NAMES[mod(rootIdx + 10, 12)],
-                label: ChordNames.majorScale,
-            },
-            [ChordNames.harMinScale]: {
-                root: NOTE_NAMES[mod(rootIdx + 3, 12)],
-                label: ChordNames.majorScale,
-            },
-        },
-        {
-            position: [1, 1, 0],
-            [ChordNames.majorScale]: {
-                root: NOTE_NAMES[mod(rootIdx + 2, 12)],
-                label: ChordNames.majorScale,
-            },
-            [ChordNames.melMinScale]: {
-                root: NOTE_NAMES[mod(rootIdx + 7, 12)],
-                label: ChordNames.majorScale,
-            },
-            [ChordNames.harMinScale]: {
-                root: NOTE_NAMES[mod(rootIdx + 0, 12)],
-                label: ChordNames.majorScale,
-            },
-        },
-        {
-            position: [1, 0, -1],
-            [ChordNames.majorScale]: {
-                root: NOTE_NAMES[mod(rootIdx + 2, 12)],
-                label: ChordNames.harMinScale,
-            },
-            [ChordNames.melMinScale]: {
-                root: NOTE_NAMES[mod(rootIdx + 5, 12)],
-                label: ChordNames.majorScale,
-            },
-            [ChordNames.harMinScale]: {
-                root: NOTE_NAMES[mod(rootIdx + 5, 12)],
-                label: ChordNames.melMinScale,
-            },
-        },
-        {
-            position: [0, 1, -1],
-            [ChordNames.majorScale]: {
-                root: NOTE_NAMES[mod(rootIdx + 7, 12)],
-                label: ChordNames.melMinScale,
-            },
-            [ChordNames.melMinScale]: {
-                root: NOTE_NAMES[mod(rootIdx + 7, 12)],
-                label: ChordNames.harMinScale,
-            },
-            [ChordNames.harMinScale]: {
-                root: NOTE_NAMES[mod(rootIdx + 10, 12)],
-                label: ChordNames.majorScale,
-            },
-        },
-        {
-            position: [1, 1, -1],
-            [ChordNames.majorScale]: {
-                root: NOTE_NAMES[mod(rootIdx + 2, 12)],
-                label: ChordNames.harMajScale,
-            },
-            [ChordNames.melMinScale]: {
-                root: NOTE_NAMES[mod(rootIdx + 7, 12)],
-                label: ChordNames.melMinScale,
-            },
-            [ChordNames.harMinScale]: {
-                root: NOTE_NAMES[mod(rootIdx + 5, 12)],
-                label: ChordNames.majorScale,
-            },
-        },
-    ];
+    const { chordCubeConnections, chordCubeVertices } = appStore.state;
 
     // loop over edgePairs, created default edge for each pair
-    for (let i = 0; i < edgePairs.length; i++) {
-        const pair = edgePairs[i];
-        const start = adjustmentBank[pair[0]];
-        const end = adjustmentBank[pair[1]];
-
-        const ignoreMajor =
-            name.endsWith(ChordNames.majorScale) &&
-            start.position[0] === 0 &&
-            end.position[0] === 0;
-        const ignoreMelMinor =
-            name.endsWith(ChordNames.melMinScale) &&
-            start.position[1] === 0 &&
-            end.position[1] === 0;
-        const ignoreHarMinor =
-            name.endsWith(ChordNames.harMinScale) &&
-            start.position[2] === -1 &&
-            end.position[2] === -1;
-
-        if (ignoreMajor || ignoreMelMinor || ignoreHarMinor) {
-            // dont make edges for ignored side of cube
+    for (let i = 0; i < chordCubeConnections.length; i++) {
+        const connection = chordCubeConnections[i];
+        if (
+            chordCubeVertices[connection[0]] === undefined ||
+            chordCubeVertices[connection[1]] === undefined
+        ) {
             continue;
         }
 
-        const startVertex = {
-            position: [
-                position[0] + start.position[0] * edgeSize,
-                position[1] + start.position[1] * edgeSize,
-                position[2] + start.position[2] * edgeSize,
-            ] as PositionType,
-            ...start[label],
-        };
-
-        const endVertex = {
-            position: [
-                position[0] + end.position[0] * edgeSize,
-                position[1] + end.position[1] * edgeSize,
-                position[2] + end.position[2] * edgeSize,
-            ] as PositionType,
-            ...end[label],
-        };
+        const start = chordCubeVertices[connection[0]];
+        const end = chordCubeVertices[connection[1]];
 
         const edge = (
             <Edge
-                key={`edge-group-${pair}`}
+                key={`edge-group-${connection}`}
                 appStore={appStore}
-                layoutKey={`edge-${startVertex.root}-${startVertex.label}-${endVertex.root}-${endVertex.label}-${index}`}
-                startVertex={startVertex}
-                endVertex={endVertex}
+                layoutKey={`edge-${start.key}-${end.key}`}
+                startVertex={start}
+                endVertex={end}
             />
         );
 
@@ -724,36 +543,16 @@ export const EdgeCube: React.FC<EdgeCubeProps> = ({
     return <>{edges}</>;
 };
 
-// create EdgeCubes for every cube of vertices/edges
-export const Edges: React.FC<KeyCubeProps> = ({ appStore }) => {
-    const { keyCubePositions } = appStore.state;
-    return (
-        <>
-            {Object.keys(keyCubePositions).map((name) => {
-                const positions = keyCubePositions[name];
-                return positions.map((position, i) => (
-                    <EdgeCube
-                        key={`box-${i}`}
-                        appStore={appStore}
-                        position={position}
-                        index={i}
-                        name={name}
-                    />
-                ));
-            })}
-        </>
-    );
-};
+// ChordCube
+export const ChordCube: React.FC<ChordCubeProps> = ({ appStore }) => {
+    const { edgeSize, chordCubeStartingPos } = appStore.state;
 
-// KeyCube
-export const KeyCube: React.FC<KeyCubeProps> = ({ appStore }) => {
-    const { edgeSize, keyCubeStartingPos } = appStore.state;
     return (
         <div>
             <Canvas
                 orthographic
                 camera={{
-                    position: keyCubeStartingPos,
+                    position: chordCubeStartingPos,
                     far: 100000,
                     near: edgeSize,
                 }}
@@ -772,6 +571,11 @@ export const KeyCube: React.FC<KeyCubeProps> = ({ appStore }) => {
                 <Controls />
                 <ScaleVertices appStore={appStore} />
                 <Edges appStore={appStore} />
+                {/* Axes Helper: shows the 3D axes at the origin (0, 0, 0) */}
+                {/* <axesHelper args={[edgeSize]} /> args={[size]} */}
+                {/* Grid Helper: adds a ground grid */}
+                {/* <gridHelper args={[edgeSize, 10]} />{" "} */}
+                {/* args={[size, divisions]} */}
             </Canvas>
         </div>
     );

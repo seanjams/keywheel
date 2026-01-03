@@ -1,11 +1,17 @@
 import { COLORS, lightGrey, mediumGrey } from "../colors";
-import { NOTE_NAMES, SHAPES, VERTICES } from "../consts";
+import {
+    chordCubeExperimentalConstants,
+    keyCubeExperimentalConstants,
+    NOTE_NAMES,
+    SHAPES,
+} from "../consts";
 import {
     ChordNames,
     NoteNames,
     Mode,
     Orderings,
     RootReferences,
+    VertexType,
 } from "../types";
 import {
     buildKeyWheel,
@@ -27,22 +33,35 @@ export const DEFAULT_APP_STATE: () => AppStateType = () => {
         mute: false,
         noteNames: Array(8).fill("C"),
         chordNames: Array(8).fill("Major"),
-        keyCubeVisible: true,
+        chordCubeVisible: true,
+        keyCubeVisible: false,
         keyWheelVisible: false,
         instrumentsVisible: false,
         scales: [],
-        threeProps: buildThreeProps(getEmptySet()),
+        // keyCube / chordCube
+        keyCubeThreeProps: {},
+        chordCubeThreeProps: {},
         layoutDisabledKeys: {},
+        edgeSize: 150,
+        keyCubeVertices: {},
+        keyCubePositions: {},
+        keyCubeStartingPos: [0, 0, 0],
+        chordCubeVertices: {},
+        chordCubeStartingPos: [0, 0, 0],
+        chordCubeConnections: [],
     };
 };
 
 // builds object with key pointing to textGeometry props for specific vertix
-function buildThreeProps(selected: boolean[][]): {
+function buildThreeProps(
+    selected: boolean[][],
+    vertices: Record<string, VertexType>,
+): {
     [key in string]: string[][];
 } {
     function getNoteColors(root: NoteNames, scaleType: ChordNames) {
         const rootIdx = NOTE_NAMES.indexOf(root);
-        if (rootIdx === -1) return DEFAULT_NOTE_COLOR_OPTIONS;
+        if (rootIdx === -1) return DEFAULT_NOTE_COLOR_OPTIONS();
 
         const scaleNotes = getNotes(
             SHAPES[scaleType].map((note) => (note + rootIdx) % 12).sort(),
@@ -68,8 +87,8 @@ function buildThreeProps(selected: boolean[][]): {
     }
 
     const nextThreeProps: { [key in string]: string[][] } = {};
-    for (let key in VERTICES) {
-        let { root, scaleType } = VERTICES[key];
+    for (let key in vertices) {
+        let { root, scaleType } = vertices[key];
         nextThreeProps[key] = getNoteColors(root, scaleType);
     }
 
@@ -144,11 +163,17 @@ export const reducers = {
         };
     },
     setSelected(state: AppStateType, selected: boolean[][]): AppStateType {
-        const threeProps = buildThreeProps(selected);
+        const { keyCubeVertices, chordCubeVertices } = state;
+        const keyCubeThreeProps = buildThreeProps(selected, keyCubeVertices);
+        const chordCubeThreeProps = buildThreeProps(
+            selected,
+            chordCubeVertices,
+        );
         return {
             ...state,
             selected,
-            threeProps,
+            keyCubeThreeProps,
+            chordCubeThreeProps,
         };
     },
     toggleMode(state: AppStateType, mode: Mode): AppStateType {
@@ -186,12 +211,22 @@ export const reducers = {
             scales: buildKeyWheel(start),
         };
     },
+    toggleChordCube(state: AppStateType): AppStateType {
+        return {
+            ...state,
+            instrumentsVisible: false,
+            keyWheelVisible: false,
+            keyCubeVisible: false,
+            chordCubeVisible: true,
+        };
+    },
     toggleKeyCube(state: AppStateType): AppStateType {
         return {
             ...state,
             instrumentsVisible: false,
             keyWheelVisible: false,
             keyCubeVisible: true,
+            chordCubeVisible: false,
         };
     },
     toggleKeyWheel(state: AppStateType): AppStateType {
@@ -200,6 +235,7 @@ export const reducers = {
             instrumentsVisible: false,
             keyWheelVisible: true,
             keyCubeVisible: false,
+            chordCubeVisible: false,
         };
     },
     toggleInstruments(state: AppStateType): AppStateType {
@@ -208,6 +244,7 @@ export const reducers = {
             instrumentsVisible: true,
             keyWheelVisible: false,
             keyCubeVisible: false,
+            chordCubeVisible: false,
         };
     },
     saveToLocalStorage(state: AppStateType): AppStateType {
@@ -222,13 +259,35 @@ export const reducers = {
             ...state,
         };
     },
-    setThreeProps(
-        state: AppStateType,
-        threeProps: { [x: string]: string[][] },
-    ) {
+    initThreeProps(state: AppStateType) {
+        const {
+            startingPos: keyCubeStartingPos,
+            vertices: keyCubeVertices,
+            positions: keyCubePositions,
+        } = keyCubeExperimentalConstants(state.edgeSize);
+        const {
+            vertices: chordCubeVertices,
+            startingPos: chordCubeStartingPos,
+            connections: chordCubeConnections,
+        } = chordCubeExperimentalConstants(state.edgeSize);
+        const keyCubeThreeProps = buildThreeProps(
+            getEmptySet(),
+            keyCubeVertices,
+        );
+        const chordCubeThreeProps = buildThreeProps(
+            getEmptySet(),
+            chordCubeVertices,
+        );
         return {
             ...state,
-            threeProps,
+            keyCubeThreeProps,
+            keyCubeStartingPos,
+            keyCubeVertices,
+            keyCubePositions,
+            chordCubeVertices,
+            chordCubeStartingPos,
+            chordCubeConnections,
+            chordCubeThreeProps,
         };
     },
     setLayoutDisabledKey(

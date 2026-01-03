@@ -4,7 +4,7 @@ import { COLORS, CHORD_COLOR, offWhite, mediumGrey, lightGrey } from "./colors";
 import { DIRS, C, EMPTY, NOTE_NAMES, MAJOR, SHAPES } from "./consts";
 import { ChordNames, Dirs, NoteNames, TweekType } from "./types";
 
-export const DEFAULT_NOTE_COLOR_OPTIONS = EMPTY.map(() => [lightGrey]);
+export const DEFAULT_NOTE_COLOR_OPTIONS = () => EMPTY.map(() => [lightGrey]);
 
 export class ScaleNode {
     rank: number;
@@ -228,7 +228,7 @@ export const soundNotes = async (pegs: number[], modeIdx = 0, poly = false) => {
     if (!poly) notes.push(Tone.Frequency(notes[0]).transpose(12).toNote());
 
     if (poly) {
-        currentSynth.triggerAttackRelease(notes, "2n", Tone.now(), 0.5);
+        currentSynth.triggerAttackRelease(notes, "4n", Tone.now(), 0.5);
     } else {
         currentSequence = new Tone.Sequence(
             (time, note) => {
