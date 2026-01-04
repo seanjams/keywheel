@@ -18,12 +18,11 @@ import {
     RootReferences,
 } from "../types";
 import { getNotes, getEmptySet, dup, onCopyToClipboard } from "../util";
-import { ChordCube } from "./chordcube";
 import { Input } from "./input";
 import { FretBoard } from "./fretboard";
 import { Piano } from "./piano";
 import { KeyWheel } from "./keywheel";
-import { KeyCube } from "./keycube";
+import { ThreeCanvas } from "./threecanvas";
 
 const mainStyle: CSSProperties = {
     boxSizing: "border-box",
@@ -242,6 +241,10 @@ export const App: React.FC<AppProps> = ({ appStore }) => {
         appStore.dispatch.toggleMute(!mute);
     };
 
+    const toggleChordCube = () => {
+        appStore.dispatch.toggleChordCube();
+    };
+
     const toggleKeyCube = () => {
         appStore.dispatch.toggleKeyCube();
     };
@@ -287,8 +290,8 @@ export const App: React.FC<AppProps> = ({ appStore }) => {
                     </button>
                     <button
                         style={buttonStyle}
-                        onClick={toggleKeyCube}
-                        disabled={keyCubeVisible}
+                        onClick={toggleChordCube}
+                        disabled={chordCubeVisible}
                     >
                         Show Chord Cube
                     </button>
@@ -407,25 +410,7 @@ export const App: React.FC<AppProps> = ({ appStore }) => {
                     </div>
                 )}
 
-                <div
-                    style={{
-                        margin: "30px auto",
-                        width: "fit-content",
-                        display: keyCubeVisible ? "block" : "none", // don't unmount the Canvas when hiding
-                    }}
-                >
-                    <KeyCube appStore={appStore} />
-                </div>
-
-                <div
-                    style={{
-                        margin: "30px auto",
-                        width: "fit-content",
-                        display: chordCubeVisible ? "block" : "none", // don't unmount the Canvas when hiding
-                    }}
-                >
-                    <ChordCube appStore={appStore} />
-                </div>
+                <ThreeCanvas appStore={appStore} />
             </div>
         </div>
     );

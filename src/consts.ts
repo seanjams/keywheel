@@ -75,33 +75,33 @@ export const EMPTY = [
 // }
 
 export const NOTE_NAMES: NoteNames[] = [
-    "C",
-    "D♭",
-    "D",
-    "E♭",
-    "E",
-    "F",
-    "G♭",
-    "G",
-    "A♭",
-    "A",
-    "B♭",
-    "B",
+    NoteNames.C,
+    NoteNames.Db,
+    NoteNames.D,
+    NoteNames.Eb,
+    NoteNames.E,
+    NoteNames.F,
+    NoteNames.Gb,
+    NoteNames.G,
+    NoteNames.Ab,
+    NoteNames.A,
+    NoteNames.Bb,
+    NoteNames.B,
 ];
 
 export const SHARP_NOTE_NAMES: SharpNoteNames[] = [
-    "C",
-    "C♯",
-    "D",
-    "D♯",
-    "E",
-    "F",
-    "F♯",
-    "G",
-    "G♯",
-    "A",
-    "A♯",
-    "B",
+    SharpNoteNames.C,
+    SharpNoteNames.Cs,
+    SharpNoteNames.D,
+    SharpNoteNames.Ds,
+    SharpNoteNames.E,
+    SharpNoteNames.F,
+    SharpNoteNames.Fs,
+    SharpNoteNames.G,
+    SharpNoteNames.Gs,
+    SharpNoteNames.A,
+    SharpNoteNames.As,
+    SharpNoteNames.B,
 ];
 
 export const MAJOR = [2, 2, 1, 2, 2, 2, 1];
@@ -134,51 +134,149 @@ export const SHAPES: { [key in ChordNames]: number[] } = {
     [ChordNames.NeoScale]: [0, 1, 3, 5, 7, 9, 11],
 };
 
-// Key Cube Experimental Constants
-const PATTERN_MAP: { [key in string]: [number, number, number][] } = {
-    [ChordNames.majorScale]: [
-        [0, 0, 0],
-        [0, 1, 0],
-        [1, 1, 0],
-    ],
-    [ChordNames.melMinScale]: [
-        [-1, 0, 0],
-        [0, 1, -1],
-        [1, 0, 0],
-    ],
-    [ChordNames.harMinScale]: [
-        [-1, -1, 0],
-        [-1, 1, -1],
-        [1, 0, -1],
-    ],
-    [ChordNames.harMajScale]: [
-        [0, -1, 0],
-        [-1, 1, 0],
-        [1, 1, -1],
-    ],
-};
-
 export function keyCubeExperimentalConstants(edgeSize: number): {
     startingPos: PositionType;
     vertices: Record<string, VertexType>;
-    positions: Record<string, PositionType[]>;
+    connections: [string, string][];
 } {
     const startingPos: PositionType = [
         edgeSize * -30,
         edgeSize * 10,
         edgeSize * 20,
     ];
-    const cubeRange = [-2, -1, 0, 1];
-    const positions: { [key in string]: PositionType[] } = {};
-    const vertices: {
-        [key in string]: VertexType;
-    } = {};
+    const positions: Record<string, PositionType[]> = {};
+    const vertices: Record<string, VertexType> = {};
+
+    type scaleTypes =
+        | ChordNames.majorScale
+        | ChordNames.melMinScale
+        | ChordNames.harMinScale
+        | ChordNames.harMajScale;
+
+    // Key Cube Experimental Constants
+    const patternMap: Record<scaleTypes, PositionType[]> = {
+        [ChordNames.majorScale]: [
+            [0, 0, 0],
+            [0, 1, 0],
+            [1, 1, 0],
+        ],
+        [ChordNames.melMinScale]: [
+            [-1, 0, 0],
+            [0, 1, -1],
+            [1, 0, 0],
+        ],
+        [ChordNames.harMinScale]: [
+            [-1, -1, 0],
+            [-1, 1, -1],
+            [1, 0, -1],
+        ],
+        [ChordNames.harMajScale]: [
+            [0, -1, 0],
+            [-1, 1, 0],
+            [1, 1, -1],
+        ],
+    };
+
+    const getKey = (rootIdx: number, name: scaleTypes, layerIdx: number) => {
+        const root = NOTE_NAMES[mod(rootIdx, 12)];
+        return `${root}-${name}-${layerIdx}`;
+    };
+
+    function majorScale(rootIdx: number, layerIdx: number) {
+        const [root, second, third, fourth, fifth, sixth, seventh] = SHAPES[
+            ChordNames.majorScale
+        ].map((peg) => mod(peg + rootIdx, 12));
+        const backwardMajorOffset = root === 0 ? -1 : 0;
+        const forwardMajorOffset = root === 5 ? 1 : 0;
+        const melMinorOffset = root === 10 || root === 5 ? 1 : 0;
+        const harMinOffset = root === 3 || root === 10 || root === 5 ? 1 : 0;
+
+        return [
+            getKey(root, ChordNames.melMinScale, layerIdx),
+            getKey(root, ChordNames.harMajScale, layerIdx),
+            getKey(second, ChordNames.melMinScale, layerIdx + melMinorOffset),
+            getKey(
+                fourth,
+                ChordNames.majorScale,
+                layerIdx + backwardMajorOffset,
+            ),
+            getKey(fifth, ChordNames.majorScale, layerIdx + forwardMajorOffset),
+            getKey(sixth, ChordNames.harMinScale, layerIdx + harMinOffset),
+        ];
+    }
+
+    function melMinScale(rootIdx: number, layerIdx: number) {
+        const [root, second, third, fourth, fifth, sixth, seventh] = SHAPES[
+            ChordNames.melMinScale
+        ].map((peg) => mod(peg + rootIdx, 12));
+        const majorOffset = root === 0 || root === 7 ? -1 : 0;
+        const harMajOffset = root === 5 ? 1 : 0;
+        return [
+            getKey(root, ChordNames.majorScale, layerIdx),
+            getKey(root, ChordNames.harMinScale, layerIdx),
+            getKey(fifth, ChordNames.harMajScale, layerIdx + harMajOffset),
+            getKey(seventh - 1, ChordNames.majorScale, layerIdx + majorOffset),
+        ];
+    }
+
+    function harMinScale(rootIdx: number, layerIdx: number) {
+        const [root, second, third, fourth, fifth, sixth, seventh] = SHAPES[
+            ChordNames.harMinScale
+        ].map((peg) => mod(peg + rootIdx, 12));
+        const majorOffset = root === 0 || root === 7 || root === 2 ? -1 : 0;
+
+        return [
+            getKey(root, ChordNames.melMinScale, layerIdx),
+            getKey(root, ChordNames.harMajScale, layerIdx),
+            getKey(third, ChordNames.majorScale, layerIdx + majorOffset),
+        ];
+    }
+
+    function harMajScale(rootIdx: number, layerIdx: number) {
+        const [root, second, third, fourth, fifth, sixth, seventh] = SHAPES[
+            ChordNames.harMajScale
+        ].map((peg) => mod(peg + rootIdx, 12));
+        const melMinOffset = root === 0 ? -1 : 0;
+        return [
+            getKey(root, ChordNames.majorScale, layerIdx),
+            getKey(root, ChordNames.harMinScale, layerIdx),
+            getKey(fourth, ChordNames.melMinScale, layerIdx + melMinOffset),
+        ];
+    }
+
+    const scaleFuncs: Record<
+        scaleTypes,
+        (rootIdx: number, layerIdx: number) => string[]
+    > = {
+        [ChordNames.majorScale]: majorScale,
+        [ChordNames.melMinScale]: melMinScale,
+        [ChordNames.harMinScale]: harMinScale,
+        [ChordNames.harMajScale]: harMajScale,
+    };
+
+    function generateConnections(
+        rootIdx: number,
+        chordName: keyof typeof scaleFuncs,
+        layerIdx: number,
+    ): [string, string][] {
+        const scaleFunc = scaleFuncs[chordName];
+        return scaleFunc(rootIdx, layerIdx).map((connectedScaleKey: string) => {
+            const connection: [string, string] = [
+                getKey(rootIdx, chordName, layerIdx),
+                connectedScaleKey,
+            ];
+            connection.sort();
+            return connection;
+        });
+    }
+
+    let allConnections: [string, string][] = [];
 
     for (let i in NOTE_NAMES) {
         // traverse in circle of fifths
-        // get positions for every scale vertex and the cube positions for them
-        const root = NOTE_NAMES[(7 * +i) % 12];
-        const patternIndex = +i % 3;
+        // get positions for every scale vertex and the connections for them
+        const rootIdx = mod(7 * +i, 12);
+        const patternIdx = mod(+i, 3);
         const patternDelta = Math.floor(+i / 3);
 
         for (let name of [
@@ -186,35 +284,46 @@ export function keyCubeExperimentalConstants(edgeSize: number): {
             ChordNames.melMinScale,
             ChordNames.harMinScale,
             ChordNames.harMajScale,
-        ]) {
+        ] as scaleTypes[]) {
+            const root = NOTE_NAMES[rootIdx];
             const label = `${root}\n${name}`;
-            const coordinates = PATTERN_MAP[name][patternIndex];
-            const cubePositions = cubeRange.map((k, index) => {
-                const key = `${root}-${name}-${index}`;
-                const position = coordinates.map((coord, j) => {
-                    return (4 * k + (coord + patternDelta)) * edgeSize;
+            const coordinates = patternMap[name][patternIdx];
+            for (let layerIdx of [-2, -1, 0, 1]) {
+                const key = getKey(rootIdx, name, layerIdx);
+                const connections = generateConnections(
+                    rootIdx,
+                    name,
+                    layerIdx,
+                );
+                const position = coordinates.map((coord) => {
+                    return (4 * layerIdx + (coord + patternDelta)) * edgeSize;
                 }) as PositionType;
 
+                allConnections.push(...connections);
                 vertices[key] = {
                     key,
-                    label,
+                    // label,
+                    label: key,
                     root,
                     scaleType: name as ChordNames,
                     position,
                 };
-                return position;
-            });
-
-            if (+i % 3 === 0 && name !== ChordNames.harMajScale) {
-                positions[label] = cubePositions;
             }
         }
     }
 
+    // remove duplicate allConnections
+    const uniqueConnections = new Set(
+        allConnections.map((pair) => JSON.stringify(pair)),
+    );
+    allConnections = Array.from(uniqueConnections).map((str) =>
+        JSON.parse(str),
+    );
+
     return {
         startingPos,
         vertices,
-        positions,
+        connections: allConnections,
     };
 }
 
@@ -231,12 +340,12 @@ export function chordCubeExperimentalConstants(edgeSize: number): {
     const scaleRatio = 0.8;
 
     function generateVertexLayer(
-        offset: number,
+        noteName: NoteNames,
         height: number,
-        scaleRatio: number,
-        rangeIdx: number,
+        layerIdx: number,
     ): [Record<string, VertexType>, [string, string][]] {
-        const twistIdx = Math.floor(rangeIdx / 3);
+        const offset = mod(NOTE_NAMES.indexOf(noteName), 3);
+        const twistIdx = Math.floor(layerIdx / 3);
 
         const chordNotes = [
             mod(offset, 12),
@@ -251,9 +360,10 @@ export function chordCubeExperimentalConstants(edgeSize: number): {
             mod(offset + 11, 12),
         ];
 
-        const getKey = (rootIdx: number, name: ChordNames, idx?: number) => {
-            if (idx === undefined) idx = rangeIdx;
-            return `${NOTE_NAMES[rootIdx]}-${name}-${idx}`;
+        const getKey = (rootIdx: number, name: ChordNames, layer?: number) => {
+            if (layer === undefined) layer = layerIdx;
+            const root = NOTE_NAMES[mod(rootIdx, 12)];
+            return `${root}-${name}-${layer}`;
         };
 
         const getVertex = (
@@ -267,7 +377,7 @@ export function chordCubeExperimentalConstants(edgeSize: number): {
                 position[2] * edgeSize,
             ];
             return {
-                key: getKey(rootIdx, name),
+                key: getKey(rootIdx, name, layerIdx),
                 position: scaledPosition,
                 scaleType: name,
                 root: NOTE_NAMES[rootIdx],
@@ -275,150 +385,130 @@ export function chordCubeExperimentalConstants(edgeSize: number): {
             };
         };
 
-        function maj(rootIdx: number) {
-            const third = mod(rootIdx + 4, 12);
-            const fifth = mod(rootIdx + 7, 12);
-            const seventh = mod(rootIdx + 11, 12);
+        function maj7Chord(rootIdx: number) {
+            const [root, third, fifth, seventh] = SHAPES[
+                ChordNames.maj7Chord
+            ].map((peg) => mod(peg + rootIdx, 12));
             return [
-                getKey(
-                    mod(rootIdx + 1, 12),
-                    ChordNames.min7b5Chord,
-                    rangeIdx + 1,
-                ),
-                getKey(rootIdx, ChordNames.minMajChord),
-                getKey(rootIdx, ChordNames.majAugChord),
-                getKey(rootIdx, ChordNames.domChord),
+                getKey(root + 1, ChordNames.min7b5Chord, layerIdx + 1),
+                getKey(root, ChordNames.minMajChord, layerIdx),
+                getKey(root, ChordNames.majAugChord, layerIdx),
+                getKey(root, ChordNames.domChord, layerIdx),
             ];
         }
 
-        function min(rootIdx: number) {
-            const third = mod(rootIdx + 3, 12);
-            const fifth = mod(rootIdx + 7, 12);
-            const seventh = mod(rootIdx + 10, 12);
+        function min7Chord(rootIdx: number) {
+            const [root, third, fifth, seventh] = SHAPES[
+                ChordNames.min7Chord
+            ].map((peg) => mod(peg + rootIdx, 12));
             return [
-                getKey(
-                    mod(rootIdx - 1, 12),
-                    ChordNames.majAugChord,
-                    rangeIdx - 1,
-                ),
-                getKey(third, ChordNames.domChord),
-                getKey(rootIdx, ChordNames.domChord),
-                getKey(rootIdx, ChordNames.min7b5Chord),
-                getKey(mod(fifth + 2, 12), ChordNames.min7b5Chord),
-                getKey(rootIdx, ChordNames.minMajChord),
+                getKey(root - 1, ChordNames.majAugChord, layerIdx - 1),
+                getKey(third, ChordNames.domChord, layerIdx),
+                getKey(root, ChordNames.domChord, layerIdx),
+                getKey(root, ChordNames.min7b5Chord, layerIdx),
+                getKey(fifth + 2, ChordNames.min7b5Chord, layerIdx),
+                getKey(root, ChordNames.minMajChord, layerIdx),
             ];
         }
 
-        function dom(rootIdx: number) {
-            const third = mod(rootIdx + 4, 12);
-            const fifth = mod(rootIdx + 7, 12);
-            const seventh = mod(rootIdx + 10, 12);
+        function domChord(rootIdx: number) {
+            const [root, third, fifth, seventh] = SHAPES[
+                ChordNames.domChord
+            ].map((peg) => mod(peg + rootIdx, 12));
             return [
-                getKey(mod(rootIdx + 1, 12), ChordNames.dimChord),
-                getKey(rootIdx, ChordNames.min7Chord),
-                getKey(rootIdx, ChordNames.domAugChord),
-                getKey(mod(seventh - 1, 12), ChordNames.min7Chord),
-                getKey(rootIdx, ChordNames.maj7Chord),
+                getKey(root + 1, ChordNames.dimChord, layerIdx),
+                getKey(root, ChordNames.min7Chord, layerIdx),
+                getKey(root, ChordNames.domAugChord, layerIdx),
+                getKey(seventh - 1, ChordNames.min7Chord, layerIdx),
+                getKey(root, ChordNames.maj7Chord, layerIdx),
             ];
         }
 
-        function halfDim(rootIdx: number) {
-            const third = mod(rootIdx + 3, 12);
-            const fifth = mod(rootIdx + 6, 12);
-            const seventh = mod(rootIdx + 10, 12);
+        function min7b5Chord(rootIdx: number) {
+            const [root, third, fifth, seventh] = SHAPES[
+                ChordNames.min7b5Chord
+            ].map((peg) => mod(peg + rootIdx, 12));
             return [
-                getKey(
-                    mod(rootIdx - 1, 12),
-                    ChordNames.maj7Chord,
-                    rangeIdx - 1,
-                ),
-                getKey(third, ChordNames.min7Chord),
-                getKey(
-                    mod(third - 1, 12),
-                    ChordNames.domAugChord,
-                    rangeIdx - 1,
-                ),
-                getKey(rootIdx, ChordNames.min7Chord),
-                getKey(mod(seventh - 1, 12), ChordNames.dimChord),
+                getKey(root - 1, ChordNames.maj7Chord, layerIdx - 1),
+                getKey(third, ChordNames.min7Chord, layerIdx),
+                getKey(third - 1, ChordNames.domAugChord, layerIdx - 1),
+                getKey(root, ChordNames.min7Chord, layerIdx),
+                getKey(seventh - 1, ChordNames.dimChord, layerIdx),
             ];
         }
 
-        function minMaj(rootIdx: number) {
-            const third = mod(rootIdx + 3, 12);
-            const fifth = mod(rootIdx + 7, 12);
-            const seventh = mod(rootIdx + 11, 12);
+        function minMajChord(rootIdx: number) {
+            const [root, third, fifth, seventh] = SHAPES[
+                ChordNames.minMajChord
+            ].map((peg) => mod(peg + rootIdx, 12));
             return [
-                getKey(third, ChordNames.domAugChord),
-                getKey(rootIdx, ChordNames.maj7Chord),
-                getKey(rootIdx, ChordNames.min7Chord),
+                getKey(third, ChordNames.domAugChord, layerIdx),
+                getKey(root, ChordNames.maj7Chord, layerIdx),
+                getKey(root, ChordNames.min7Chord, layerIdx),
             ];
         }
 
-        function majAug(rootIdx: number) {
-            const third = mod(rootIdx + 4, 12);
-            const fifth = mod(rootIdx + 8, 12);
-            const seventh = mod(rootIdx + 11, 12);
+        function majAugChord(rootIdx: number) {
+            const [root, third, fifth, seventh] = SHAPES[
+                ChordNames.majAugChord
+            ].map((peg) => mod(peg + rootIdx, 12));
             return [
-                getKey(
-                    mod(rootIdx + 1, 12),
-                    ChordNames.min7Chord,
-                    rangeIdx + 1,
-                ),
-                getKey(rootIdx, ChordNames.maj7Chord),
-                getKey(rootIdx, ChordNames.domAugChord),
+                getKey(root + 1, ChordNames.min7Chord, layerIdx + 1),
+                getKey(root, ChordNames.maj7Chord, layerIdx),
+                getKey(root, ChordNames.domAugChord, layerIdx),
             ];
         }
 
-        function domAug(rootIdx: number) {
-            const third = mod(rootIdx + 4, 12);
-            const fifth = mod(rootIdx + 8, 12);
-            const seventh = mod(rootIdx + 10, 12);
+        function domAugChord(rootIdx: number) {
+            const [root, third, fifth, seventh] = SHAPES[
+                ChordNames.domAugChord
+            ].map((peg) => mod(peg + rootIdx, 12));
             return [
-                getKey(seventh, ChordNames.min7b5Chord, rangeIdx + 1),
-                getKey(rootIdx, ChordNames.domChord),
-                getKey(mod(seventh - 1, 12), ChordNames.minMajChord),
-                getKey(rootIdx, ChordNames.majAugChord),
+                getKey(seventh, ChordNames.min7b5Chord, layerIdx + 1),
+                getKey(root, ChordNames.domChord, layerIdx),
+                getKey(seventh - 1, ChordNames.minMajChord, layerIdx),
+                getKey(root, ChordNames.majAugChord, layerIdx),
             ];
         }
 
-        function domb5(rootIdx: number) {
-            const third = mod(rootIdx + 4, 12);
-            const fifth = mod(rootIdx + 6, 12);
-            const seventh = mod(rootIdx + 10, 12);
+        function domb5Chord(rootIdx: number) {
+            const [root, third, fifth, seventh] = SHAPES[
+                ChordNames.domb5Chord
+            ].map((peg) => mod(peg + rootIdx, 12));
             return [
-                getKey(fifth, ChordNames.domChord),
-                getKey(rootIdx, ChordNames.min7b5Chord),
-                getKey(rootIdx, ChordNames.domChord),
-                getKey(fifth, ChordNames.min7b5Chord),
+                getKey(fifth, ChordNames.domChord, layerIdx),
+                getKey(root, ChordNames.min7b5Chord, layerIdx),
+                getKey(root, ChordNames.domChord, layerIdx),
+                getKey(fifth, ChordNames.min7b5Chord, layerIdx),
             ];
         }
 
-        function dim(rootIdx: number) {
-            const third = mod(rootIdx + 3, 12);
-            const fifth = mod(rootIdx + 6, 12);
-            const seventh = mod(rootIdx + 9, 12);
+        function dim7Chord(rootIdx: number) {
+            const [root, third, fifth, seventh] = SHAPES[
+                ChordNames.dim7Chord
+            ].map((peg) => mod(peg + rootIdx, 12));
             return [
-                getKey(mod(rootIdx - 1, 12), ChordNames.domChord),
-                getKey(third, ChordNames.min7b5Chord, rangeIdx + 1),
-                getKey(mod(third - 1, 12), ChordNames.domChord),
-                getKey(fifth, ChordNames.min7b5Chord, rangeIdx + 1),
-                getKey(mod(fifth - 1, 12), ChordNames.domChord),
-                getKey(seventh, ChordNames.min7b5Chord, rangeIdx + 1),
-                getKey(mod(seventh - 1, 12), ChordNames.domChord),
-                getKey(rootIdx, ChordNames.min7b5Chord, rangeIdx + 1),
+                getKey(root - 1, ChordNames.domChord, layerIdx),
+                getKey(third, ChordNames.min7b5Chord, layerIdx + 1),
+                getKey(third - 1, ChordNames.domChord, layerIdx),
+                getKey(fifth, ChordNames.min7b5Chord, layerIdx + 1),
+                getKey(fifth - 1, ChordNames.domChord, layerIdx),
+                getKey(seventh, ChordNames.min7b5Chord, layerIdx + 1),
+                getKey(seventh - 1, ChordNames.domChord, layerIdx),
+                getKey(root, ChordNames.min7b5Chord, layerIdx + 1),
             ];
         }
 
         const chordFuncs = {
-            [ChordNames.maj7Chord]: maj,
-            [ChordNames.min7Chord]: min,
-            [ChordNames.domChord]: dom,
-            [ChordNames.min7b5Chord]: halfDim,
-            [ChordNames.minMajChord]: minMaj,
-            [ChordNames.majAugChord]: majAug,
-            [ChordNames.domAugChord]: domAug,
-            [ChordNames.domb5Chord]: domb5,
-            [ChordNames.dim7Chord]: dim,
+            [ChordNames.maj7Chord]: maj7Chord,
+            [ChordNames.min7Chord]: min7Chord,
+            [ChordNames.domChord]: domChord,
+            [ChordNames.min7b5Chord]: min7b5Chord,
+            [ChordNames.minMajChord]: minMajChord,
+            [ChordNames.majAugChord]: majAugChord,
+            [ChordNames.domAugChord]: domAugChord,
+            [ChordNames.domb5Chord]: domb5Chord,
+            [ChordNames.dim7Chord]: dim7Chord,
         };
 
         function generateConnections(
@@ -426,17 +516,14 @@ export function chordCubeExperimentalConstants(edgeSize: number): {
             chordName: keyof typeof chordFuncs,
         ): [string, string][] {
             const chordFunc = chordFuncs[chordName];
-            if (chordFunc) {
-                return chordFunc(rootIdx).map((connectedChordKey: string) => {
-                    const connection: [string, string] = [
-                        getKey(rootIdx, chordName),
-                        connectedChordKey,
-                    ];
-                    connection.sort();
-                    return connection;
-                });
-            }
-            return [];
+            return chordFunc(rootIdx).map((connectedChordKey: string) => {
+                const connection: [string, string] = [
+                    getKey(rootIdx, chordName),
+                    connectedChordKey,
+                ];
+                connection.sort();
+                return connection;
+            });
         }
 
         // the graph twists when repeated vertically
@@ -694,21 +781,18 @@ export function chordCubeExperimentalConstants(edgeSize: number): {
     let vertices: Record<string, VertexType> = {};
     for (let i of [-1, 0]) {
         const [firstVertexLayer, firstConnections] = generateVertexLayer(
-            0, // root offset (only need 0-1-2) aka (C, C# D)
+            NoteNames.C, // root offset for each diminished group (only need C, C# D
             i * 12 + 0, // height on y-axis (0, 4, 8...)
-            scaleRatio, // sandwhich the height
-            i * 3 + 0, // layer number (0, 1, 2)
+            i * 3 + 0, // layer number (0, 1, 2...)
         );
         const [secondVertexLayer, secondConnections] = generateVertexLayer(
-            1,
+            NoteNames.Db,
             i * 12 + 4,
-            scaleRatio,
             i * 3 + 1,
         );
         const [thirdVertexLayer, thirdConnections] = generateVertexLayer(
-            2,
+            NoteNames.D,
             i * 12 + 8,
-            scaleRatio,
             i * 3 + 2,
         );
 

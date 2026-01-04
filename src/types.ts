@@ -6,33 +6,35 @@ export type RootReferences = "numbers" | "degrees" | "names";
 
 export type Orderings = "chromatic" | "fifths";
 
-export type NoteNames =
-    | "C"
-    | "D♭"
-    | "D"
-    | "E♭"
-    | "E"
-    | "F"
-    | "G♭"
-    | "G"
-    | "A♭"
-    | "A"
-    | "B♭"
-    | "B";
+export enum NoteNames {
+    C = "C",
+    Db = "D♭",
+    D = "D",
+    Eb = "E♭",
+    E = "E",
+    F = "F",
+    Gb = "G♭",
+    G = "G",
+    Ab = "A♭",
+    A = "A",
+    Bb = "B♭",
+    B = "B",
+}
 
-export type SharpNoteNames =
-    | "C"
-    | "C♯"
-    | "D"
-    | "D♯"
-    | "E"
-    | "F"
-    | "F♯"
-    | "G"
-    | "G♯"
-    | "A"
-    | "A♯"
-    | "B";
+export enum SharpNoteNames {
+    C = "C",
+    Cs = "C♯",
+    D = "D",
+    Ds = "D♯",
+    E = "E",
+    F = "F",
+    Fs = "F♯",
+    G = "G",
+    Gs = "G♯",
+    A = "A",
+    As = "A♯",
+    B = "B",
+}
 
 export enum ChordNames {
     majorChord = "maj",

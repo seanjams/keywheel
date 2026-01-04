@@ -1,8 +1,14 @@
 import React, { useRef, useEffect, useLayoutEffect } from "react";
 import * as THREE from "three";
 import type { OrbitControls as OrbitControlsImpl } from "three-stdlib";
-import { Canvas, useFrame } from "@react-three/fiber";
-import { OrbitControls, Text3D, Center } from "@react-three/drei";
+import { useFrame } from "@react-three/fiber";
+import {
+    OrbitControls,
+    Text3D,
+    Center,
+    View,
+    OrthographicCamera,
+} from "@react-three/drei";
 import { NOTE_NAMES } from "../consts";
 import { darkGrey, grey, lightGrey, mediumGrey, red, yellow } from "../colors";
 import { AppStore } from "../store/state";
@@ -440,11 +446,6 @@ export const Edge: React.FC<EdgeProps> = ({
     useEffect(() => {
         return appStore.addListener(
             ({ chordCubeThreeProps, layoutDisabledKeys }) => {
-                console.log(
-                    endVertex.key,
-                    startVertex.key,
-                    chordCubeThreeProps,
-                );
                 startOptionsRef.current =
                     chordCubeThreeProps[startVertex.key] ||
                     DEFAULT_NOTE_COLOR_OPTIONS();
@@ -545,38 +546,38 @@ export const Edges: React.FC<ChordCubeProps> = ({ appStore }) => {
 
 // ChordCube
 export const ChordCube: React.FC<ChordCubeProps> = ({ appStore }) => {
+    const chordCubeDivRef = useRef<HTMLDivElement>(null);
     const { edgeSize, chordCubeStartingPos } = appStore.state;
 
     return (
-        <div>
-            <Canvas
-                orthographic
-                camera={{
-                    position: chordCubeStartingPos,
-                    far: 100000,
-                    near: edgeSize,
-                }}
+        <div
+            ref={chordCubeDivRef}
+            style={{
+                height: "calc(100vh - 50px)",
+                width: "90vw",
+                margin: "0 auto",
+                backgroundColor: "#000",
+            }}
+        >
+            <View
+                track={chordCubeDivRef as React.RefObject<HTMLDivElement>}
                 style={{
                     height: "calc(100vh - 50px)",
                     width: "90vw",
                     margin: "0 auto",
                 }}
-                onCreated={({ gl }) => {
-                    gl.setClearColor("#000");
-                    gl.shadowMap.enabled = true;
-                    gl.shadowMap.type = THREE.PCFSoftShadowMap;
-                }}
             >
+                <OrthographicCamera
+                    makeDefault
+                    position={chordCubeStartingPos}
+                    far={100000}
+                    near={edgeSize}
+                />
                 <Lights />
                 <Controls />
                 <ScaleVertices appStore={appStore} />
                 <Edges appStore={appStore} />
-                {/* Axes Helper: shows the 3D axes at the origin (0, 0, 0) */}
-                {/* <axesHelper args={[edgeSize]} /> args={[size]} */}
-                {/* Grid Helper: adds a ground grid */}
-                {/* <gridHelper args={[edgeSize, 10]} />{" "} */}
-                {/* args={[size, divisions]} */}
-            </Canvas>
+            </View>
         </div>
     );
 };

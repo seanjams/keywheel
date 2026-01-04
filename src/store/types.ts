@@ -29,7 +29,7 @@ export interface AppStateType {
     layoutDisabledKeys: Record<string, boolean>;
     edgeSize: number;
     keyCubeVertices: Record<string, VertexType>;
-    keyCubePositions: Record<string, PositionType[]>;
+    keyCubeConnections: [string, string][];
     keyCubeStartingPos: PositionType;
     chordCubeVertices: Record<string, VertexType>;
     chordCubeStartingPos: PositionType;

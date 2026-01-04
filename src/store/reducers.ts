@@ -39,13 +39,13 @@ export const DEFAULT_APP_STATE: () => AppStateType = () => {
         instrumentsVisible: false,
         scales: [],
         // keyCube / chordCube
-        keyCubeThreeProps: {},
-        chordCubeThreeProps: {},
         layoutDisabledKeys: {},
         edgeSize: 150,
+        keyCubeThreeProps: {},
         keyCubeVertices: {},
-        keyCubePositions: {},
+        keyCubeConnections: [],
         keyCubeStartingPos: [0, 0, 0],
+        chordCubeThreeProps: {},
         chordCubeVertices: {},
         chordCubeStartingPos: [0, 0, 0],
         chordCubeConnections: [],
@@ -259,11 +259,11 @@ export const reducers = {
             ...state,
         };
     },
-    initThreeProps(state: AppStateType) {
+    initThreeProps(state: AppStateType): AppStateType {
         const {
             startingPos: keyCubeStartingPos,
             vertices: keyCubeVertices,
-            positions: keyCubePositions,
+            connections: keyCubeConnections,
         } = keyCubeExperimentalConstants(state.edgeSize);
         const {
             vertices: chordCubeVertices,
@@ -283,7 +283,7 @@ export const reducers = {
             keyCubeThreeProps,
             keyCubeStartingPos,
             keyCubeVertices,
-            keyCubePositions,
+            keyCubeConnections,
             chordCubeVertices,
             chordCubeStartingPos,
             chordCubeConnections,
@@ -294,7 +294,7 @@ export const reducers = {
         state: AppStateType,
         layoutKey: string,
         layoutDisabled: boolean,
-    ) {
+    ): AppStateType {
         return {
             ...state,
             layoutDisabledKeys: {

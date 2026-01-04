@@ -14,8 +14,8 @@ export class Store<S, R extends AnyReducersType<S>> {
     };
 
     // set manually to include debug logs
-    private verbose = false; // this one
-    private excludeKeys: (string | number | symbol)[] = []; // this one
+    // private verbose = false; // this one
+    // private excludeKeys: (string | number | symbol)[] = []; // this one
 
     constructor(
         public state: S,
@@ -29,13 +29,12 @@ export class Store<S, R extends AnyReducersType<S>> {
             dispatch[k] = (...args: any[]): S => {
                 const reducer = reducers[k];
                 if (reducer) {
-                    const exclude = this.excludeKeys.includes(k); // this one
+                    // const exclude = this.excludeKeys.includes(k); // this one
                     this.state = reducer.call(reducers, this.state, ...args);
-                    if (this.verbose && !exclude) {
-                        // this one
-                        console.log(`(1) Action: ${String(k)}`);
-                    }
-
+                    // if (this.verbose && !exclude) {
+                    //     // this one
+                    //     console.log(`(1) Action: ${String(k)}`);
+                    // }
                     this.emit();
                 }
                 return this.state;
