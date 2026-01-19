@@ -1,4 +1,3 @@
-import { COLORS, lightGrey, mediumGrey } from "../colors";
 import {
     chordCubeExperimentalConstants,
     keyCubeExperimentalConstants,
@@ -11,17 +10,9 @@ import {
     Mode,
     Orderings,
     RootReferences,
-    VertexType,
 } from "../types";
-import {
-    buildKeyWheel,
-    DEFAULT_NOTE_COLOR_OPTIONS,
-    getEmptySet,
-    getNotes,
-    getPegs,
-    mod,
-} from "../util";
-import { AppStateType } from "./types";
+import { buildKeyWheel, dup, getEmptySet, getNotes, mod } from "../util";
+import { AppStateType, SceneKey } from "./types";
 
 export const DEFAULT_APP_STATE: () => AppStateType = () => {
     return {
@@ -39,61 +30,20 @@ export const DEFAULT_APP_STATE: () => AppStateType = () => {
         instrumentsVisible: false,
         scales: [],
         // keyCube / chordCube
-        layoutDisabledKeys: {},
-        edgeSize: 150,
-        keyCubeThreeProps: {},
-        keyCubeVertices: {},
-        keyCubeConnections: [],
-        keyCubeStartingPos: [0, 0, 0],
-        chordCubeThreeProps: {},
-        chordCubeVertices: {},
-        chordCubeStartingPos: [0, 0, 0],
-        chordCubeConnections: [],
+        keyCube: {
+            edgeSize: 150,
+            vertices: {},
+            connections: [],
+            startingPos: [0, 0, 0],
+        },
+        chordCube: {
+            edgeSize: 150,
+            vertices: {},
+            connections: [],
+            startingPos: [0, 0, 0],
+        },
     };
 };
-
-// builds object with key pointing to textGeometry props for specific vertix
-function buildThreeProps(
-    selected: boolean[][],
-    vertices: Record<string, VertexType>,
-): {
-    [key in string]: string[][];
-} {
-    function getNoteColors(root: NoteNames, scaleType: ChordNames) {
-        const rootIdx = NOTE_NAMES.indexOf(root);
-        if (rootIdx === -1) return DEFAULT_NOTE_COLOR_OPTIONS();
-
-        const scaleNotes = getNotes(
-            SHAPES[scaleType].map((note) => (note + rootIdx) % 12).sort(),
-        );
-
-        const noteColors = scaleNotes.map((note) =>
-            note ? [mediumGrey] : [lightGrey],
-        );
-
-        for (let i = selected.length - 1; i >= 0; i--) {
-            const selectedPegs = getPegs(selected[i]);
-            if (
-                selectedPegs.length &&
-                selectedPegs.every((val) => scaleNotes[val])
-            ) {
-                for (let peg of selectedPegs) {
-                    noteColors[peg].push(COLORS(1)[i]);
-                }
-            }
-        }
-
-        return noteColors;
-    }
-
-    const nextThreeProps: { [key in string]: string[][] } = {};
-    for (let key in vertices) {
-        let { root, scaleType } = vertices[key];
-        nextThreeProps[key] = getNoteColors(root, scaleType);
-    }
-
-    return nextThreeProps;
-}
 
 // Reducers
 export const reducers = {
@@ -150,30 +100,58 @@ export const reducers = {
             scales: buildKeyWheel(0),
         };
     },
-    changeName(state: AppStateType, noteNames: NoteNames[]): AppStateType {
+    changeName(
+        state: AppStateType,
+        noteName: NoteNames,
+        index: number,
+    ): AppStateType {
+        // TODO: clicking on the Input scales to change selected notes after changing name in
+        //  dropdown doesn't clear dropdowns, fix this
+        const { noteNames, chordNames, selected } = state;
+        const newNoteNames = dup(noteNames);
+        newNoteNames[index] = noteName;
+
+        const rootIdx = NOTE_NAMES.indexOf(newNoteNames[index]);
+        const pegs = SHAPES[chordNames[index]]
+            .map((note) => mod(note + rootIdx, 12))
+            .sort();
+
+        const newSelected = dup(selected);
+        newSelected[index] = getNotes(pegs);
+
         return {
-            ...state,
-            noteNames,
+            ...this.setSelected(state, newSelected),
+            noteNames: newNoteNames,
         };
     },
-    changeChord(state: AppStateType, chordNames: ChordNames[]): AppStateType {
+    changeChord(
+        state: AppStateType,
+        chordName: ChordNames,
+        index: number,
+    ): AppStateType {
+        // TODO: clicking on the Input scales after changing chord in
+        //  dropdown doesn't clear input, fix this
+        const { noteNames, chordNames, selected } = state;
+        const newChordNames = dup(chordNames);
+        newChordNames[index] = chordName;
+
+        const rootIdx = NOTE_NAMES.indexOf(noteNames[index]);
+        const pegs = SHAPES[newChordNames[index]]
+            .map((note) => mod(note + rootIdx, 12))
+            .sort();
+
+        const newSelected = dup(selected);
+        newSelected[index] = getNotes(pegs);
+
         return {
-            ...state,
-            chordNames,
+            ...this.setSelected(state, newSelected),
+            chordNames: newChordNames,
         };
     },
     setSelected(state: AppStateType, selected: boolean[][]): AppStateType {
-        const { keyCubeVertices, chordCubeVertices } = state;
-        const keyCubeThreeProps = buildThreeProps(selected, keyCubeVertices);
-        const chordCubeThreeProps = buildThreeProps(
-            selected,
-            chordCubeVertices,
-        );
         return {
             ...state,
             selected,
-            keyCubeThreeProps,
-            chordCubeThreeProps,
         };
     },
     toggleMode(state: AppStateType, mode: Mode): AppStateType {
@@ -260,46 +238,49 @@ export const reducers = {
         };
     },
     initThreeProps(state: AppStateType): AppStateType {
+        const { keyCube, chordCube } = state;
         const {
             startingPos: keyCubeStartingPos,
             vertices: keyCubeVertices,
             connections: keyCubeConnections,
-        } = keyCubeExperimentalConstants(state.edgeSize);
+        } = keyCubeExperimentalConstants(keyCube.edgeSize);
         const {
             vertices: chordCubeVertices,
             startingPos: chordCubeStartingPos,
             connections: chordCubeConnections,
-        } = chordCubeExperimentalConstants(state.edgeSize);
-        const keyCubeThreeProps = buildThreeProps(
-            getEmptySet(),
-            keyCubeVertices,
-        );
-        const chordCubeThreeProps = buildThreeProps(
-            getEmptySet(),
-            chordCubeVertices,
-        );
+        } = chordCubeExperimentalConstants(chordCube.edgeSize);
         return {
             ...state,
-            keyCubeThreeProps,
-            keyCubeStartingPos,
-            keyCubeVertices,
-            keyCubeConnections,
-            chordCubeVertices,
-            chordCubeStartingPos,
-            chordCubeConnections,
-            chordCubeThreeProps,
+            keyCube: {
+                ...keyCube,
+                startingPos: keyCubeStartingPos,
+                vertices: keyCubeVertices,
+                connections: keyCubeConnections,
+            },
+            chordCube: {
+                ...chordCube,
+                vertices: chordCubeVertices,
+                startingPos: chordCubeStartingPos,
+                connections: chordCubeConnections,
+            },
         };
     },
-    setLayoutDisabledKey(
+    hideVertices(
         state: AppStateType,
-        layoutKey: string,
-        layoutDisabled: boolean,
+        scene: SceneKey,
+        chordName: ChordNames,
+        hide: boolean,
     ): AppStateType {
+        const { vertices } = state[scene];
+        const newVertices = dup(vertices);
+        Object.values(newVertices).map((vertex) => {
+            if (vertex.scaleType === chordName) vertex.hidden = hide;
+        });
         return {
             ...state,
-            layoutDisabledKeys: {
-                ...state.layoutDisabledKeys,
-                [layoutKey]: layoutDisabled,
+            [scene]: {
+                ...state[scene],
+                vertices: newVertices,
             },
         };
     },

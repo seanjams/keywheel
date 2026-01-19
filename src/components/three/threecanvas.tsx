@@ -1,8 +1,8 @@
 import React, { useState } from "react";
 import { Canvas } from "@react-three/fiber";
 import { View } from "@react-three/drei";
-import { AppStore } from "../store/state";
-import { useDerivedState } from "../store/hooks";
+import { AppStore } from "../../store/state";
+import { useDerivedState } from "../../store/hooks";
 import { KeyCube } from "./keycube";
 import { ChordCube } from "./chordcube";
 

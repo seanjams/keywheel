@@ -75,9 +75,13 @@ export type TweekType = {
 export type PositionType = [number, number, number];
 
 export type VertexType = {
-    key: string;
-    label: string;
-    root: NoteNames;
-    scaleType: ChordNames;
-    position: PositionType;
+    key: string; // unique key for vertex
+    alternativeKeys: string[]; // other vertex keys which are enharmonic to this one
+    label: string; // verbose name
+    layerIdx: number; // int to differentiate repeated notes along a lattice
+    rootIdx: number; // 0-11, corresponds to note name
+    root: NoteNames; // note name for rootIdx
+    scaleType: ChordNames; // scale or chord represented at vertex
+    position: PositionType; // position of vertex [x, y, z]
+    hidden: boolean; // is this vertex visible
 };

@@ -11,7 +11,6 @@ import {
 
 import { NOTE_RADIUS, SCALE_RADIUS, NOTE_NAMES, EMPTY } from "../consts";
 
-import { Mode, Orderings, RootReferences } from "../types";
 import {
     getPegs,
     mergeNotes,
@@ -21,6 +20,8 @@ import {
     getMajor,
     mod,
 } from "../util";
+import { AppStore } from "../store/state";
+import { useDerivedState } from "../store/hooks";
 
 const textStyle: CSSProperties = {
     position: "relative",
@@ -38,29 +39,33 @@ const svgContainerStyle: CSSProperties = {
 
 interface ScaleProps {
     notes: boolean[]; //array of 12 bools, the notes that are part of the scale
-    selected: boolean[][]; //array of 8 separate notes objects for svg and coloring
     isInput: boolean; //bool for styling svg and event handlers of input type scales
-    mode: Mode; //string for deciding how to render svg
-    rootReference: RootReferences; //bool for labeling notes
     index: number; //int for color index of input type scales
-    mute: boolean; //bool for volume
     style: CSSProperties; // scale container style
-    ordering: Orderings; //key representing what order to arrange notes
     handleClick?: (i: number) => void;
+    appStore: AppStore;
 }
 
 export const Scale: React.FC<ScaleProps> = ({
+    appStore,
     notes,
-    selected,
-    mode,
-    rootReference,
     index,
-    mute,
     isInput,
     style,
-    ordering,
     handleClick,
 }) => {
+    const [getState] = useDerivedState(
+        appStore,
+        ({ selected, mute, mode, rootReference, ordering }) => ({
+            selected,
+            mute,
+            mode,
+            rootReference,
+            ordering,
+        }),
+    );
+    const { selected, mute, mode, rootReference, ordering } = getState();
+
     const getSVG = () => {
         let result: boolean[][] = [];
         let colorIdx = 8;

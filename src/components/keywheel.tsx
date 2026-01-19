@@ -1,25 +1,19 @@
 import React, { CSSProperties } from "react";
-import { Orderings, RootReferences, Mode } from "../types";
 import { ScaleNode } from "../util";
 import { Scale } from "./scale";
+import { AppStore } from "../store/state";
+import { useDerivedState } from "../store/hooks";
 
 interface KeyWheelProps {
-    selected: boolean[][];
-    scales: ScaleNode[];
-    rootReference: RootReferences;
-    mode: Mode;
-    mute: boolean;
-    ordering: Orderings;
+    appStore: AppStore;
 }
 
-export const KeyWheel: React.FC<KeyWheelProps> = ({
-    selected,
-    scales,
-    rootReference,
-    mode,
-    mute,
-    ordering,
-}) => {
+export const KeyWheel: React.FC<KeyWheelProps> = ({ appStore }) => {
+    const [getState] = useDerivedState(appStore, ({ scales }) => ({
+        scales,
+    }));
+    const { scales } = getState();
+
     const scaleComponents = scales.map((node: ScaleNode, i: number) => {
         const rowShift = i % 12 > 5 ? 1 : 0;
         const colStart = 4 * (i % 6) + 2 * rowShift + 1;
@@ -35,14 +29,10 @@ export const KeyWheel: React.FC<KeyWheelProps> = ({
             <Scale
                 key={i}
                 notes={node.notes} //array of 12 bools, the notes that are part of the scale
-                selected={selected} //array of 8 separate notes objects for svg and coloring
                 isInput={false} //bool for styling svg and event handlers of input type scales
-                mode={mode} //string for deciding how to render svg
-                rootReference={rootReference} //bool for labeling notes
                 index={-1} //int for color index of input type scales
-                mute={mute} //bool for volume
                 style={style} // scale container style
-                ordering={ordering} //key representing what order to arrange notes
+                appStore={appStore}
             />
         );
     });

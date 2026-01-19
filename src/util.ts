@@ -185,17 +185,23 @@ export function chordReader(notes: boolean[]): {
 export function getNotesFromName(
     root: NoteNames,
     scaleType: ChordNames,
-): boolean[] | null {
-    if (!SHAPES.hasOwnProperty(scaleType)) return null;
-    if (!NOTE_NAMES.includes(root)) return null;
+): boolean[] {
+    if (!SHAPES.hasOwnProperty(scaleType)) return [...EMPTY];
+    if (!NOTE_NAMES.includes(root)) return [...EMPTY];
     const rootIdx = NOTE_NAMES.indexOf(root);
     return getNotes(SHAPES[scaleType].map((peg) => mod(rootIdx + peg, 12)));
 }
 
 let currentSequence: Tone.Sequence | null = null;
 let currentSynth: Tone.PolySynth | null = null;
+let currentSampler: Tone.Sampler | null = null;
 
-export const soundNotes = async (pegs: number[], modeIdx = 0, poly = false) => {
+export const soundNotes = async (
+    pegs: number[],
+    modeIdx = 0,
+    poly = false,
+    octave: number = 5,
+) => {
     await Tone.start();
 
     const transport = Tone.getTransport();
@@ -215,7 +221,70 @@ export const soundNotes = async (pegs: number[], modeIdx = 0, poly = false) => {
     transport.cancel(0);
     transport.position = 0;
 
-    currentSynth = new Tone.PolySynth(Tone.Synth).toDestination();
+    // Create piano samples programmatically using buffers
+    const createPianoSample = (frequency: number, duration = 3) => {
+        const sampleRate = Tone.context.sampleRate;
+        const buffer = Tone.context.createBuffer(
+            1,
+            sampleRate * duration,
+            sampleRate,
+        );
+        const channelData = buffer.getChannelData(0);
+
+        // Generate a piano-like sound with multiple harmonics
+        for (let i = 0; i < channelData.length; i++) {
+            const t = i / sampleRate;
+
+            // Fundamental and harmonics with different amplitudes
+            let sample = 0;
+            sample += Math.sin(2 * Math.PI * frequency * t) * 0.5;
+            sample += Math.sin(2 * Math.PI * frequency * 2 * t) * 0.3;
+            sample += Math.sin(2 * Math.PI * frequency * 3 * t) * 0.15;
+            sample += Math.sin(2 * Math.PI * frequency * 4 * t) * 0.08;
+            sample += Math.sin(2 * Math.PI * frequency * 5 * t) * 0.05;
+
+            // Piano-like envelope
+            const attack = Math.min(1, t * 100);
+            const decay = Math.exp(-t * 1.2);
+            const envelope = attack * decay;
+
+            channelData[i] = sample * envelope * 0.3;
+        }
+
+        return new Tone.ToneAudioBuffer(buffer);
+    };
+
+    // Create samples for specific notes
+    const samples = {
+        C4: createPianoSample(261.63),
+        E4: createPianoSample(329.63),
+        G4: createPianoSample(392.0),
+        C5: createPianoSample(523.25),
+    };
+
+    // Create sampler with our generated samples
+    currentSampler = new Tone.Sampler({
+        urls: samples,
+        attack: 0,
+        release: 0.5,
+    }).toDestination();
+
+    // Add effects
+    const reverb = new Tone.Reverb({
+        decay: 2.5,
+        wet: 0.3,
+    });
+
+    const compressor = new Tone.Compressor({
+        threshold: -20,
+        ratio: 4,
+    });
+
+    currentSampler.connect(compressor);
+    compressor.connect(reverb);
+    reverb.toDestination();
+
+    await reverb.generate();
 
     let scale = dup(pegs);
     for (let i = 0; i < modeIdx; i++) scale = rotate(scale);
@@ -223,16 +292,16 @@ export const soundNotes = async (pegs: number[], modeIdx = 0, poly = false) => {
     const notes: string[] = [];
     for (let i = 0; i < scale.length; i++) {
         if (scale[i + 1] < scale[i]) scale[i + 1] += 12;
-        notes.push(Tone.Frequency(60 + scale[i], "midi").toNote());
+        notes.push(Tone.Frequency(octave * 12 + scale[i], "midi").toNote());
     }
     if (!poly) notes.push(Tone.Frequency(notes[0]).transpose(12).toNote());
 
     if (poly) {
-        currentSynth.triggerAttackRelease(notes, "4n", Tone.now(), 0.5);
+        currentSampler.triggerAttackRelease(notes, "4n", Tone.now(), 0.5);
     } else {
         currentSequence = new Tone.Sequence(
             (time, note) => {
-                currentSynth?.triggerAttackRelease(note, "8n", time, 0.5);
+                currentSampler?.triggerAttackRelease(note, "8n", time, 0.5);
             },
             notes,
             "8n",
@@ -243,6 +312,78 @@ export const soundNotes = async (pegs: number[], modeIdx = 0, poly = false) => {
         transport.start();
     }
 };
+
+// export const soundNotes = async (pegs: number[], modeIdx = 0, poly = false) => {
+//     await Tone.start();
+
+//     const transport = Tone.getTransport();
+
+//     // Cleanup previous playback
+//     if (currentSequence) {
+//         currentSequence.stop();
+//         currentSequence.dispose();
+//         currentSequence = null;
+//     }
+//     if (currentSynth) {
+//         currentSynth.dispose();
+//         currentSynth = null;
+//     }
+
+//     transport.stop();
+//     transport.cancel(0);
+//     transport.position = 0;
+
+//     // Create a polyphonic synth with piano-like characteristics
+//     currentSynth = new Tone.PolySynth(Tone.Synth, {
+//         oscillator: {
+//             type: "triangle",
+//         },
+//         envelope: {
+//             attack: 0.005,
+//             decay: 0.3,
+//             sustain: 0.1,
+//             release: 2,
+//         },
+//     }).toDestination();
+
+//     // Add harmonics for richer piano sound
+//     const filter = new Tone.Filter(2000, "lowpass");
+//     const compressor = new Tone.Compressor(-20, 3);
+
+//     // Add some effects for authenticity
+//     const reverb = new Tone.Reverb({ decay: 2.5, wet: 0.2 });
+//     currentSynth.connect(filter);
+//     filter.connect(compressor);
+//     compressor.connect(reverb);
+//     reverb.toDestination();
+//     await reverb.generate();
+
+//     let scale = dup(pegs);
+//     for (let i = 0; i < modeIdx; i++) scale = rotate(scale);
+
+//     const notes: string[] = [];
+//     for (let i = 0; i < scale.length; i++) {
+//         if (scale[i + 1] < scale[i]) scale[i + 1] += 12;
+//         notes.push(Tone.Frequency(60 + scale[i], "midi").toNote());
+//     }
+//     if (!poly) notes.push(Tone.Frequency(notes[0]).transpose(12).toNote());
+
+//     if (poly) {
+//         currentSynth.triggerAttackRelease(notes, "4n", Tone.now(), 0.5);
+//     } else {
+//         currentSequence = new Tone.Sequence(
+//             (time, note) => {
+//                 currentSynth?.triggerAttackRelease(note, "8n", time, 0.5);
+//             },
+//             notes,
+//             "8n",
+//         );
+
+//         currentSequence.loop = false;
+//         currentSequence.start(0);
+//         transport.start();
+//     }
+// };
 
 //input: [0,2,2,1] relative tablature for Major chord
 //output: [1,3,4,2] corresponding finger to play each note with

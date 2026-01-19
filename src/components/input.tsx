@@ -1,9 +1,11 @@
 import React, { CSSProperties, useEffect } from "react";
 import { EMPTY, SHAPES, NOTE_NAMES } from "../consts";
 import { lightGrey } from "../colors";
-import { Mode, Orderings, ReactChangeEvent, RootReferences } from "../types";
-import { getPegs, soundNotes, chordReader, dup } from "../util";
+import { ChordNames, NoteNames, ReactChangeEvent } from "../types";
+import { getPegs, soundNotes, chordReader, dup, getNotes } from "../util";
 import { Scale } from "./scale";
+import { AppStore } from "../store/state";
+import { useDerivedState } from "../store/hooks";
 
 const containerStyle: CSSProperties = {
     display: "flex",
@@ -37,28 +39,16 @@ const selectContainerStyle: CSSProperties = {
 };
 
 interface InputProps {
-    selected: boolean[][];
-    mute: boolean;
-    rootReference: RootReferences;
-    mode: Mode;
-    ordering: Orderings;
-    clearNotes: (i: number) => void;
-    onNameChange: (e: ReactChangeEvent, i: number) => void;
-    onChordChange: (e: ReactChangeEvent, i: number) => void;
-    handleClick: (k: number, i: number) => void;
+    appStore: AppStore;
 }
 
-export const Input: React.FC<InputProps> = ({
-    selected,
-    mute,
-    rootReference,
-    mode,
-    ordering,
-    clearNotes,
-    onNameChange,
-    onChordChange,
-    handleClick,
-}) => {
+export const Input: React.FC<InputProps> = ({ appStore }) => {
+    const [getState] = useDerivedState(appStore, ({ selected, mute }) => ({
+        selected,
+        mute,
+    }));
+    const { selected, mute } = getState();
+
     useEffect(() => {
         const handleKeyPress = (e: KeyboardEvent) => {
             const i = parseInt(e.key);
@@ -76,6 +66,28 @@ export const Input: React.FC<InputProps> = ({
             const modeIdx = chord.indexOf(rootIdx);
             soundNotes(chord, modeIdx, true);
         }
+    };
+
+    const clearNotes = (i: number) => {
+        if (i >= 0 && i < selected.length) {
+            const newSelected = dup(selected);
+            newSelected[i] = dup(EMPTY);
+            appStore.dispatch.setSelected(newSelected);
+        }
+    };
+
+    const onNameChange = (e: ReactChangeEvent, i: number) => {
+        appStore.dispatch.changeName(e.target.value as NoteNames, i);
+    };
+
+    const onChordChange = (e: ReactChangeEvent, i: number) => {
+        appStore.dispatch.changeChord(e.target.value as ChordNames, i);
+    };
+
+    const handleClick = (i: number, id: number) => {
+        const newSelected: boolean[][] = dup(selected);
+        newSelected[id][i] = !newSelected[id][i];
+        appStore.dispatch.setSelected(newSelected);
     };
 
     return (
@@ -142,15 +154,11 @@ export const Input: React.FC<InputProps> = ({
                                 </select>
                             </div>
                             <Scale
+                                appStore={appStore}
                                 notes={dup(EMPTY)}
                                 index={i}
-                                selected={selected}
                                 handleClick={(k) => handleClick(k, i)}
-                                rootReference={rootReference}
                                 isInput={true}
-                                mode={mode}
-                                mute={mute}
-                                ordering={ordering}
                                 style={{
                                     width: "7vw",
                                     height: "7vw",

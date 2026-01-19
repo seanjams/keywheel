@@ -1,7 +1,6 @@
 import * as React from "react";
 import ReactDOM from "react-dom/client";
 import { Container } from "./container";
-import { KeyCube } from "./keycube";
 import "../css/reset.css";
 import "../css/static.css";
 import { AppStore } from "../store/state";
