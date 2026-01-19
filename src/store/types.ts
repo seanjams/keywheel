@@ -40,15 +40,3 @@ export interface AppStateType {
     keyCube: SceneType;
     chordCube: SceneType;
 }
-
-export type ChordCubeNames =
-    | ChordNames.maj7Chord
-    | ChordNames.min7Chord
-    | ChordNames.domChord
-    | ChordNames.min7b5Chord
-    | ChordNames.minMajChord
-    | ChordNames.majAugChord
-    | ChordNames.domAugChord
-    | ChordNames.domb5Chord
-    | ChordNames.dim7Chord
-    | ChordNames.augChord;

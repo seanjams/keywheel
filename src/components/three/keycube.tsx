@@ -3,6 +3,8 @@ import { View, OrthographicCamera } from "@react-three/drei";
 import { AppStore } from "../../store/state";
 import { Lights, Controls, ScaleVertices, Edges } from "./common";
 import { SceneKey } from "../../store/types";
+import { ChordNames } from "../../types";
+import { ToolBar } from "./toolbar";
 
 interface KeyCubeProps {
     appStore: AppStore;
@@ -12,6 +14,7 @@ interface KeyCubeProps {
 export const KeyCube: React.FC<KeyCubeProps> = ({ appStore }) => {
     const keyCubeDivRef = useRef<HTMLDivElement>(null);
     const { edgeSize, startingPos } = appStore.state.keyCube;
+
     return (
         <div
             ref={keyCubeDivRef}
@@ -22,6 +25,16 @@ export const KeyCube: React.FC<KeyCubeProps> = ({ appStore }) => {
                 backgroundColor: "#000",
             }}
         >
+            <ToolBar
+                appStore={appStore}
+                scene={SceneKey.keyCube}
+                chordNames={[
+                    ChordNames.majorScale,
+                    ChordNames.melMinScale,
+                    ChordNames.harMinScale,
+                    ChordNames.harMajScale,
+                ]}
+            />
             <View
                 track={keyCubeDivRef as React.RefObject<HTMLDivElement>}
                 style={{
