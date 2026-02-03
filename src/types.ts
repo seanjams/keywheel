@@ -1,10 +1,15 @@
 export type Dirs = "TL" | "TR" | "BL" | "BR";
 
-export type Mode = "union" | "intersection";
+export enum RootReferences {
+    numbers = "numbers",
+    degrees = "degrees",
+    names = "names",
+}
 
-export type RootReferences = "numbers" | "degrees" | "names";
-
-export type Orderings = "chromatic" | "fifths";
+export enum Orderings {
+    chromatic = "chromatic",
+    fifths = "fifths",
+}
 
 export enum NoteNames {
     C = "C",
@@ -48,15 +53,18 @@ export enum ChordNames {
     min7b5Chord = "min7♭5",
     dim7Chord = "dimbb7",
     minMajChord = "minmaj7",
+    majb5Chord = "maj7♭5",
     majAugChord = "maj7♯5",
+    majSusChord = "maj7sus4",
     domb5Chord = "7♭5",
     domAugChord = "7♯5",
+    domSusChord = "7sus4",
     pentaScale = "penta",
     dimPentaScale = "Dim Penta",
     majorScale = "Major",
-    melMinScale = "Mel min",
-    harMajScale = "Har Maj",
-    harMinScale = "Har Min",
+    melMinScale = "Mel Minor",
+    harMajScale = "Har Major",
+    harMinScale = "Har Minor",
     NeoScale = "Neo",
 }
 

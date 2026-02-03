@@ -1,15 +1,32 @@
-import React, { useRef, useEffect } from "react";
+import React, { useRef, useEffect, useState } from "react";
 import * as THREE from "three";
 import type { OrbitControls as OrbitControlsImpl } from "three-stdlib";
 import { useFrame } from "@react-three/fiber";
 import { OrbitControls, Text3D, Center } from "@react-three/drei";
-import { EMPTY, NOTE_NAMES, SHAPES } from "../../consts";
-import { COLORS, darkGrey, grey, lightGrey, mediumGrey } from "../../colors";
+import { useDerivedState } from "../../store/hooks";
 import { AppStore } from "../../store/state";
 import { SceneKey } from "../../store/types";
-import { ReactMouseEvent, VertexType } from "../../types";
-import { getNotesFromName, getPegs, mod, soundNotes } from "../../util";
-import { useDerivedState } from "../../store/hooks";
+import {
+    Orderings,
+    ReactMouseEvent,
+    RootReferences,
+    VertexType,
+} from "../../types";
+import {
+    EMPTY,
+    NOTE_NAMES,
+    SHAPES,
+    COLORS,
+    darkGrey,
+    grey,
+    lightGrey,
+    mediumGrey,
+    getNotesFromName,
+    getPegs,
+    soundNotes,
+    getScaledPolygonPoints,
+    mod,
+} from "../../util";
 
 interface SceneProps {
     appStore: AppStore;
@@ -174,31 +191,54 @@ const ScalePolygon: React.FC<ScalePolygonProps> = ({
     radius,
 }) => {
     const color = COLORS(1)[inputIndex];
+    const selectedNotesRef = useRef(appStore.state.selected[inputIndex]);
+    const orderingRef = useRef(appStore.state.ordering);
 
-    const [getState] = useDerivedState(appStore, ({ selected }) => {
-        const selectedNotes = selected[inputIndex];
-        let points: THREE.Vector2[] = [];
-        const { root, scaleType } = vertex;
-        const vertexNotes = getNotesFromName(root, scaleType);
+    const [getState] = useDerivedState(
+        appStore,
+        (
+            { selected, normalizedPolygonPoints, ordering },
+            componentState: { shape: THREE.Shape | null },
+        ) => {
+            const selectedNotes = selected[inputIndex];
 
-        for (let i = 0; i < selectedNotes.length; i++) {
-            if (selectedNotes[i]) {
-                // if selected notes don't all fit within the current scale/chord, bail
-                if (!vertexNotes[i]) {
-                    points = [];
-                    break;
-                }
-                // create directional vectors from center of outer sphere to build note clock
-                let x = 16 * Math.sin((2 * i * Math.PI) / 12);
-                let y = 16 * Math.cos((2 * i * Math.PI) / 12);
-                points.push(new THREE.Vector2(x, y));
+            // if dependencies haven't changed, don't recalculate
+            if (
+                selectedNotesRef.current.every(
+                    (note, i) => note === selectedNotes[i],
+                ) &&
+                orderingRef.current === ordering
+            ) {
+                return componentState || { shape: null };
             }
-        }
 
-        return {
-            shape: points.length ? new THREE.Shape(points) : null,
-        };
-    });
+            // set refs
+            selectedNotesRef.current = selectedNotes;
+            orderingRef.current = ordering;
+
+            const { root, scaleType } = vertex;
+            const vertexNotes = getNotesFromName(root, scaleType);
+
+            // only draw polygon if this specific inputIndex matches this vertex
+            if (
+                selectedNotes.every(
+                    (note, i) => !note || (note && vertexNotes[i]),
+                )
+            ) {
+                const points = getScaledPolygonPoints(
+                    normalizedPolygonPoints[inputIndex],
+                    "three",
+                    16,
+                    0,
+                ).map(([x, y]) => new THREE.Vector2(x, y));
+
+                return {
+                    shape: points.length ? new THREE.Shape(points) : null,
+                };
+            }
+            return { shape: null };
+        },
+    );
     const { shape } = getState();
 
     if (!shape) return null;
@@ -271,8 +311,8 @@ export const NoteBall: React.FC<NoteBallProps> = ({
 
     useEffect(() => {
         // things that should happen on first render cylce after mounting
-        const { selected } = appStore.state;
-        setMaterialColor(selected);
+        const { selected, ordering } = appStore.state;
+        setMaterialColor(selected, ordering);
 
         // create directional vectors from center of outer sphere to build note clock
         let x = Math.sin((2 * noteIndex * Math.PI) / 12);
@@ -286,27 +326,41 @@ export const NoteBall: React.FC<NoteBallProps> = ({
         }
 
         return appStore.addListener((appState) => {
-            const { selected } = appState;
-            setMaterialColor(selected);
+            const { selected, ordering } = appState;
+            setMaterialColor(selected, ordering);
         });
     }, []);
 
-    function setMaterialColor(selected: boolean[][]) {
+    function setMaterialColor(selected: boolean[][], ordering: Orderings) {
         if (materialRef.current) {
             let isSelected = false;
             let highlightColor = null;
+
+            // get relative index considering order of fifths or chromatic
+            const index =
+                ordering === Orderings.fifths
+                    ? mod(7 * noteIndex, 12)
+                    : noteIndex;
+
+            // iterate over all vertices that this node represents
             for (let vertex of vertices) {
                 const vertexNotes = getNotesFromName(
                     vertex.root,
                     vertex.scaleType,
                 );
-                if (vertexNotes[noteIndex]) isSelected = true;
+                // check to see if this specific note should be selected (darker grey)
+                if (vertexNotes[index]) isSelected = true;
+                // check to see if this specific note should be highlighted (color)
                 for (let i = 0; i < selected.length; i++) {
-                    const selectedPegs = getPegs(selected[i]);
+                    let selectedPegs = getPegs(selected[i]);
+
                     const isMatch =
                         selectedPegs.length &&
-                        selectedPegs.every((i) => vertexNotes[i]);
-                    if (isMatch && selected[i][noteIndex] && !highlightColor) {
+                        selectedPegs.every((peg) => vertexNotes[peg]);
+
+                    // the highlightColor should always be the color of the
+                    // first input index that matches this vertex's notes.
+                    if (isMatch && selected[i][index] && !highlightColor) {
                         highlightColor = COLORS(1)[i];
                         break;
                     }
@@ -335,14 +389,37 @@ export const NoteBall: React.FC<NoteBallProps> = ({
     );
 };
 
-interface NoteTextProps {
+interface NoteTextProps extends SceneProps {
     noteIndex: number;
 }
 
 // text on note ball
-export const NoteText: React.FC<NoteTextProps> = ({ noteIndex }) => {
+export const NoteText: React.FC<NoteTextProps> = ({
+    appStore,
+    scene,
+    noteIndex,
+}) => {
     const meshRef = useRef<THREE.Mesh>(null);
     const materialRef = useRef<THREE.MeshPhysicalMaterial>(null);
+
+    const rootReferenceRef = useRef(appStore.state.rootReference);
+    const orderingRef = useRef(appStore.state.ordering);
+
+    const fifthIndex = mod(noteIndex * 7, 12);
+
+    const refLabel = {
+        numbers: noteIndex,
+        names: NOTE_NAMES[noteIndex],
+        // degrees: numLabel,
+        degrees: NOTE_NAMES[noteIndex],
+
+        numbersFifths: fifthIndex,
+        namesFifths: NOTE_NAMES[fifthIndex],
+        // degrees: numLabel,
+        degreesFifths: NOTE_NAMES[fifthIndex],
+    };
+
+    const [visibleLabel, setVisibleLabel] = useState<string>(refLabel.names);
 
     useEffect(() => {
         // create directional vectors from center of outer sphere to build note clock
@@ -355,12 +432,54 @@ export const NoteText: React.FC<NoteTextProps> = ({ noteIndex }) => {
         if (meshRef.current) {
             meshRef.current.translateOnAxis(z, 23);
         }
+
+        return appStore.addListener(({ rootReference, ordering }) => {
+            if (
+                rootReference !== rootReferenceRef.current ||
+                orderingRef.current !== ordering
+            ) {
+                rootReferenceRef.current = rootReference;
+                orderingRef.current = ordering;
+
+                if (
+                    rootReference === RootReferences.names &&
+                    ordering === Orderings.chromatic
+                ) {
+                    setVisibleLabel(refLabel.names);
+                } else if (
+                    rootReference === RootReferences.names &&
+                    ordering === Orderings.fifths
+                ) {
+                    setVisibleLabel(refLabel.namesFifths);
+                } else if (
+                    rootReference === RootReferences.numbers &&
+                    ordering === Orderings.chromatic
+                ) {
+                    setVisibleLabel(`${refLabel.numbers}`);
+                } else if (
+                    rootReference === RootReferences.numbers &&
+                    ordering === Orderings.fifths
+                ) {
+                    setVisibleLabel(`${refLabel.numbersFifths}`);
+                } else if (
+                    rootReference === RootReferences.degrees &&
+                    ordering === Orderings.chromatic
+                ) {
+                    setVisibleLabel(refLabel.degrees);
+                } else if (
+                    rootReference === RootReferences.degrees &&
+                    ordering === Orderings.fifths
+                ) {
+                    setVisibleLabel(refLabel.degreesFifths);
+                }
+            }
+        });
     }, []);
 
     return (
         <Center>
             <Text3D ref={meshRef} font="../font.json" height={1} size={2}>
-                {NOTE_NAMES[noteIndex]}
+                {visibleLabel}
                 <meshPhysicalMaterial ref={materialRef} color={darkGrey} />
             </Text3D>
         </Center>
@@ -380,34 +499,20 @@ export const ScaleVertex: React.FC<ScaleVertexProps> = ({
     const groupRef = useRef<THREE.Group>(null);
     const innerGroupRef = useRef<THREE.Group>(null);
     const isVisibleRef = useRef(getScaleVertexVisible(vertices));
-    const notes = getScaleVertexNotes(vertices);
+    const isMuteRef = useRef(appStore.state.mute);
+    // const notes = getScaleVertexNotes(vertices);
     const vertexKeys = vertices.map(({ key }) => key);
     const position = vertices[0].position; // all vertices shared by a ScaleVertex are in same position
     const radius = 20;
 
-    // Get union of notes from each vertex to display on noteballs
-    function getScaleVertexNotes(vertices: VertexType[]) {
-        let commonNotes = [...EMPTY];
-        vertices.forEach(({ root, scaleType }) => {
-            const notes = getNotesFromName(root, scaleType);
-            notes.forEach((note, i) => {
-                if (note) commonNotes[i] = true;
-            });
-        });
-        return commonNotes;
-    }
-
-    // if any vertex is visible, this whole ScaleVertex is visible
-    function getScaleVertexVisible(vertices: VertexType[]) {
-        return vertices.some(({ hidden }) => !hidden);
-    }
-
     useEffect(
         () =>
             appStore.addListener((appState) => {
+                const { mute } = appState;
                 const { vertices: allVertices } = appState[scene];
                 const vertices = vertexKeys.map((key) => allVertices[key]);
                 isVisibleRef.current = getScaleVertexVisible(vertices);
+                isMuteRef.current = mute;
             }),
         [],
     );
@@ -427,24 +532,51 @@ export const ScaleVertex: React.FC<ScaleVertexProps> = ({
         }
     });
 
+    // Get union of notes from each vertex to display on noteballs
+    function getScaleVertexNotes(vertices: VertexType[]) {
+        let commonNotes = [...EMPTY];
+        vertices.forEach(({ root, scaleType }) => {
+            const notes = getNotesFromName(root, scaleType);
+            notes.forEach((note, i) => {
+                if (note) commonNotes[i] = true;
+            });
+        });
+        return commonNotes;
+    }
+
+    // if any vertex is visible, this whole ScaleVertex is visible
+    function getScaleVertexVisible(vertices: VertexType[]) {
+        return vertices.some((vertex) => !vertex.hidden);
+    }
+
     // TODO: Fix me, only plays first vertex in list for now
     const onClick = (e: ReactMouseEvent) => {
         e.stopPropagation();
+        if (isMuteRef.current) return;
+
         const { root, rootIdx, scaleType } = vertices[0];
         const notes = getNotesFromName(root, scaleType);
         if (!notes) return;
-        const shape = SHAPES[scaleType];
-        // make a spread voicing
-        let pegs = shape;
-        let octave = 5;
-        if (shape.length == 4) {
-            pegs = [shape[0], shape[3], shape[1], shape[2]].map(
-                (peg) => peg + rootIdx,
-            );
-            octave = rootIdx >= 6 ? 3 : 4;
-        }
 
-        soundNotes(pegs, 0, true, octave);
+        if (scene === SceneKey.chordCube) {
+            // make a spread voicing and "strum" the chord
+            const shape = SHAPES[scaleType];
+            let pegs = shape;
+            let octave = 5;
+            if (shape.length == 4) {
+                pegs = [shape[0], shape[3], shape[1], shape[2]].map(
+                    (peg) => peg + rootIdx,
+                );
+                octave = rootIdx >= 6 ? 3 : 4;
+            }
+
+            soundNotes(pegs, 0, true, octave);
+        } else if (scene === SceneKey.keyCube) {
+            // arpeggiate the scale
+            const chord = getPegs(notes);
+            const modeIdx = chord.indexOf(rootIdx);
+            soundNotes(chord, modeIdx, false);
+        }
     };
 
     // build default outer sphere
@@ -480,9 +612,15 @@ export const ScaleVertex: React.FC<ScaleVertexProps> = ({
             />,
         );
 
-        if (notes && notes[i]) {
-            noteTexts.push(<NoteText key={textKey} noteIndex={i} />);
-        }
+        // TODO, feed info here that helps determine numLabel and ordering
+        noteTexts.push(
+            <NoteText
+                key={textKey}
+                appStore={appStore}
+                scene={scene}
+                noteIndex={i}
+            />,
+        );
     }
 
     // chord polygons

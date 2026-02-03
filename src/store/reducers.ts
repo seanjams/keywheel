@@ -1,33 +1,31 @@
+import { ChordNames, NoteNames, Orderings, RootReferences } from "../types";
 import {
-    chordCubeExperimentalConstants,
-    keyCubeExperimentalConstants,
     NOTE_NAMES,
     SHAPES,
-} from "../consts";
-import {
-    ChordNames,
-    NoteNames,
-    Mode,
-    Orderings,
-    RootReferences,
-} from "../types";
-import { buildKeyWheel, dup, getEmptySet, getNotes, mod } from "../util";
-import { AppStateType, SceneKey } from "./types";
+    chordCubeExperimentalConstants,
+    keyCubeExperimentalConstants,
+    buildKeyWheel,
+    dup,
+    getEmptySet,
+    getNotes,
+    mod,
+    getNormalizedSVGPolygonPoints,
+} from "../util";
+import { AppStateType, DisplayType, SceneKey } from "./types";
 
 export const DEFAULT_APP_STATE: () => AppStateType = () => {
     return {
         start: 0,
         selected: getEmptySet(),
-        mode: "union",
-        rootReference: "names",
-        ordering: "chromatic",
+        normalizedPolygonPoints: Array(8)
+            .fill(0)
+            .map(() => new Array()),
+        rootReference: RootReferences.names,
+        ordering: Orderings.chromatic,
         mute: false,
         noteNames: Array(8).fill("C"),
         chordNames: Array(8).fill("Major"),
-        chordCubeVisible: true,
-        keyCubeVisible: false,
-        keyWheelVisible: false,
-        instrumentsVisible: false,
+        display: DisplayType.chordCube,
         scales: [],
         // keyCube / chordCube
         keyCube: {
@@ -89,7 +87,7 @@ export const reducers = {
 
         // appStore.dispatch.rehydrate(newState);
         // appStore.dispatch.setSelected(newState.selected || getEmptySet());
-        // appStore.dispatch.toggleKeyCube(
+        // appStore.dispatch.showKeyCube(
         //     !newState.keyWheelVisible && !newState.instrumentsVisible,
         // );
 
@@ -149,15 +147,18 @@ export const reducers = {
         };
     },
     setSelected(state: AppStateType, selected: boolean[][]): AppStateType {
+        const { ordering } = state;
+
+        // cache positions of polygon vertices for each input selection
+        const normalizedPolygonPoints = getNormalizedSVGPolygonPoints(
+            selected,
+            ordering,
+        );
+
         return {
             ...state,
             selected,
-        };
-    },
-    toggleMode(state: AppStateType, mode: Mode): AppStateType {
-        return {
-            ...state,
-            mode,
+            normalizedPolygonPoints,
         };
     },
     changeRootReference(
@@ -170,9 +171,18 @@ export const reducers = {
         };
     },
     changeOrder(state: AppStateType, ordering: Orderings): AppStateType {
+        const { selected } = state;
+
+        // cache positions of polygon vertices for each input selection
+        const normalizedPolygonPoints = getNormalizedSVGPolygonPoints(
+            selected,
+            ordering,
+        );
+
         return {
             ...state,
             ordering,
+            normalizedPolygonPoints,
         };
     },
     toggleMute(state: AppStateType, mute: boolean): AppStateType {
@@ -189,40 +199,10 @@ export const reducers = {
             scales: buildKeyWheel(start),
         };
     },
-    toggleChordCube(state: AppStateType): AppStateType {
+    changeDisplay(state: AppStateType, display: DisplayType): AppStateType {
         return {
             ...state,
-            instrumentsVisible: false,
-            keyWheelVisible: false,
-            keyCubeVisible: false,
-            chordCubeVisible: true,
-        };
-    },
-    toggleKeyCube(state: AppStateType): AppStateType {
-        return {
-            ...state,
-            instrumentsVisible: false,
-            keyWheelVisible: false,
-            keyCubeVisible: true,
-            chordCubeVisible: false,
-        };
-    },
-    toggleKeyWheel(state: AppStateType): AppStateType {
-        return {
-            ...state,
-            instrumentsVisible: false,
-            keyWheelVisible: true,
-            keyCubeVisible: false,
-            chordCubeVisible: false,
-        };
-    },
-    toggleInstruments(state: AppStateType): AppStateType {
-        return {
-            ...state,
-            instrumentsVisible: true,
-            keyWheelVisible: false,
-            keyCubeVisible: false,
-            chordCubeVisible: false,
+            display,
         };
     },
     saveToLocalStorage(state: AppStateType): AppStateType {
@@ -265,22 +245,79 @@ export const reducers = {
             },
         };
     },
-    hideVertices(
+    hideVerticesByType(
         state: AppStateType,
         scene: SceneKey,
-        chordName: ChordNames,
-        hide: boolean,
+        hiddenNoteNames: NoteNames[],
+        hiddenChordNames: ChordNames[],
     ): AppStateType {
         const { vertices } = state[scene];
         const newVertices = dup(vertices);
-        Object.values(newVertices).map((vertex) => {
-            if (vertex.scaleType === chordName) vertex.hidden = hide;
+
+        Object.values(newVertices).forEach((vertex) => {
+            const { rootIdx } = vertex;
+
+            if (hiddenChordNames.includes(vertex.scaleType)) {
+                vertex.hidden = true;
+                return;
+            }
+
+            const rootIndicesToHide = [];
+            rootIndicesToHide.push(rootIdx);
+            if (vertex.scaleType === ChordNames.dim7Chord) {
+                rootIndicesToHide.push(mod(rootIdx + 3, 12));
+                rootIndicesToHide.push(mod(rootIdx + 6, 12));
+                rootIndicesToHide.push(mod(rootIdx + 9, 12));
+            } else if (vertex.scaleType === ChordNames.domb5Chord) {
+                rootIndicesToHide.push(mod(rootIdx + 6, 12));
+            } else if (vertex.scaleType === ChordNames.augChord) {
+                // rootIndicesToHide.push(mod(rootIdx + 4, 12));
+                // rootIndicesToHide.push(mod(rootIdx + 8, 12));
+            }
+
+            if (
+                rootIndicesToHide.every((rootIdx) =>
+                    hiddenNoteNames.some(
+                        (note) => note === NOTE_NAMES[rootIdx],
+                    ),
+                )
+            ) {
+                vertex.hidden = true;
+                return;
+            }
+
+            vertex.hidden = false;
         });
+
         return {
             ...state,
             [scene]: {
                 ...state[scene],
                 vertices: newVertices,
+            },
+        };
+    },
+    hideVertex(
+        state: AppStateType,
+        scene: SceneKey,
+        vertexKey: string,
+        shouldHide: boolean,
+    ): AppStateType {
+        const { vertices } = state[scene];
+        const vertex = dup(vertices[vertexKey]);
+
+        if (vertex) {
+            vertex.hidden = shouldHide;
+        }
+
+        return {
+            ...state,
+            [scene]: {
+                ...state[scene],
+                vertices: {
+                    ...state[scene].vertices,
+                    [vertexKey]: vertex,
+                },
             },
         };
     },

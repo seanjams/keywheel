@@ -1,8 +1,11 @@
 import React, { CSSProperties, useState } from "react";
 import isEqual from "lodash/isEqual";
-import { NOTE_NAMES } from "../consts";
-import { COLORS, lightGrey, mediumGrey } from "../colors";
+import { NoteNames } from "../types";
 import {
+    COLORS,
+    lightGrey,
+    mediumGrey,
+    NOTE_NAMES,
     rotate,
     dup,
     getOctaveFrets,
@@ -10,7 +13,6 @@ import {
     bStringStep,
     getLabelColors,
 } from "../util";
-import { NoteNames } from "../types";
 
 const buttonStyle: CSSProperties = {
     padding: "5px",

@@ -34,9 +34,12 @@ export const ChordCube: React.FC<ChordCubeProps> = ({ appStore }) => {
                     ChordNames.domChord,
                     ChordNames.min7b5Chord,
                     ChordNames.minMajChord,
+                    ChordNames.majb5Chord,
                     ChordNames.majAugChord,
-                    ChordNames.domAugChord,
+                    ChordNames.majSusChord,
                     ChordNames.domb5Chord,
+                    ChordNames.domAugChord,
+                    ChordNames.domSusChord,
                     ChordNames.dim7Chord,
                     ChordNames.augChord,
                 ]}

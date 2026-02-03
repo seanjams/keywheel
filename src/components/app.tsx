@@ -1,5 +1,5 @@
 import React, { useEffect, CSSProperties } from "react";
-import { offWhite, lightGrey } from "../colors";
+import { offWhite } from "../util";
 import { useDerivedState } from "../store/hooks";
 import { AppStore } from "../store/state";
 import { Input } from "./input";
@@ -7,39 +7,10 @@ import { KeyWheel } from "./keywheel";
 import { ThreeCanvas } from "./three/threecanvas";
 import { Instruments } from "./instruments";
 import { NavBar } from "./navbar";
+import { DisplayType } from "../store/types";
 
 const mainStyle: CSSProperties = {
     boxSizing: "border-box",
-};
-
-const titleStyle: CSSProperties = {
-    fontSize: "1.75rem",
-    padding: "10px",
-};
-
-const buttonStyle: CSSProperties = {
-    padding: "5px",
-    backgroundColor: lightGrey,
-    margin: "5px",
-    textAlign: "center",
-    minWidth: "60px",
-    height: "30px",
-    fontSize: "0.8rem",
-    border: 0,
-    borderRadius: "3px",
-};
-
-const navBarStyle: CSSProperties = {
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-    width: "100%",
-    borderBottom: "2px solid black",
-    position: "fixed",
-    top: 0,
-    height: 50,
-    zIndex: 9999,
-    background: offWhite,
 };
 
 const leftPanelStyle: CSSProperties = {
@@ -52,24 +23,15 @@ const leftPanelStyle: CSSProperties = {
     height: "calc(100vh - 50px)",
     boxShadow: "5px 0 10px 0 #888",
 };
-
-const linkContainerStyle: CSSProperties = {
-    display: "flex",
-    alignItems: "center",
-};
-
 interface AppProps {
     appStore: AppStore;
 }
 
 export const App: React.FC<AppProps> = ({ appStore }) => {
-    const [getState] = useDerivedState(
-        appStore,
-        ({ keyWheelVisible, instrumentsVisible }) => ({
-            keyWheelVisible,
-            instrumentsVisible,
-        }),
-    );
+    const [getState] = useDerivedState(appStore, ({ display }) => ({
+        keyWheelVisible: display == DisplayType.keyWheel,
+        instrumentsVisible: display == DisplayType.instruments,
+    }));
     const { keyWheelVisible, instrumentsVisible } = getState();
 
     useEffect(() => {

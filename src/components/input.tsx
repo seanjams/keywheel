@@ -1,8 +1,15 @@
 import React, { CSSProperties, useEffect } from "react";
-import { EMPTY, SHAPES, NOTE_NAMES } from "../consts";
-import { lightGrey } from "../colors";
 import { ChordNames, NoteNames, ReactChangeEvent } from "../types";
-import { getPegs, soundNotes, chordReader, dup, getNotes } from "../util";
+import {
+    EMPTY,
+    SHAPES,
+    NOTE_NAMES,
+    getPegs,
+    soundNotes,
+    chordReader,
+    dup,
+    lightGrey,
+} from "../util";
 import { Scale } from "./scale";
 import { AppStore } from "../store/state";
 import { useDerivedState } from "../store/hooks";

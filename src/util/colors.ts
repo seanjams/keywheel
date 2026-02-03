@@ -1,4 +1,4 @@
-import { ChordNames } from "./types";
+import { ChordNames } from "../types";
 
 export const darkGrey = "#333";
 
@@ -49,7 +49,7 @@ export const INTERVAL_COLORS = [
     `rgba(255,155,0,1)`,
 ];
 
-export const CHORD_COLOR: { [key in ChordNames]: string } = {
+export const CHORD_COLOR: Record<ChordNames, string> = {
     [ChordNames.majorChord]: "rgba(100,100,255,0.5)",
     [ChordNames.maj7Chord]: "rgba(155,0,255,0.5)",
     [ChordNames.minorChord]: "rgba(255,100,100,0.5)",
@@ -60,9 +60,12 @@ export const CHORD_COLOR: { [key in ChordNames]: string } = {
     [ChordNames.dim7Chord]: "rgba(0,155,0,0.5)",
     [ChordNames.min7b5Chord]: "rgba(0,255,0,0.5)",
     [ChordNames.minMajChord]: "rgba(0, 191, 255, 0.5)",
+    [ChordNames.majb5Chord]: "rgba(166, 0, 255, 0.5)",
     [ChordNames.majAugChord]: "rgba(166, 0, 255, 0.5)",
+    [ChordNames.majSusChord]: "rgba(166, 0, 255, 0.5)",
     [ChordNames.domb5Chord]: "rgba(255, 0, 230, 0.5)",
     [ChordNames.domAugChord]: "rgba(255, 170, 0, 0.5)",
+    [ChordNames.domSusChord]: "rgba(255, 170, 0, 0.5)",
     [ChordNames.susChord]: "rgba(255,255,0,0.5)",
     [ChordNames.pentaScale]: "rgba(255,0,0,0.5)",
     [ChordNames.dimPentaScale]: "rgba(0,200,0,0.5)",

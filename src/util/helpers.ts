@@ -1,8 +1,8 @@
 import isEqual from "lodash/isEqual";
 import * as Tone from "tone";
+import { ChordNames, Dirs, NoteNames, Orderings, TweekType } from "../types";
 import { COLORS, CHORD_COLOR, offWhite, mediumGrey, lightGrey } from "./colors";
 import { DIRS, C, EMPTY, NOTE_NAMES, MAJOR, SHAPES } from "./consts";
-import { ChordNames, Dirs, NoteNames, TweekType } from "./types";
 
 export const DEFAULT_NOTE_COLOR_OPTIONS = () => EMPTY.map(() => [lightGrey]);
 
@@ -150,35 +150,37 @@ export const buildKeyWheel: (start: number) => ScaleNode[] = (
 //returns chord color, name, and rootIdx from dictionary
 export function chordReader(notes: boolean[]): {
     color: string;
-    name: string;
     rootIdx: number;
+    scaleType: ChordNames | null;
 } {
     const chords = Object.keys(SHAPES) as ChordNames[];
     let color = "transparent";
     let rootIdx = 0;
-    let name = "";
-    let chordShape;
+    let scaleType: ChordNames | null = null;
 
+    let chordShapeFound = false;
     for (let i = 0; i < chords.length; i++) {
-        chordShape = getNotes(SHAPES[chords[i]]);
+        const chordShape = getNotes(SHAPES[chords[i]]);
         if (isSameType(notes, chordShape)) {
             let temp = dup(notes);
             while (!isEqual(temp, chordShape)) {
                 temp = rotate(temp);
                 rootIdx += 1;
             }
-            color = CHORD_COLOR[chords[i]];
-            name = `${NOTE_NAMES[rootIdx]} ${chords[i]}`;
+            scaleType = chords[i];
+            color = CHORD_COLOR[scaleType];
+            chordShapeFound = true;
             break;
         } // else if here to add dynamic chord inclusion
     }
 
-    if (color === "transparent") {
+    if (!chordShapeFound) {
         rootIdx = -1;
-        name = "";
+        scaleType = null;
+        color = "transparent";
     }
 
-    return { color, name, rootIdx };
+    return { color, rootIdx, scaleType };
 }
 
 // get notes array from root + shape
@@ -289,12 +291,18 @@ export const soundNotes = async (
     let scale = dup(pegs);
     for (let i = 0; i < modeIdx; i++) scale = rotate(scale);
 
+    // arpeggiate up
     const notes: string[] = [];
     for (let i = 0; i < scale.length; i++) {
         if (scale[i + 1] < scale[i]) scale[i + 1] += 12;
         notes.push(Tone.Frequency(octave * 12 + scale[i], "midi").toNote());
     }
-    if (!poly) notes.push(Tone.Frequency(notes[0]).transpose(12).toNote());
+
+    // arpeggiate including high octave of start point
+    // if (!poly) notes.push(Tone.Frequency(notes[0]).transpose(12).toNote());
+
+    // arpeggiate down
+    if (!poly) notes.push(...[...notes].reverse().slice(1));
 
     if (poly) {
         currentSampler.triggerAttackRelease(notes, "4n", Tone.now(), 0.5);
@@ -442,17 +450,6 @@ export function getNotes(pegs: number[]): boolean[] {
     return notes;
 }
 
-export function mergeNotes(notesArr: boolean[][]): boolean[] {
-    const result = [...EMPTY];
-    notesArr.forEach((notes) => {
-        notes.forEach((note, i) => {
-            if (note) result[i] = true;
-        });
-    });
-
-    return result;
-}
-
 export function isSameType(notes1: boolean[], notes2: boolean[]): boolean {
     let temp = dup(notes2);
     for (let i = 0; i < notes2.length; i++) {
@@ -569,10 +566,9 @@ export function getOctaveFrets(point: [number, number]): [number, number][][] {
 export function getLabelColors(
     notesArr: boolean[][],
     isPiano: boolean,
-): { [key in string]: { background: string; color: string } } {
-    const selectedNotesByInput: { [key in string]: number[] } = {};
-    const result: { [key in string]: { background: string; color: string } } =
-        {};
+): Record<string, { background: string; color: string }> {
+    const selectedNotesByInput: Record<string, number[]> = {};
+    const result: Record<string, { background: string; color: string }> = {};
     NOTE_NAMES.forEach((name) => {
         selectedNotesByInput[name] = [];
     });
@@ -646,4 +642,44 @@ export function onCopyToClipboard(text: string): void {
         () => console.log("Copying to clipboard was successful!"),
         (err) => console.error("Could not copy text: ", err),
     );
+}
+
+// get the positions of verticies of a polygon which connects the notes of a chord on a circle
+export function getNormalizedSVGPolygonPoints(
+    selected: boolean[][],
+    ordering: Orderings,
+) {
+    return selected.map((selectedNotes) => {
+        let points: [number, number][] = [];
+        let pegs = getPegs(selectedNotes);
+        if (pegs.length < 3) return points;
+
+        if (ordering === Orderings.fifths) {
+            pegs = pegs.map((peg) => mod(7 * peg, 12)).sort((a, b) => a - b);
+        }
+
+        points = pegs.map((peg, i) => {
+            const x = Math.sin((Math.PI * peg) / 6);
+            const y = Math.cos((Math.PI * peg) / 6);
+            return [x, y];
+        });
+
+        return points;
+    });
+}
+
+export function getScaledPolygonPoints(
+    points: [number, number][],
+    protocol: "svg" | "three",
+    scaleRadius: number,
+    noteRadius: number = 0,
+) {
+    return points.map(([_x, _y]) => {
+        let [x, y] = [_x, _y];
+        if (protocol === "svg") {
+            x = 1 + _x;
+            y = 1 - _y;
+        }
+        return [scaleRadius * x + noteRadius, scaleRadius * y + noteRadius];
+    });
 }

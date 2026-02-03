@@ -5,6 +5,7 @@ import { AppStore } from "../../store/state";
 import { useDerivedState } from "../../store/hooks";
 import { KeyCube } from "./keycube";
 import { ChordCube } from "./chordcube";
+import { DisplayType } from "../../store/types";
 
 const Loader: React.FC = () => {
     return (
@@ -31,13 +32,10 @@ interface ThreeCanvasProps {
 export const ThreeCanvas: React.FC<ThreeCanvasProps> = ({ appStore }) => {
     const [isCanvasReady, setIsCanvasReady] = useState(false);
 
-    const [getState] = useDerivedState(
-        appStore,
-        ({ keyCubeVisible, chordCubeVisible }) => ({
-            keyCubeVisible,
-            chordCubeVisible,
-        }),
-    );
+    const [getState] = useDerivedState(appStore, ({ display }) => ({
+        keyCubeVisible: display === DisplayType.keyCube,
+        chordCubeVisible: display === DisplayType.chordCube,
+    }));
     const { keyCubeVisible, chordCubeVisible } = getState();
 
     return (

@@ -1,6 +1,5 @@
 import {
     ChordNames,
-    Mode,
     NoteNames,
     Orderings,
     PositionType,
@@ -14,6 +13,13 @@ export enum SceneKey {
     chordCube = "chordCube",
 }
 
+export enum DisplayType {
+    keyCube = "Key Cube",
+    chordCube = "Chord Crystal",
+    keyWheel = "Key Wheel",
+    instruments = "Instruments",
+}
+
 export interface SceneType {
     // keyCube / chordCube state props
     edgeSize: number;
@@ -25,16 +31,13 @@ export interface SceneType {
 export interface AppStateType {
     start: number;
     selected: boolean[][];
-    mode: Mode;
+    normalizedPolygonPoints: [number, number][][];
     rootReference: RootReferences;
     ordering: Orderings;
     mute: boolean;
     noteNames: NoteNames[];
     chordNames: ChordNames[];
-    chordCubeVisible: boolean;
-    keyCubeVisible: boolean;
-    keyWheelVisible: boolean;
-    instrumentsVisible: boolean;
+    display: DisplayType;
     scales: ScaleNode[];
     // keyCube / chordCube state props
     keyCube: SceneType;

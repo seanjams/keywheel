@@ -1,9 +1,9 @@
 import React, { CSSProperties, useState } from "react";
 
-import { grey, lighterGrey, lightGrey } from "../../colors";
 import { AppStore } from "../../store/state";
-import { ChordNames } from "../../types";
+import { ChordNames, NoteNames } from "../../types";
 import { SceneKey } from "../../store/types";
+import { grey, lighterGrey, lightGrey, NOTE_NAMES } from "../../util";
 
 interface ToolBarProps {
     appStore: AppStore;
@@ -27,20 +27,41 @@ export const ToolBar: React.FC<ToolBarProps> = ({
     scene,
     chordNames,
 }) => {
-    const defaultIsVisible: Partial<Record<ChordNames, boolean>> = {};
-    chordNames.forEach((chordName) => {
-        defaultIsVisible[chordName] = true;
-    });
-    const [isVisible, setIsVisible] =
-        useState<Partial<Record<ChordNames, boolean>>>(defaultIsVisible);
+    const [hiddenNoteNames, setHiddenNoteNames] = useState<NoteNames[]>([]);
+    const [hiddenChordNames, setHiddenChordNames] = useState<ChordNames[]>([]);
 
-    const toggleVisible = (chordName: keyof typeof isVisible) => {
-        const shouldHide = isVisible[chordName] || false;
-        appStore.dispatch.hideVertices(scene, chordName, shouldHide);
-        setIsVisible({
-            ...isVisible,
-            [chordName]: !isVisible[chordName],
-        });
+    const toggleVisibleNoteName = (noteName: NoteNames) => {
+        const hiddenNoteNamesSet = new Set(hiddenNoteNames);
+        hiddenNoteNamesSet.has(noteName)
+            ? hiddenNoteNamesSet.delete(noteName)
+            : hiddenNoteNamesSet.add(noteName);
+
+        const newHiddenNoteNames = [...hiddenNoteNamesSet];
+
+        appStore.dispatch.hideVerticesByType(
+            scene,
+            newHiddenNoteNames,
+            hiddenChordNames,
+        );
+
+        setHiddenNoteNames(newHiddenNoteNames);
+    };
+
+    const toggleVisibleChordName = (chordName: ChordNames) => {
+        const hiddenChordNamesSet = new Set(hiddenChordNames);
+        hiddenChordNamesSet.has(chordName)
+            ? hiddenChordNamesSet.delete(chordName)
+            : hiddenChordNamesSet.add(chordName);
+
+        const newHiddenChordNames = [...hiddenChordNamesSet];
+
+        appStore.dispatch.hideVerticesByType(
+            scene,
+            hiddenNoteNames,
+            newHiddenChordNames,
+        );
+
+        setHiddenChordNames(newHiddenChordNames);
     };
 
     return (
@@ -48,33 +69,66 @@ export const ToolBar: React.FC<ToolBarProps> = ({
             style={{
                 background: lighterGrey,
                 borderRadius: "4px",
-                height: "50px",
+                height: "80px",
                 width: "fit-content",
                 position: "relative",
                 top: "20px",
                 left: "20px",
                 marginBottom: "-120px",
                 zIndex: "9999",
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-                padding: "10px",
+                padding: "5px",
             }}
         >
-            {chordNames.map((chordName) => (
-                <button
-                    key={`visible-button-${chordName}`}
-                    style={{
-                        ...buttonStyle,
-                        backgroundColor: isVisible[chordName]
-                            ? lightGrey
-                            : grey,
-                    }}
-                    onClick={() => toggleVisible(chordName)}
-                >
-                    {chordName}
-                </button>
-            ))}
+            <div
+                style={{
+                    height: "50%",
+                    display: "flex",
+                    justifyContent: "flex-start",
+                    alignItems: "center",
+                    padding: "10px",
+                }}
+            >
+                {NOTE_NAMES.map((noteName) => (
+                    <button
+                        key={`note-visible-button-${noteName}`}
+                        style={{
+                            ...buttonStyle,
+                            backgroundColor: hiddenNoteNames.includes(noteName)
+                                ? lightGrey
+                                : grey,
+                        }}
+                        onClick={() => toggleVisibleNoteName(noteName)}
+                    >
+                        {noteName}
+                    </button>
+                ))}
+            </div>
+            <div
+                style={{
+                    height: "50%",
+                    display: "flex",
+                    justifyContent: "flex-start",
+                    alignItems: "center",
+                    padding: "10px",
+                }}
+            >
+                {chordNames.map((chordName) => (
+                    <button
+                        key={`chord-visible-button-${chordName}`}
+                        style={{
+                            ...buttonStyle,
+                            backgroundColor: hiddenChordNames.includes(
+                                chordName,
+                            )
+                                ? lightGrey
+                                : grey,
+                        }}
+                        onClick={() => toggleVisibleChordName(chordName)}
+                    >
+                        {chordName}
+                    </button>
+                ))}
+            </div>
         </div>
     );
 };

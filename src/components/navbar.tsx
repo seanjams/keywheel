@@ -1,11 +1,16 @@
 import React, { CSSProperties } from "react";
-import { ROOT_REFERENCES, ORDERINGS } from "../consts";
-import { offWhite, lightGrey } from "../colors";
 import { useDerivedState } from "../store/hooks";
 import { AppStore } from "../store/state";
-import { AppStateType } from "../store/types";
+import { AppStateType, DisplayType } from "../store/types";
 import { Orderings, ReactChangeEvent, RootReferences } from "../types";
-import { getEmptySet, dup, onCopyToClipboard } from "../util";
+import {
+    ROOT_REFERENCES,
+    ORDERINGS,
+    dup,
+    onCopyToClipboard,
+    offWhite,
+    lightGrey,
+} from "../util";
 
 const titleStyle: CSSProperties = {
     fontSize: "1.75rem",
@@ -58,36 +63,15 @@ interface NavBarProps {
 }
 
 export const NavBar: React.FC<NavBarProps> = ({ appStore }) => {
-    const [getState] = useDerivedState(
-        appStore,
-        ({
-            mute,
-            mode,
-            chordCubeVisible,
-            keyCubeVisible,
-            keyWheelVisible,
-            instrumentsVisible,
-        }) => ({
-            mute,
-            mode,
-            chordCubeVisible,
-            keyCubeVisible,
-            keyWheelVisible,
-            instrumentsVisible,
-        }),
-    );
-    const {
+    const [getState] = useDerivedState(appStore, ({ mute, display }) => ({
         mute,
-        mode,
-        chordCubeVisible,
-        keyCubeVisible,
-        keyWheelVisible,
-        instrumentsVisible,
-    } = getState();
+        display,
+    }));
+    const { mute, display } = getState();
 
     const onSaveToClipboard = () => {
         // save state to URL
-        const savedState: Partial<AppStateType> = dup(getState());
+        const savedState: Partial<AppStateType> = dup(appStore.state);
         delete savedState.scales;
 
         history.pushState(
@@ -100,30 +84,7 @@ export const NavBar: React.FC<NavBarProps> = ({ appStore }) => {
         onCopyToClipboard(window.location.href);
     };
 
-    const handleKeyPress = (e: KeyboardEvent) => {
-        let inc = e.key === "ArrowLeft" ? 2 : e.key === "ArrowRight" ? -2 : 0;
-        if (inc) {
-            e.preventDefault();
-            shiftScale(inc);
-        }
-    };
-
-    const shiftScale = (inc: number) => {
-        appStore.dispatch.shiftScale(inc);
-    };
-
-    const clearAllNotes = () => {
-        const empty = getEmptySet();
-        appStore.dispatch.setSelected(empty);
-    };
-
-    const toggleMode = () => {
-        appStore.dispatch.toggleMode(
-            mode === "union" ? "intersection" : "union",
-        );
-    };
-
-    const changeRef = (e: ReactChangeEvent) => {
+    const changeRootReference = (e: ReactChangeEvent) => {
         appStore.dispatch.changeRootReference(
             e.currentTarget.value as RootReferences,
         );
@@ -137,20 +98,8 @@ export const NavBar: React.FC<NavBarProps> = ({ appStore }) => {
         appStore.dispatch.toggleMute(!mute);
     };
 
-    const toggleChordCube = () => {
-        appStore.dispatch.toggleChordCube();
-    };
-
-    const toggleKeyCube = () => {
-        appStore.dispatch.toggleKeyCube();
-    };
-
-    const toggleKeyWheel = () => {
-        appStore.dispatch.toggleKeyWheel();
-    };
-
-    const toggleInstruments = () => {
-        appStore.dispatch.toggleInstruments();
+    const changeView = (e: ReactChangeEvent) => {
+        appStore.dispatch.changeDisplay(e.currentTarget.value as DisplayType);
     };
 
     return (
@@ -162,47 +111,35 @@ export const NavBar: React.FC<NavBarProps> = ({ appStore }) => {
                     justifyContent: "flex-end",
                 }}
             >
-                <button
+                <select
+                    onChange={changeView}
                     style={buttonStyle}
-                    onClick={toggleInstruments}
-                    disabled={instrumentsVisible}
+                    defaultValue={display}
                 >
-                    Show Instruments
-                </button>
-                <button
-                    style={buttonStyle}
-                    onClick={toggleKeyWheel}
-                    disabled={keyWheelVisible}
-                >
-                    Show Key Wheel
-                </button>
-                <button
-                    style={buttonStyle}
-                    onClick={toggleKeyCube}
-                    disabled={keyCubeVisible}
-                >
-                    Show Key Cube
-                </button>
-                <button
-                    style={buttonStyle}
-                    onClick={toggleChordCube}
-                    disabled={chordCubeVisible}
-                >
-                    Show Chord Cube
-                </button>
-                <button style={buttonStyle} onClick={onSaveToClipboard}>
+                    {[
+                        DisplayType.chordCube,
+                        DisplayType.keyCube,
+                        DisplayType.instruments,
+                        DisplayType.keyWheel,
+                    ].map((display: DisplayType) => (
+                        <option
+                            key={`display-option-${display}`}
+                            value={display}
+                        >
+                            {display}
+                        </option>
+                    ))}
+                </select>
+                {/* <button style={buttonStyle} onClick={onSaveToClipboard}>
                     Save To Clipboard
-                </button>
+                </button> */}
                 <button style={buttonStyle} onClick={toggleMute}>
                     {mute ? "Unmute" : "Mute"}
                 </button>
-                <button style={buttonStyle} onClick={clearAllNotes}>
-                    Clear All
-                </button>
                 <select
-                    onChange={changeRef}
+                    onChange={changeRootReference}
                     style={buttonStyle}
-                    defaultValue={"numbers"}
+                    defaultValue={RootReferences.names}
                 >
                     {Object.keys(ROOT_REFERENCES).map(
                         (key: RootReferences, i: number) => (
@@ -215,7 +152,7 @@ export const NavBar: React.FC<NavBarProps> = ({ appStore }) => {
                 <select
                     onChange={changeOrder}
                     style={buttonStyle}
-                    defaultValue={"chromatic"}
+                    defaultValue={Orderings.chromatic}
                 >
                     {Object.keys(ORDERINGS).map((key: Orderings, i: number) => (
                         <option key={`ordering-${i}`} value={key}>
@@ -224,9 +161,6 @@ export const NavBar: React.FC<NavBarProps> = ({ appStore }) => {
                         </option>
                     ))}
                 </select>
-                <button style={buttonStyle} onClick={toggleMode}>
-                    {`Mode: ${mode === "union" ? "Union" : "Intersection"}`}
-                </button>
                 <button style={buttonStyle}>
                     <a href="https://github.com/seanjams/keywheel">source</a>
                 </button>

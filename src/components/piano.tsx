@@ -1,6 +1,5 @@
 import React, { CSSProperties } from "react";
-import { NOTE_NAMES } from "../consts";
-import { getLabelColors } from "../util";
+import { getLabelColors, NOTE_NAMES } from "../util";
 
 const blackKey: CSSProperties = {
     width: "2%",

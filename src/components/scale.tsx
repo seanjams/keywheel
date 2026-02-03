@@ -1,4 +1,6 @@
 import React, { CSSProperties } from "react";
+import { AppStore } from "../store/state";
+import { useDerivedState } from "../store/hooks";
 import {
     darkGrey,
     lightGrey,
@@ -7,21 +9,20 @@ import {
     brown,
     transparent,
     COLORS,
-} from "../colors";
-
-import { NOTE_RADIUS, SCALE_RADIUS, NOTE_NAMES, EMPTY } from "../consts";
-
-import {
+    NOTE_RADIUS,
+    SCALE_RADIUS,
+    SVG_OPACITY,
+    NOTE_NAMES,
+    SHARP_NOTE_NAMES,
     getPegs,
-    mergeNotes,
     chordReader,
     rotate,
     soundNotes,
     getMajor,
     mod,
+    getScaledPolygonPoints,
 } from "../util";
-import { AppStore } from "../store/state";
-import { useDerivedState } from "../store/hooks";
+import { Orderings } from "../types";
 
 const textStyle: CSSProperties = {
     position: "relative",
@@ -56,65 +57,70 @@ export const Scale: React.FC<ScaleProps> = ({
 }) => {
     const [getState] = useDerivedState(
         appStore,
-        ({ selected, mute, mode, rootReference, ordering }) => ({
+        ({
             selected,
             mute,
-            mode,
+            rootReference,
+            ordering,
+            normalizedPolygonPoints,
+        }) => ({
+            selected,
+            normalizedPolygonPoints,
+            mute,
             rootReference,
             ordering,
         }),
     );
-    const { selected, mute, mode, rootReference, ordering } = getState();
+    const { selected, mute, rootReference, ordering, normalizedPolygonPoints } =
+        getState();
 
     const getSVG = () => {
-        let result: boolean[][] = [];
-        let colorIdx = 8;
-
         if (isInput) {
             if (index >= 0) {
-                result.push(selected[index]);
-                colorIdx = index;
+                const style: CSSProperties = {
+                    stroke: lightGrey,
+                    strokeWidth: 1,
+                    fill: COLORS(SVG_OPACITY)[index],
+                };
+
+                return [
+                    {
+                        points: getScaledPolygonPoints(
+                            normalizedPolygonPoints[index],
+                            "svg",
+                            SCALE_RADIUS,
+                            NOTE_RADIUS,
+                        )
+                            .map(([x, y]) => `${x},${y}`)
+                            .join(" "),
+                        style,
+                    },
+                ];
             }
-        } else if (mode === "intersection") {
-            const collected = mergeNotes(selected);
-            const pegs = getPegs(collected);
-            const isMatch = pegs.every((i) => notes[i]);
-            if (isMatch && pegs.length > 0) result.push(collected);
-        } else if (mode === "union") {
-            selected.forEach((arr, i) => {
-                const pegs = getPegs(arr);
-                const isMatch = pegs.every((i) => notes[i]);
-                result.push(isMatch && pegs.length > 0 ? arr : []);
-            });
         }
 
-        return result.map((arr, i) => {
-            if (arr.length === 0) return null;
-            let pegs = getPegs(arr);
-            if (pegs.length < 3) return null;
+        return normalizedPolygonPoints.map((points, i) => {
+            if (!points.length) return null;
 
-            const style: CSSProperties = { stroke: lightGrey, strokeWidth: 1 };
-            style.fill =
-                result.length > 1 ? COLORS(0.5)[i] : COLORS(0.5)[colorIdx];
+            const pegs = getPegs(selected[i]);
+            const isMatch = pegs.every((j) => notes[j]);
+            if (!isMatch || !pegs.length) return null;
 
-            if (ordering === "fifths") {
-                pegs = pegs
-                    .map((peg) => mod(7 * peg, 12))
-                    .sort((a, b) => a - b);
-            }
-
-            const points = pegs.map((peg, i) => {
-                const x =
-                    SCALE_RADIUS * (1 + Math.sin((Math.PI * peg) / 6)) +
-                    NOTE_RADIUS;
-                const y =
-                    SCALE_RADIUS * (1 - Math.cos((Math.PI * peg) / 6)) +
-                    NOTE_RADIUS;
-                return `${x},${y}`;
-            });
+            const style: CSSProperties = {
+                stroke: lightGrey,
+                strokeWidth: 1,
+                fill: COLORS(SVG_OPACITY)[i],
+            };
 
             return {
-                points: points.join(" "),
+                points: getScaledPolygonPoints(
+                    points,
+                    "svg",
+                    SCALE_RADIUS,
+                    NOTE_RADIUS,
+                )
+                    .map(([x, y]) => `${x},${y}`)
+                    .join(" "),
                 style: style,
             };
         });
@@ -137,54 +143,51 @@ export const Scale: React.FC<ScaleProps> = ({
         notes: boolean[],
         pegs: number[],
         relMajor: number[],
-        rootIdx = -1,
+        isSharpKey: boolean,
+        selectedChordRootIdx = -1,
     ) => {
         return notes.map((note: boolean, i: number) => {
-            let m = i;
-            if (ordering === "fifths") {
-                m = mod(7 * i, 12);
-            }
-            note = notes[m];
-
+            let noteIndex = ordering === "fifths" ? mod(7 * i, 12) : i;
             let color = darkGrey;
             let borderColor = darkGrey;
             let backgroundColor = transparent;
-            let noteColor: string = "";
-            let numLabel: string = "";
-
-            const isMatch = () =>
-                selected.some((arr, j) => {
-                    const arrPegs = getPegs(arr);
-                    const match =
-                        arr[m] &&
-                        arrPegs.length > 0 &&
-                        arrPegs.every((k) => notes[k]);
-                    if (match && !noteColor) noteColor = COLORS(1)[j];
-                    return match;
-                });
+            let degreeLabel: string = "";
 
             if (isInput) {
-                numLabel = NOTE_NAMES[m];
-                if (selected[index][m]) {
+                // inputs should show note name for degree label
+                degreeLabel = NOTE_NAMES[noteIndex];
+                if (selected[index][noteIndex]) {
                     backgroundColor = COLORS(1)[index];
                     color = offWhite;
-                    if (m === rootIdx) {
+                    if (noteIndex === selectedChordRootIdx) {
                         color = gold;
                         borderColor = brown;
                     }
                 }
             } else {
+                let noteColor: string = "";
+                const isMatch = () =>
+                    selected.some((arr, j) => {
+                        let arrPegs = getPegs(arr);
+                        const match =
+                            arr[noteIndex] &&
+                            arrPegs.length > 0 &&
+                            arrPegs.every((k) => notes[k]);
+                        if (match && !noteColor) noteColor = COLORS(1)[j];
+                        return match;
+                    });
+
                 if (isMatch()) {
                     backgroundColor = noteColor;
                     color = offWhite;
-                } else if (note) {
+                } else if (notes[noteIndex]) {
                     backgroundColor = lightGrey;
                 }
 
-                if (pegs.includes(m)) {
-                    const idx = pegs.indexOf(m);
-                    numLabel = m === relMajor[idx] ? "" : "♭";
-                    numLabel += `${idx + 1}`;
+                if (pegs.includes(noteIndex)) {
+                    const idx = pegs.indexOf(noteIndex);
+                    degreeLabel = noteIndex === relMajor[idx] ? "" : "♭";
+                    degreeLabel += `${idx + 1}`;
                 }
             }
 
@@ -215,17 +218,19 @@ export const Scale: React.FC<ScaleProps> = ({
             };
 
             const refLabel = {
-                numbers: m,
-                names: NOTE_NAMES[m],
-                degrees: numLabel,
+                numbers: noteIndex,
+                names: isSharpKey
+                    ? SHARP_NOTE_NAMES[noteIndex]
+                    : NOTE_NAMES[noteIndex],
+                degrees: degreeLabel,
             };
 
             return (
                 <div
-                    key={m}
+                    key={noteIndex}
                     onClick={(e) => {
                         e.stopPropagation();
-                        onClick(pegs, m);
+                        onClick(pegs, noteIndex);
                     }}
                     style={style}
                 >
@@ -235,16 +240,23 @@ export const Scale: React.FC<ScaleProps> = ({
         });
     };
 
-    const { name: keyName, rootIdx: keyRootIdx } = chordReader(notes);
-    const { name: chordName, rootIdx: chordRootIdx } = chordReader(
+    const { rootIdx: scaleRootIdx, scaleType } = chordReader(notes);
+    const { rootIdx: chordRootIdx, scaleType: chordType } = chordReader(
         selected[index],
     );
-    const relMajor = getMajor(keyRootIdx);
+    const relMajor = getMajor(scaleRootIdx);
+    const isSharpKey = [7, 2, 9, 4, 11, 6].includes(scaleRootIdx);
+    const keyName =
+        scaleRootIdx > -1
+            ? `${isSharpKey ? SHARP_NOTE_NAMES[scaleRootIdx] : NOTE_NAMES[scaleRootIdx]} ${scaleType}`
+            : "";
+    const chordName =
+        chordRootIdx > -1 ? `${NOTE_NAMES[chordRootIdx]} ${chordType}` : "";
     let pegs = getPegs(notes);
     let label: React.JSX.Element[];
 
     for (let i = 0; i < pegs.length; i++) {
-        if (pegs[0] === keyRootIdx) break;
+        if (pegs[0] === scaleRootIdx) break;
         pegs = rotate(pegs);
     }
 
@@ -262,7 +274,13 @@ export const Scale: React.FC<ScaleProps> = ({
             : [];
     }
 
-    const noteDivs = noteComponents(notes, pegs, relMajor, chordRootIdx);
+    const noteDivs = noteComponents(
+        notes,
+        pegs,
+        relMajor,
+        isSharpKey,
+        chordRootIdx,
+    );
     const svg = getSVG();
 
     return (
