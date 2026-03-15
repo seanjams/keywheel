@@ -26,17 +26,19 @@ export interface SceneType {
     vertices: Record<string, VertexType>;
     connections: [string, string][];
     startingPos: PositionType;
+    hiddenNoteNames: NoteNames[];
+    hiddenChordNames: ChordNames[];
 }
 
 export interface AppStateType {
     start: number;
     selected: boolean[][];
+    selectedRootIndices: (NoteNames | undefined)[];
+    selectedChordNames: (ChordNames | undefined)[];
     normalizedPolygonPoints: [number, number][][];
     rootReference: RootReferences;
     ordering: Orderings;
     mute: boolean;
-    noteNames: NoteNames[];
-    chordNames: ChordNames[];
     display: DisplayType;
     scales: ScaleNode[];
     // keyCube / chordCube state props

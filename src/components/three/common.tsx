@@ -264,6 +264,9 @@ interface ScaleTextProps {
 export const ScaleText: React.FC<ScaleTextProps> = ({ vertices }) => {
     const meshRef = useRef<THREE.Mesh>(null);
     const materialRef = useRef<THREE.MeshPhysicalMaterial>(null);
+    const { position } = vertices[0];
+    // flip to true if you want to see positions of nodes along with the name
+    const debug = false;
 
     function getLabel(vertices: VertexType[]) {
         if (vertices.length > 1) {
@@ -286,6 +289,8 @@ export const ScaleText: React.FC<ScaleTextProps> = ({ vertices }) => {
         <Center>
             <Text3D ref={meshRef} height={2} size={4} font="../font.json">
                 {getLabel(vertices)}
+                {debug &&
+                    `\nx: ${position[0] / 150}, y: ${position[1] / 150}, z: ${position[2] / 150}`}
                 <meshPhysicalMaterial ref={materialRef} color={darkGrey} />
             </Text3D>
         </Center>

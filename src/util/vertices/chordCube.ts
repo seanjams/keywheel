@@ -177,18 +177,6 @@ export function chordCubeExperimentalConstants(edgeSize: number): {
             ];
         }
 
-        function domb5Chord(rootIdx: number) {
-            const [root, third, fifth, seventh] = SHAPES[
-                ChordNames.domb5Chord
-            ].map((peg) => mod(peg + rootIdx, 12));
-            return [
-                getKey(fifth, ChordNames.domChord, layerIdx),
-                getKey(root, ChordNames.min7b5Chord, layerIdx),
-                getKey(root, ChordNames.domChord, layerIdx),
-                getKey(fifth, ChordNames.min7b5Chord, layerIdx),
-            ];
-        }
-
         function dim7Chord(rootIdx: number) {
             const [root, third, fifth, seventh] = SHAPES[
                 ChordNames.dim7Chord
@@ -215,39 +203,51 @@ export function chordCubeExperimentalConstants(edgeSize: number): {
             ];
         }
 
-        function domSusChord(rootIdx: number) {
-            const [root, third, fifth] = SHAPES[ChordNames.domSusChord].map(
-                (peg) => mod(peg + rootIdx, 12),
-            );
-            return [
-                getKey(fifth, ChordNames.min7b5Chord, layerIdx),
-                getKey(root, ChordNames.domChord, layerIdx),
-                getKey(fifth, ChordNames.majb5Chord, layerIdx),
-                getKey(root, ChordNames.majSusChord, layerIdx),
-            ];
-        }
+        // function domb5Chord(rootIdx: number) {
+        //     const [root, third, fifth, seventh] = SHAPES[
+        //         ChordNames.domb5Chord
+        //     ].map((peg) => mod(peg + rootIdx, 12));
+        //     return [
+        //         getKey(fifth, ChordNames.domChord, layerIdx),
+        //         getKey(root, ChordNames.min7b5Chord, layerIdx),
+        //         getKey(root, ChordNames.domChord, layerIdx),
+        //         getKey(fifth, ChordNames.min7b5Chord, layerIdx),
+        //     ];
+        // }
 
-        function majSusChord(rootIdx: number) {
-            const [root, third, fifth] = SHAPES[ChordNames.majSusChord].map(
-                (peg) => mod(peg + rootIdx, 12),
-            );
-            return [
-                getKey(root + 1, ChordNames.domb5Chord, layerIdx),
-                getKey(root, ChordNames.maj7Chord, layerIdx),
-                getKey(root, ChordNames.domSusChord, layerIdx),
-            ];
-        }
+        // function domSusChord(rootIdx: number) {
+        //     const [root, third, fifth] = SHAPES[ChordNames.domSusChord].map(
+        //         (peg) => mod(peg + rootIdx, 12),
+        //     );
+        //     return [
+        //         getKey(fifth, ChordNames.min7b5Chord, layerIdx),
+        //         getKey(root, ChordNames.domChord, layerIdx),
+        //         getKey(fifth, ChordNames.majb5Chord, layerIdx),
+        //         getKey(root, ChordNames.majSusChord, layerIdx),
+        //     ];
+        // }
 
-        function majb5Chord(rootIdx: number) {
-            const [root, third, fifth] = SHAPES[ChordNames.majb5Chord].map(
-                (peg) => mod(peg + rootIdx, 12),
-            );
-            return [
-                getKey(fifth, ChordNames.domSusChord, layerIdx),
-                getKey(root, ChordNames.maj7Chord, layerIdx),
-                getKey(root, ChordNames.domb5Chord, layerIdx),
-            ];
-        }
+        // function majSusChord(rootIdx: number) {
+        //     const [root, third, fifth] = SHAPES[ChordNames.majSusChord].map(
+        //         (peg) => mod(peg + rootIdx, 12),
+        //     );
+        //     return [
+        //         getKey(root + 1, ChordNames.domb5Chord, layerIdx),
+        //         getKey(root, ChordNames.maj7Chord, layerIdx),
+        //         getKey(root, ChordNames.domSusChord, layerIdx),
+        //     ];
+        // }
+
+        // function majb5Chord(rootIdx: number) {
+        //     const [root, third, fifth] = SHAPES[ChordNames.majb5Chord].map(
+        //         (peg) => mod(peg + rootIdx, 12),
+        //     );
+        //     return [
+        //         getKey(fifth, ChordNames.domSusChord, layerIdx),
+        //         getKey(root, ChordNames.maj7Chord, layerIdx),
+        //         getKey(root, ChordNames.domb5Chord, layerIdx),
+        //     ];
+        // }
 
         const chordFuncs = {
             [ChordNames.maj7Chord]: maj7Chord,
@@ -257,13 +257,13 @@ export function chordCubeExperimentalConstants(edgeSize: number): {
             [ChordNames.minMajChord]: minMajChord,
             [ChordNames.majAugChord]: majAugChord,
             [ChordNames.domAugChord]: domAugChord,
-            [ChordNames.domb5Chord]: domb5Chord,
             [ChordNames.dim7Chord]: dim7Chord,
             [ChordNames.augChord]: augChord,
             // what am i doing
-            [ChordNames.domSusChord]: domSusChord,
-            [ChordNames.majSusChord]: majSusChord,
-            [ChordNames.majb5Chord]: majb5Chord,
+            // [ChordNames.domb5Chord]: domb5Chord,
+            // [ChordNames.domSusChord]: domSusChord,
+            // [ChordNames.majSusChord]: majSusChord,
+            // [ChordNames.majb5Chord]: majb5Chord,
         };
 
         function generateConnections(
@@ -330,30 +330,31 @@ export function chordCubeExperimentalConstants(edgeSize: number): {
             ...generateConnections(chordNotes[c], ChordNames.domAugChord),
             ...generateConnections(chordNotes[d], ChordNames.domAugChord),
             // ...
-            ...generateConnections(domb5Roots[0], ChordNames.domb5Chord),
-            ...generateConnections(domb5Roots[1], ChordNames.domb5Chord),
-            ...generateConnections(domb5Roots[2], ChordNames.domb5Chord),
-            ...generateConnections(domb5Roots[3], ChordNames.domb5Chord),
-            // ...
             ...generateConnections(augRoots[a], ChordNames.augChord),
             ...generateConnections(augRoots[b], ChordNames.augChord),
             ...generateConnections(augRoots[c], ChordNames.augChord),
             ...generateConnections(augRoots[d], ChordNames.augChord),
+            // what am i doing
+            // // ...
+            // ...generateConnections(domb5Roots[0], ChordNames.domb5Chord),
+            // ...generateConnections(domb5Roots[1], ChordNames.domb5Chord),
+            // ...generateConnections(domb5Roots[2], ChordNames.domb5Chord),
+            // ...generateConnections(domb5Roots[3], ChordNames.domb5Chord),
             // ...
-            ...generateConnections(chordNotes[a], ChordNames.domSusChord),
-            ...generateConnections(chordNotes[b], ChordNames.domSusChord),
-            ...generateConnections(chordNotes[c], ChordNames.domSusChord),
-            ...generateConnections(chordNotes[d], ChordNames.domSusChord),
-            // ...
-            ...generateConnections(chordNotes[a], ChordNames.majSusChord),
-            ...generateConnections(chordNotes[b], ChordNames.majSusChord),
-            ...generateConnections(chordNotes[c], ChordNames.majSusChord),
-            ...generateConnections(chordNotes[d], ChordNames.majSusChord),
-            // ...
-            ...generateConnections(chordNotes[a], ChordNames.majb5Chord),
-            ...generateConnections(chordNotes[b], ChordNames.majb5Chord),
-            ...generateConnections(chordNotes[c], ChordNames.majb5Chord),
-            ...generateConnections(chordNotes[d], ChordNames.majb5Chord),
+            // ...generateConnections(chordNotes[a], ChordNames.domSusChord),
+            // ...generateConnections(chordNotes[b], ChordNames.domSusChord),
+            // ...generateConnections(chordNotes[c], ChordNames.domSusChord),
+            // ...generateConnections(chordNotes[d], ChordNames.domSusChord),
+            // // ...
+            // ...generateConnections(chordNotes[a], ChordNames.majSusChord),
+            // ...generateConnections(chordNotes[b], ChordNames.majSusChord),
+            // ...generateConnections(chordNotes[c], ChordNames.majSusChord),
+            // ...generateConnections(chordNotes[d], ChordNames.majSusChord),
+            // // ...
+            // ...generateConnections(chordNotes[a], ChordNames.majb5Chord),
+            // ...generateConnections(chordNotes[b], ChordNames.majb5Chord),
+            // ...generateConnections(chordNotes[c], ChordNames.majb5Chord),
+            // ...generateConnections(chordNotes[d], ChordNames.majb5Chord),
         ];
 
         return [
@@ -527,27 +528,6 @@ export function chordCubeExperimentalConstants(edgeSize: number): {
                     [0, 3, 2],
                 ),
                 // ...
-                [getKey(domb5Roots[0], ChordNames.domb5Chord)]: getVertex(
-                    domb5Roots[0],
-                    ChordNames.domb5Chord,
-                    [2, 1, 2],
-                ),
-                [getKey(domb5Roots[1], ChordNames.domb5Chord)]: getVertex(
-                    domb5Roots[1],
-                    ChordNames.domb5Chord,
-                    [2, 1, 2],
-                ),
-                [getKey(domb5Roots[2], ChordNames.domb5Chord)]: getVertex(
-                    domb5Roots[2],
-                    ChordNames.domb5Chord,
-                    [2, 1, 2],
-                ),
-                [getKey(domb5Roots[3], ChordNames.domb5Chord)]: getVertex(
-                    domb5Roots[3],
-                    ChordNames.domb5Chord,
-                    [2, 1, 2],
-                ),
-                // ...
                 [getKey(augRoots[a], ChordNames.augChord)]: getVertex(
                     augRoots[a],
                     ChordNames.augChord,
@@ -568,69 +548,90 @@ export function chordCubeExperimentalConstants(edgeSize: number): {
                     ChordNames.augChord,
                     [0, 1, 4],
                 ),
-                // what am i doing
-                [getKey(chordNotes[a], ChordNames.majb5Chord)]: getVertex(
-                    chordNotes[a],
-                    ChordNames.majb5Chord,
-                    [1, 2, 2],
-                ),
-                [getKey(chordNotes[b], ChordNames.majb5Chord)]: getVertex(
-                    chordNotes[b],
-                    ChordNames.majb5Chord,
-                    [2, 2, 1],
-                ),
-                [getKey(chordNotes[c], ChordNames.majb5Chord)]: getVertex(
-                    chordNotes[c],
-                    ChordNames.majb5Chord,
-                    [3, 2, 2],
-                ),
-                [getKey(chordNotes[d], ChordNames.majb5Chord)]: getVertex(
-                    chordNotes[d],
-                    ChordNames.majb5Chord,
-                    [2, 2, 3],
-                ),
-                // what am i doing
-                [getKey(chordNotes[a], ChordNames.majSusChord)]: getVertex(
-                    chordNotes[a],
-                    ChordNames.majSusChord,
-                    [2, 4, 1],
-                ),
-                [getKey(chordNotes[b], ChordNames.majSusChord)]: getVertex(
-                    chordNotes[b],
-                    ChordNames.majSusChord,
-                    [3, 4, 2],
-                ),
-                [getKey(chordNotes[c], ChordNames.majSusChord)]: getVertex(
-                    chordNotes[c],
-                    ChordNames.majSusChord,
-                    [2, 4, 3],
-                ),
-                [getKey(chordNotes[d], ChordNames.majSusChord)]: getVertex(
-                    chordNotes[d],
-                    ChordNames.majSusChord,
-                    [1, 4, 2],
-                ),
-                // what am i doing
-                [getKey(chordNotes[a], ChordNames.domSusChord)]: getVertex(
-                    chordNotes[a],
-                    ChordNames.domSusChord,
-                    [3, 3, 1],
-                ),
-                [getKey(chordNotes[b], ChordNames.domSusChord)]: getVertex(
-                    chordNotes[b],
-                    ChordNames.domSusChord,
-                    [3, 3, 3],
-                ),
-                [getKey(chordNotes[c], ChordNames.domSusChord)]: getVertex(
-                    chordNotes[c],
-                    ChordNames.domSusChord,
-                    [1, 3, 3],
-                ),
-                [getKey(chordNotes[d], ChordNames.domSusChord)]: getVertex(
-                    chordNotes[d],
-                    ChordNames.domSusChord,
-                    [1, 3, 1],
-                ),
+                // // ...
+                // [getKey(domb5Roots[0], ChordNames.domb5Chord)]: getVertex(
+                //     domb5Roots[0],
+                //     ChordNames.domb5Chord,
+                //     [2, 1, 2],
+                // ),
+                // [getKey(domb5Roots[1], ChordNames.domb5Chord)]: getVertex(
+                //     domb5Roots[1],
+                //     ChordNames.domb5Chord,
+                //     [2, 1, 2],
+                // ),
+                // [getKey(domb5Roots[2], ChordNames.domb5Chord)]: getVertex(
+                //     domb5Roots[2],
+                //     ChordNames.domb5Chord,
+                //     [2, 1, 2],
+                // ),
+                // [getKey(domb5Roots[3], ChordNames.domb5Chord)]: getVertex(
+                //     domb5Roots[3],
+                //     ChordNames.domb5Chord,
+                //     [2, 1, 2],
+                // ),
+                // // what am i doing
+                // [getKey(chordNotes[a], ChordNames.majb5Chord)]: getVertex(
+                //     chordNotes[a],
+                //     ChordNames.majb5Chord,
+                //     [1, 2, 2],
+                // ),
+                // [getKey(chordNotes[b], ChordNames.majb5Chord)]: getVertex(
+                //     chordNotes[b],
+                //     ChordNames.majb5Chord,
+                //     [2, 2, 1],
+                // ),
+                // [getKey(chordNotes[c], ChordNames.majb5Chord)]: getVertex(
+                //     chordNotes[c],
+                //     ChordNames.majb5Chord,
+                //     [3, 2, 2],
+                // ),
+                // [getKey(chordNotes[d], ChordNames.majb5Chord)]: getVertex(
+                //     chordNotes[d],
+                //     ChordNames.majb5Chord,
+                //     [2, 2, 3],
+                // ),
+                // // what am i doing
+                // [getKey(chordNotes[a], ChordNames.majSusChord)]: getVertex(
+                //     chordNotes[a],
+                //     ChordNames.majSusChord,
+                //     [2, 4, 1],
+                // ),
+                // [getKey(chordNotes[b], ChordNames.majSusChord)]: getVertex(
+                //     chordNotes[b],
+                //     ChordNames.majSusChord,
+                //     [3, 4, 2],
+                // ),
+                // [getKey(chordNotes[c], ChordNames.majSusChord)]: getVertex(
+                //     chordNotes[c],
+                //     ChordNames.majSusChord,
+                //     [2, 4, 3],
+                // ),
+                // [getKey(chordNotes[d], ChordNames.majSusChord)]: getVertex(
+                //     chordNotes[d],
+                //     ChordNames.majSusChord,
+                //     [1, 4, 2],
+                // ),
+                // // what am i doing
+                // [getKey(chordNotes[a], ChordNames.domSusChord)]: getVertex(
+                //     chordNotes[a],
+                //     ChordNames.domSusChord,
+                //     [3, 3, 1],
+                // ),
+                // [getKey(chordNotes[b], ChordNames.domSusChord)]: getVertex(
+                //     chordNotes[b],
+                //     ChordNames.domSusChord,
+                //     [3, 3, 3],
+                // ),
+                // [getKey(chordNotes[c], ChordNames.domSusChord)]: getVertex(
+                //     chordNotes[c],
+                //     ChordNames.domSusChord,
+                //     [1, 3, 3],
+                // ),
+                // [getKey(chordNotes[d], ChordNames.domSusChord)]: getVertex(
+                //     chordNotes[d],
+                //     ChordNames.domSusChord,
+                //     [1, 3, 1],
+                // ),
             },
             connections,
         ];

@@ -22,7 +22,6 @@ import {
     mod,
     getScaledPolygonPoints,
 } from "../util";
-import { Orderings } from "../types";
 
 const textStyle: CSSProperties = {
     position: "relative",

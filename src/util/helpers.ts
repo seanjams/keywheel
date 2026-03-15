@@ -152,11 +152,13 @@ export function chordReader(notes: boolean[]): {
     color: string;
     rootIdx: number;
     scaleType: ChordNames | null;
+    alternateRootIndices: number[];
 } {
     const chords = Object.keys(SHAPES) as ChordNames[];
     let color = "transparent";
     let rootIdx = 0;
     let scaleType: ChordNames | null = null;
+    let alternateRootIndices = [];
 
     let chordShapeFound = false;
     for (let i = 0; i < chords.length; i++) {
@@ -170,6 +172,18 @@ export function chordReader(notes: boolean[]): {
             scaleType = chords[i];
             color = CHORD_COLOR[scaleType];
             chordShapeFound = true;
+
+            if (scaleType === ChordNames.dim7Chord) {
+                alternateRootIndices.push(mod(rootIdx + 3, 12));
+                alternateRootIndices.push(mod(rootIdx + 6, 12));
+                alternateRootIndices.push(mod(rootIdx + 9, 12));
+            } else if (scaleType === ChordNames.domb5Chord) {
+                alternateRootIndices.push(mod(rootIdx + 6, 12));
+            } else if (scaleType === ChordNames.augChord) {
+                alternateRootIndices.push(mod(rootIdx + 4, 12));
+                alternateRootIndices.push(mod(rootIdx + 8, 12));
+            }
+
             break;
         } // else if here to add dynamic chord inclusion
     }
@@ -178,9 +192,10 @@ export function chordReader(notes: boolean[]): {
         rootIdx = -1;
         scaleType = null;
         color = "transparent";
+        alternateRootIndices = [];
     }
 
-    return { color, rootIdx, scaleType };
+    return { color, rootIdx, scaleType, alternateRootIndices };
 }
 
 // get notes array from root + shape

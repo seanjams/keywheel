@@ -10,6 +10,7 @@ import {
     getNotes,
     mod,
     getNormalizedSVGPolygonPoints,
+    chordReader,
 } from "../util";
 import { AppStateType, DisplayType, SceneKey } from "./types";
 
@@ -17,14 +18,14 @@ export const DEFAULT_APP_STATE: () => AppStateType = () => {
     return {
         start: 0,
         selected: getEmptySet(),
+        selectedRootIndices: Array(8).fill(undefined),
+        selectedChordNames: Array(8).fill(undefined),
         normalizedPolygonPoints: Array(8)
             .fill(0)
             .map(() => new Array()),
         rootReference: RootReferences.names,
         ordering: Orderings.chromatic,
         mute: false,
-        noteNames: Array(8).fill("C"),
-        chordNames: Array(8).fill("Major"),
         display: DisplayType.chordCube,
         scales: [],
         // keyCube / chordCube
@@ -33,12 +34,16 @@ export const DEFAULT_APP_STATE: () => AppStateType = () => {
             vertices: {},
             connections: [],
             startingPos: [0, 0, 0],
+            hiddenNoteNames: [],
+            hiddenChordNames: [],
         },
         chordCube: {
             edgeSize: 150,
             vertices: {},
             connections: [],
             startingPos: [0, 0, 0],
+            hiddenNoteNames: [],
+            hiddenChordNames: [],
         },
     };
 };
@@ -103,23 +108,27 @@ export const reducers = {
         noteName: NoteNames,
         index: number,
     ): AppStateType {
-        // TODO: clicking on the Input scales to change selected notes after changing name in
-        //  dropdown doesn't clear dropdowns, fix this
-        const { noteNames, chordNames, selected } = state;
-        const newNoteNames = dup(noteNames);
+        const { selectedRootIndices, selectedChordNames, selected } = state;
+
+        // update input root indices
+        const newNoteNames = dup(selectedRootIndices);
         newNoteNames[index] = noteName;
 
+        // update selected notes
         const rootIdx = NOTE_NAMES.indexOf(newNoteNames[index]);
-        const pegs = SHAPES[chordNames[index]]
-            .map((note) => mod(note + rootIdx, 12))
-            .sort();
+        const pegs =
+            rootIdx > -1 && selectedChordNames[index]
+                ? SHAPES[selectedChordNames[index]]
+                      .map((note) => mod(note + rootIdx, 12))
+                      .sort()
+                : [];
 
         const newSelected = dup(selected);
         newSelected[index] = getNotes(pegs);
 
         return {
             ...this.setSelected(state, newSelected),
-            noteNames: newNoteNames,
+            selectedRootIndices: newNoteNames,
         };
     },
     changeChord(
@@ -127,27 +136,57 @@ export const reducers = {
         chordName: ChordNames,
         index: number,
     ): AppStateType {
-        // TODO: clicking on the Input scales after changing chord in
-        //  dropdown doesn't clear input, fix this
-        const { noteNames, chordNames, selected } = state;
-        const newChordNames = dup(chordNames);
+        const { selectedRootIndices, selectedChordNames, selected } = state;
+        // update input chord names
+        const newChordNames = dup(selectedChordNames);
         newChordNames[index] = chordName;
 
-        const rootIdx = NOTE_NAMES.indexOf(noteNames[index]);
-        const pegs = SHAPES[newChordNames[index]]
-            .map((note) => mod(note + rootIdx, 12))
-            .sort();
+        // update selected notes
+        const rootIdx =
+            selectedRootIndices[index] !== undefined
+                ? NOTE_NAMES.indexOf(selectedRootIndices[index])
+                : -1;
+        const pegs =
+            rootIdx > -1
+                ? SHAPES[newChordNames[index]]
+                      .map((note) => mod(note + rootIdx, 12))
+                      .sort()
+                : [];
 
         const newSelected = dup(selected);
         newSelected[index] = getNotes(pegs);
 
         return {
             ...this.setSelected(state, newSelected),
-            chordNames: newChordNames,
+            selectedChordNames: newChordNames,
         };
     },
     setSelected(state: AppStateType, selected: boolean[][]): AppStateType {
-        const { ordering } = state;
+        const { ordering, selectedRootIndices, selectedChordNames } = state;
+
+        // make sure input names update appropriately
+        const newNoteNames = dup(selectedRootIndices);
+        const newChordNames = dup(selectedChordNames);
+        for (let i = 0; i < selected.length; i++) {
+            const notes = selected[i];
+            const { rootIdx, scaleType, alternateRootIndices } =
+                chordReader(notes);
+            if (rootIdx > -1 && scaleType) {
+                const currentName = newNoteNames[i];
+                if (
+                    currentName !== undefined &&
+                    !alternateRootIndices.includes(
+                        NOTE_NAMES.indexOf(currentName),
+                    )
+                ) {
+                    newNoteNames[i] = NOTE_NAMES[rootIdx];
+                }
+                newChordNames[i] = scaleType;
+            } else {
+                newNoteNames[i] = undefined;
+                newChordNames[i] = undefined;
+            }
+        }
 
         // cache positions of polygon vertices for each input selection
         const normalizedPolygonPoints = getNormalizedSVGPolygonPoints(
@@ -159,6 +198,8 @@ export const reducers = {
             ...state,
             selected,
             normalizedPolygonPoints,
+            selectedRootIndices: newNoteNames,
+            selectedChordNames: newChordNames,
         };
     },
     changeRootReference(
@@ -262,6 +303,11 @@ export const reducers = {
                 return;
             }
 
+            // collect this vertex's rootIdx, and any rootIdx that shares a symmetric chord with this vertex.
+            // ex:
+            // - C maj7 -> [0]
+            // - C dim7 -> [0,3,6,9]
+            // - C domb5 -> [0,6]
             const rootIndicesToHide = [];
             rootIndicesToHide.push(rootIdx);
             if (vertex.scaleType === ChordNames.dim7Chord) {
@@ -275,6 +321,9 @@ export const reducers = {
                 // rootIndicesToHide.push(mod(rootIdx + 8, 12));
             }
 
+            // Only hide these vertices if all of the roots in the list are unselected by the user.
+            // Ex:
+            // - C dim7 only disappears if the user removes C, Eb, Gb, and A from the note name list
             if (
                 rootIndicesToHide.every((rootIdx) =>
                     hiddenNoteNames.some(
@@ -294,6 +343,8 @@ export const reducers = {
             [scene]: {
                 ...state[scene],
                 vertices: newVertices,
+                hiddenNoteNames,
+                hiddenChordNames,
             },
         };
     },

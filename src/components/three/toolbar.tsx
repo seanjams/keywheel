@@ -1,9 +1,10 @@
-import React, { CSSProperties, useState } from "react";
+import React, { CSSProperties, useEffect, useState } from "react";
 
 import { AppStore } from "../../store/state";
 import { ChordNames, NoteNames } from "../../types";
 import { SceneKey } from "../../store/types";
 import { grey, lighterGrey, lightGrey, NOTE_NAMES } from "../../util";
+import { useDerivedState } from "../../store/hooks";
 
 interface ToolBarProps {
     appStore: AppStore;
@@ -20,6 +21,13 @@ const buttonStyle: CSSProperties = {
     fontSize: "0.8rem",
     border: 0,
     borderRadius: "3px",
+    boxShadow: "rgb(26, 26, 26, 0.4) 0px 2px 4px",
+    backgroundColor: grey,
+};
+
+const pressedButtonStyle = {
+    boxShadow: "rgb(52, 52, 52, 0.4) 0px 1px 4px inset",
+    backgroundColor: lightGrey,
 };
 
 export const ToolBar: React.FC<ToolBarProps> = ({
@@ -27,8 +35,17 @@ export const ToolBar: React.FC<ToolBarProps> = ({
     scene,
     chordNames,
 }) => {
-    const [hiddenNoteNames, setHiddenNoteNames] = useState<NoteNames[]>([]);
-    const [hiddenChordNames, setHiddenChordNames] = useState<ChordNames[]>([]);
+    const [hideToolBar, setHideToolbar] = useState(false);
+
+    const [getState] = useDerivedState(appStore, ({ keyCube, chordCube }) => {
+        const { hiddenNoteNames, hiddenChordNames } =
+            scene === SceneKey.keyCube ? keyCube : chordCube;
+        return {
+            hiddenNoteNames,
+            hiddenChordNames,
+        };
+    });
+    const { hiddenNoteNames, hiddenChordNames } = getState();
 
     const toggleVisibleNoteName = (noteName: NoteNames) => {
         const hiddenNoteNamesSet = new Set(hiddenNoteNames);
@@ -43,8 +60,6 @@ export const ToolBar: React.FC<ToolBarProps> = ({
             newHiddenNoteNames,
             hiddenChordNames,
         );
-
-        setHiddenNoteNames(newHiddenNoteNames);
     };
 
     const toggleVisibleChordName = (chordName: ChordNames) => {
@@ -60,20 +75,42 @@ export const ToolBar: React.FC<ToolBarProps> = ({
             hiddenNoteNames,
             newHiddenChordNames,
         );
-
-        setHiddenChordNames(newHiddenChordNames);
     };
+
+    const onHide = () => {
+        setHideToolbar((prev) => !prev);
+    };
+
+    // useEffect(() => {
+    //     appStore.dispatch.hideVerticesByType(
+    //         scene,
+    //         [
+    //             NoteNames.Db,
+    //             NoteNames.D,
+    //             NoteNames.Eb,
+    //             NoteNames.E,
+    //             NoteNames.F,
+    //             NoteNames.Gb,
+    //             NoteNames.G,
+    //             NoteNames.Ab,
+    //             NoteNames.A,
+    //             NoteNames.Bb,
+    //             NoteNames.B,
+    //         ],
+    //         [],
+    //     );
+    // }, []);
 
     return (
         <div
             style={{
-                background: lighterGrey,
+                background: "rgb(220, 220, 220, 0.4)",
                 borderRadius: "4px",
                 height: "80px",
                 width: "fit-content",
                 position: "relative",
-                top: "20px",
-                left: "20px",
+                top: "10px",
+                left: "10px",
                 marginBottom: "-120px",
                 zIndex: "9999",
                 padding: "5px",
@@ -81,53 +118,79 @@ export const ToolBar: React.FC<ToolBarProps> = ({
         >
             <div
                 style={{
-                    height: "50%",
+                    height: "100%",
                     display: "flex",
-                    justifyContent: "flex-start",
-                    alignItems: "center",
-                    padding: "10px",
+                    alignItems: hideToolBar ? "center" : "end",
                 }}
             >
-                {NOTE_NAMES.map((noteName) => (
-                    <button
-                        key={`note-visible-button-${noteName}`}
-                        style={{
-                            ...buttonStyle,
-                            backgroundColor: hiddenNoteNames.includes(noteName)
-                                ? lightGrey
-                                : grey,
-                        }}
-                        onClick={() => toggleVisibleNoteName(noteName)}
-                    >
-                        {noteName}
-                    </button>
-                ))}
-            </div>
-            <div
-                style={{
-                    height: "50%",
-                    display: "flex",
-                    justifyContent: "flex-start",
-                    alignItems: "center",
-                    padding: "10px",
-                }}
-            >
-                {chordNames.map((chordName) => (
-                    <button
-                        key={`chord-visible-button-${chordName}`}
-                        style={{
-                            ...buttonStyle,
-                            backgroundColor: hiddenChordNames.includes(
-                                chordName,
-                            )
-                                ? lightGrey
-                                : grey,
-                        }}
-                        onClick={() => toggleVisibleChordName(chordName)}
-                    >
-                        {chordName}
-                    </button>
-                ))}
+                {!hideToolBar && (
+                    <div style={{ height: "100%" }}>
+                        <div
+                            style={{
+                                height: "50%",
+                                display: "flex",
+                                justifyContent: "flex-start",
+                                alignItems: "center",
+                                padding: "10px",
+                            }}
+                        >
+                            Root Note:&nbsp;
+                            {NOTE_NAMES.map((noteName) => (
+                                <button
+                                    key={`note-visible-button-${noteName}`}
+                                    style={{
+                                        ...buttonStyle,
+                                        ...(hiddenNoteNames.includes(noteName)
+                                            ? {}
+                                            : pressedButtonStyle),
+                                        minWidth: "50px",
+                                    }}
+                                    onClick={() =>
+                                        toggleVisibleNoteName(noteName)
+                                    }
+                                >
+                                    {noteName}
+                                </button>
+                            ))}
+                        </div>
+                        <div
+                            style={{
+                                height: "50%",
+                                display: "flex",
+                                justifyContent: "flex-start",
+                                alignItems: "center",
+                                padding: "10px",
+                            }}
+                        >
+                            Chord Quality:&nbsp;
+                            {chordNames.map((chordName) => (
+                                <button
+                                    key={`chord-visible-button-${chordName}`}
+                                    style={{
+                                        ...buttonStyle,
+                                        ...(hiddenChordNames.includes(chordName)
+                                            ? {}
+                                            : pressedButtonStyle),
+                                    }}
+                                    onClick={() =>
+                                        toggleVisibleChordName(chordName)
+                                    }
+                                >
+                                    {chordName}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+                )}
+                <div
+                    style={{
+                        textAlign: "center",
+                        cursor: "pointer",
+                    }}
+                    onClick={onHide}
+                >
+                    {hideToolBar ? "show" : "hide"}
+                </div>
             </div>
         </div>
     );

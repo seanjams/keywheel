@@ -50,11 +50,17 @@ interface InputProps {
 }
 
 export const Input: React.FC<InputProps> = ({ appStore }) => {
-    const [getState] = useDerivedState(appStore, ({ selected, mute }) => ({
-        selected,
-        mute,
-    }));
-    const { selected, mute } = getState();
+    const [getState] = useDerivedState(
+        appStore,
+        ({ selected, mute, selectedRootIndices, selectedChordNames }) => ({
+            selected,
+            mute,
+            selectedRootIndices,
+            selectedChordNames,
+        }),
+    );
+    const { selected, mute, selectedRootIndices, selectedChordNames } =
+        getState();
 
     useEffect(() => {
         const handleKeyPress = (e: KeyboardEvent) => {
@@ -125,6 +131,7 @@ export const Input: React.FC<InputProps> = ({ appStore }) => {
                                     style={{ fontSize: "0.7vw" }}
                                     onChange={(e) => onNameChange(e, i)}
                                     defaultValue=""
+                                    value={selectedRootIndices[i] || ""}
                                 >
                                     <option disabled value="">
                                         --
@@ -144,6 +151,7 @@ export const Input: React.FC<InputProps> = ({ appStore }) => {
                                     style={{ fontSize: "0.7vw" }}
                                     onChange={(e) => onChordChange(e, i)}
                                     defaultValue=""
+                                    value={selectedChordNames[i] || ""}
                                 >
                                     <option disabled value="">
                                         --
