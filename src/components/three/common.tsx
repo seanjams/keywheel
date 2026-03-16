@@ -2,7 +2,8 @@ import React, { useRef, useEffect, useState } from "react";
 import * as THREE from "three";
 import type { OrbitControls as OrbitControlsImpl } from "three-stdlib";
 import { useFrame } from "@react-three/fiber";
-import { OrbitControls, Text3D, Center } from "@react-three/drei";
+import { OrbitControls, Text3D, Center, FontData } from "@react-three/drei";
+import fontJsonUrl from "../../assets/json/font.json";
 import { useDerivedState } from "../../store/hooks";
 import { AppStore } from "../../store/state";
 import { SceneKey } from "../../store/types";
@@ -27,6 +28,8 @@ import {
     getScaledPolygonPoints,
     mod,
 } from "../../util";
+
+const fontData = fontJsonUrl as unknown as FontData;
 
 interface SceneProps {
     appStore: AppStore;
@@ -287,7 +290,7 @@ export const ScaleText: React.FC<ScaleTextProps> = ({ vertices }) => {
 
     return (
         <Center>
-            <Text3D ref={meshRef} height={2} size={4} font="../font.json">
+            <Text3D ref={meshRef} height={2} size={4} font={fontData}>
                 {getLabel(vertices)}
                 {debug &&
                     `\nx: ${position[0] / 150}, y: ${position[1] / 150}, z: ${position[2] / 150}`}
@@ -483,7 +486,7 @@ export const NoteText: React.FC<NoteTextProps> = ({
 
     return (
         <Center>
-            <Text3D ref={meshRef} font="../font.json" height={1} size={2}>
+            <Text3D ref={meshRef} font={fontData} height={1} size={2}>
                 {visibleLabel}
                 <meshPhysicalMaterial ref={materialRef} color={darkGrey} />
             </Text3D>
