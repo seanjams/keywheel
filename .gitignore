@@ -1,6 +1,4 @@
 node_modules
 .*
 
-dist
-
 python_explorations/*
