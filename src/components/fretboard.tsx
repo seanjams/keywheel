@@ -1,8 +1,11 @@
-import React, { useState } from "react";
+import React, { CSSProperties, useState } from "react";
 import isEqual from "lodash/isEqual";
-import { NOTE_NAMES } from "../consts";
-import { COLORS, lightGrey, mediumGrey } from "../colors";
+import { NoteNames } from "../types";
 import {
+    COLORS,
+    lightGrey,
+    mediumGrey,
+    NOTE_NAMES,
     rotate,
     dup,
     getOctaveFrets,
@@ -11,7 +14,7 @@ import {
     getLabelColors,
 } from "../util";
 
-const buttonStyle = {
+const buttonStyle: CSSProperties = {
     padding: "5px",
     backgroundColor: lightGrey,
     borderRadius: "3px",
@@ -21,31 +24,39 @@ const buttonStyle = {
     fontSize: "0.8rem",
 };
 
-const byString = (a, b) => {
+const byString = (a: number[], b: number[]) => {
     if (b[0] == a[0]) return b[1] - a[1];
     return b[0] - a[0];
 };
 
-export const FretBoard = (props) => {
-    const [chordGroups, setChordGroups] = useState({});
-    const [previewPoints, setPreviewPoints] = useState([]);
-    const [currentGroup, setCurrentGroup] = useState(null);
+interface FretBoardProps {
+    selected: boolean[][];
+    style: CSSProperties;
+}
 
-    const getCurrentChordGroup = () => {
-        return chordGroups[currentGroup] || [];
-    };
+type ChordGroupsType = Partial<Record<NoteNames, [number, number][][]>>;
+type PointGroupsType = Partial<Record<NoteNames, string[]>>;
+
+export const FretBoard: React.FC<FretBoardProps> = ({ selected, style }) => {
+    const [chordGroups, setChordGroups] = useState<ChordGroupsType>({});
+    const [previewPoints, setPreviewPoints] = useState<[number, number][]>([]);
+    const [currentGroup, setCurrentGroup] = useState<NoteNames | null>(null);
+
+    function getCurrentChordGroup(): [number, number][][] {
+        return (currentGroup && chordGroups[currentGroup]) || [];
+    }
 
     const fretComponents = () => {
-        const fretDivs = [];
-        const clickHandlers = [];
-        const colors = getLabelColors(props.selected);
-        const eString = rotate(dup(NOTE_NAMES), 5);
+        const fretDivs: React.JSX.Element[] = [];
+        const clickHandlers: React.JSX.Element[] = [];
+        const colors = getLabelColors(selected, false);
+        const eString = rotate([...NOTE_NAMES], 5);
 
-        const strings = Array(6)
+        const strings: NoteNames[][] = Array(6)
             .fill(0)
             .map((_, i) => {
                 const times = i > 3 ? 5 * i - 1 : 5 * i;
-                let string = rotate(dup(eString), times);
+                let string = rotate([...eString], times);
                 string = string.concat(string.slice(0, 4));
                 return string;
             })
@@ -53,7 +64,7 @@ export const FretBoard = (props) => {
 
         strings.forEach((noteNames, i) => {
             noteNames.forEach((name, j) => {
-                const fretStyle = {
+                const fretStyle: CSSProperties = {
                     boxShadow: "0px 0px 0px 2px #777",
                     height: "100%",
                     color: colors[name].color,
@@ -64,11 +75,11 @@ export const FretBoard = (props) => {
                     fontSize: "1vw",
                 };
 
-                const onClick = (e) => {
+                const onClick = () => {
                     const groups = dup(chordGroups);
                     let chords = getCurrentChordGroup();
-                    let current = currentGroup;
-                    let previewPoints = [];
+                    let current: NoteNames | null = currentGroup;
+                    let previewPoints: [number, number][] = [];
                     let handled = false;
 
                     // first click of chordGroup, get octaves and escape
@@ -88,7 +99,9 @@ export const FretBoard = (props) => {
                             if (isEqual(activeChord[k], [i, j])) {
                                 //clicked on same fret
                                 chords = chords.map((chord) =>
-                                    chord.slice(0, k).concat(chord.slice(k + 1))
+                                    chord
+                                        .slice(0, k)
+                                        .concat(chord.slice(k + 1)),
                                 );
                                 if (chords.every((chord) => !chord.length)) {
                                     delete groups[current];
@@ -115,7 +128,7 @@ export const FretBoard = (props) => {
 
                     // adding a fret to all chords in group
                     if (!handled) {
-                        if (activeChord[0][0] < i) {
+                        if (activeChord[0][0] < i && current) {
                             groups[name] = groups[current];
                             delete groups[current];
                             current = name;
@@ -146,7 +159,7 @@ export const FretBoard = (props) => {
                     let chords = getCurrentChordGroup();
                     if (!chords.length) return;
                     let points = dup(chords[0]);
-                    let previewPoints = [];
+                    let previewPoints: [number, number][] = [];
 
                     if (points[points.length - 1][0] > i) {
                         previewPoints = [points[points.length - 1], [i, j]];
@@ -194,10 +207,9 @@ export const FretBoard = (props) => {
                     <div
                         key={`fret-${noteNames.length * i + j}`}
                         style={fretStyle}
-                        name={name}
                     >
                         {name}
-                    </div>
+                    </div>,
                 );
 
                 clickHandlers.push(
@@ -205,10 +217,9 @@ export const FretBoard = (props) => {
                         key={`handler-${noteNames.length * i + j}`}
                         style={{ height: "100%" }}
                         onClick={onClick}
-                        name={name}
                         onMouseEnter={onMouseEnter}
                         onMouseLeave={onMouseLeave}
-                    />
+                    />,
                 );
             });
         });
@@ -216,19 +227,19 @@ export const FretBoard = (props) => {
         return { fretDivs, clickHandlers };
     };
 
-    const getPoints = (points) => {
+    const getPoints = (points: [number, number][]) => {
         if (!points.length || points.some((point) => !inRange(point)))
             return "";
         return points
             .map((point) =>
-                point ? `${point[1] * 100 + 50},${point[0] * 33 + 16.5}` : ""
+                point ? `${point[1] * 100 + 50},${point[0] * 33 + 16.5}` : "",
             )
             .join(" ");
     };
 
-    const removeGroup = (name) => {
+    const removeGroup = (name: NoteNames) => {
         let current = currentGroup;
-        let groups = dup(chordGroups);
+        let groups = { ...chordGroups };
         current = null;
         delete groups[name];
 
@@ -243,24 +254,26 @@ export const FretBoard = (props) => {
     };
 
     const { fretDivs, clickHandlers } = fretComponents();
-    const pointGroups = {};
-    Object.keys(chordGroups).forEach((key) => {
-        pointGroups[key] = chordGroups[key].map((chord) => getPoints(chord));
+    const pointGroups: PointGroupsType = {};
+    Object.keys(chordGroups).forEach((key: NoteNames) => {
+        pointGroups[key] = chordGroups[key]
+            ? chordGroups[key].map((chord) => getPoints(chord))
+            : [];
     });
 
-    const style = Object.assign({}, props.style, {
+    const fretboardStyle: CSSProperties = Object.assign({}, style, {
         position: "relative",
         display: "grid",
         gridTemplateColumns: "repeat(16, 1fr)",
     });
 
-    const clickHandlerStyle = {
-        ...style,
+    const clickHandlerStyle: CSSProperties = {
+        ...fretboardStyle,
         zIndex: 60,
-        marginBottom: `-${props.style.height}`,
+        marginBottom: `-${style.height}`,
     };
 
-    const svgContainerStyle = {
+    const svgContainerStyle: CSSProperties = {
         position: "absolute",
         float: "left",
         height: "100%",
@@ -270,7 +283,7 @@ export const FretBoard = (props) => {
         left: 0,
     };
 
-    const previewLineStyle = {
+    const previewLineStyle: CSSProperties = {
         stroke: "yellow",
         strokeWidth: "3",
         fill: "none",
@@ -278,7 +291,7 @@ export const FretBoard = (props) => {
         strokeLinecap: "round",
     };
 
-    const chooseButtonStyle = Object.assign({}, buttonStyle, {
+    const chooseButtonStyle: CSSProperties = Object.assign({}, buttonStyle, {
         color: mediumGrey,
         display: "flex",
         alignItems: "center",
@@ -288,46 +301,50 @@ export const FretBoard = (props) => {
     return (
         <div>
             <div style={clickHandlerStyle}>{clickHandlers}</div>
-            <div style={style}>
+            <div style={fretboardStyle}>
                 <div style={svgContainerStyle}>
                     <svg width="100%" height="100%" viewBox="0 0 1600 198">
-                        {Object.keys(chordGroups).map((key, i) => {
-                            const chords = chordGroups[key];
-                            const points = pointGroups[key];
+                        {Object.keys(chordGroups).map(
+                            (key: NoteNames, i: number) => {
+                                const chords = chordGroups[key] || [];
+                                const points = pointGroups[key] || [];
 
-                            return chords.map((chord, j) => (
-                                <polyline
-                                    key={`line-${i}-${j}`}
-                                    style={{
-                                        stroke: "orange",
-                                        // stroke: COLORS(j ? 0.7 : 0.8)[i],
-                                        strokeWidth: "4",
-                                        strokeLinecap: "round",
-                                        fill: "none",
-                                    }}
-                                    points={points[j]}
-                                />
-                            ));
-                        })}
-                        {Object.keys(chordGroups).map((key, i) => {
-                            const chords = chordGroups[key];
-                            return chords.map((chord, j) => {
-                                const center = chord[0];
-                                return (
-                                    center && (
-                                        <circle
-                                            key={`circle-${i}-${j}`}
-                                            cx={`${center[1] * 100 + 50}`}
-                                            cy={`${center[0] * 33 + 16}`}
-                                            r="13"
-                                            stroke={COLORS(0.7)[i]}
-                                            strokeWidth="3"
-                                            fill={COLORS(0.2)[i]}
-                                        />
-                                    )
-                                );
-                            });
-                        })}
+                                return chords.map((chord, j) => (
+                                    <polyline
+                                        key={`line-${i}-${j}`}
+                                        style={{
+                                            stroke: "orange",
+                                            // stroke: COLORS(j ? 0.7 : 0.8)[i],
+                                            strokeWidth: "4",
+                                            strokeLinecap: "round",
+                                            fill: "none",
+                                        }}
+                                        points={points[j]}
+                                    />
+                                ));
+                            },
+                        )}
+                        {Object.keys(chordGroups).map(
+                            (key: NoteNames, i: number) => {
+                                const chords = chordGroups[key] || [];
+                                return chords.map((chord, j) => {
+                                    const center = chord[0];
+                                    return (
+                                        center && (
+                                            <circle
+                                                key={`circle-${i}-${j}`}
+                                                cx={`${center[1] * 100 + 50}`}
+                                                cy={`${center[0] * 33 + 16}`}
+                                                r="13"
+                                                stroke={COLORS(0.7)[i]}
+                                                strokeWidth="3"
+                                                fill={COLORS(0.2)[i]}
+                                            />
+                                        )
+                                    );
+                                });
+                            },
+                        )}
                         <polyline
                             style={previewLineStyle}
                             points={getPoints(previewPoints)}
@@ -346,50 +363,52 @@ export const FretBoard = (props) => {
                 }}
             >
                 <div style={{ display: "flex" }}>
-                    {Object.keys(chordGroups).map((name, i) => {
-                        const chordButtonStyle = Object.assign(
-                            {},
-                            buttonStyle,
-                            {
-                                backgroundColor: COLORS(0.5)[i],
-                                display: "flex",
-                                alignItems: "center",
-                                minWidth: "unset",
-                                border:
-                                    currentGroup === name
-                                        ? "2px solid yellow"
-                                        : "2px solid brown",
-                            }
-                        );
+                    {Object.keys(chordGroups).map(
+                        (name: NoteNames, i: number) => {
+                            const chordButtonStyle = Object.assign(
+                                {},
+                                buttonStyle,
+                                {
+                                    backgroundColor: COLORS(0.5)[i],
+                                    display: "flex",
+                                    alignItems: "center",
+                                    minWidth: "unset",
+                                    border:
+                                        currentGroup === name
+                                            ? "2px solid yellow"
+                                            : "2px solid brown",
+                                },
+                            );
 
-                        return (
-                            <button
-                                key={`chord-button-${i}`}
-                                style={chordButtonStyle}
-                                onClick={() => setCurrentGroup(name)}
-                            >
-                                <span
-                                    style={{
-                                        paddingRight: "40px",
-                                        fontSize: "0.7rem",
-                                    }}
+                            return (
+                                <button
+                                    key={`chord-button-${i}`}
+                                    style={chordButtonStyle}
+                                    onClick={() => setCurrentGroup(name)}
                                 >
-                                    {name}
-                                </span>
-                                <span
-                                    name={name}
-                                    style={{
-                                        color: mediumGrey,
-                                        fontSize: "1rem",
-                                        lineHeight: "1rem",
-                                    }}
-                                    onClick={() => removeGroup(name)}
-                                >
-                                    &times;
-                                </span>
-                            </button>
-                        );
-                    })}
+                                    <span
+                                        style={{
+                                            paddingRight: "40px",
+                                            fontSize: "0.7rem",
+                                        }}
+                                    >
+                                        {name}
+                                    </span>
+                                    <span
+                                        // name={name}
+                                        style={{
+                                            color: mediumGrey,
+                                            fontSize: "1rem",
+                                            lineHeight: "1rem",
+                                        }}
+                                        onClick={() => removeGroup(name)}
+                                    >
+                                        &times;
+                                    </span>
+                                </button>
+                            );
+                        },
+                    )}
 
                     {!currentGroup ? (
                         <button style={chooseButtonStyle}>
@@ -402,7 +421,7 @@ export const FretBoard = (props) => {
                                 Choose A Root Note
                             </span>
                             <span
-                                name={name}
+                                // name={name}
                                 style={{
                                     color: mediumGrey,
                                     fontSize: "1rem",

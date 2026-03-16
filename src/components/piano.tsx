@@ -1,8 +1,7 @@
-import React from "react";
-import { NOTE_NAMES } from "../consts";
-import { getLabelColors } from "../util";
+import React, { CSSProperties } from "react";
+import { getLabelColors, NOTE_NAMES } from "../util";
 
-const blackKey = {
+const blackKey: CSSProperties = {
     width: "2%",
     height: "60%",
     zIndex: 1,
@@ -14,7 +13,7 @@ const blackKey = {
     flexBasis: 0,
 };
 
-const whiteKey = {
+const whiteKey: CSSProperties = {
     flex: 2,
     height: "100%",
     boxShadow: "inset 0 0 0 1px rgba(0,0,0,1)",
@@ -22,18 +21,24 @@ const whiteKey = {
     flexBasis: 0,
 };
 
-export const Piano = (props) => {
-    const colors = getLabelColors(props.selected, true);
-    const octaves = props.octaves || 2;
+interface PianoProps {
+    selected: boolean[][];
+    style: CSSProperties;
+    octaves: number;
+}
+
+export const Piano: React.FC<PianoProps> = ({ octaves, selected, style }) => {
+    const colors = getLabelColors(selected, true);
+    const numOctaves = octaves || 2;
     const pianoStyle = {
-        width: props.style.width,
-        height: props.style.height,
+        width: style.width,
+        height: style.height,
         boxShadow: "0 0 0 2px rgba(0,0,0,1)",
         display: "flex",
     };
 
     let names = [...NOTE_NAMES];
-    for (let i = 1; i < octaves; i++) {
+    for (let i = 1; i < numOctaves; i++) {
         names = names.concat(names);
     }
 
@@ -41,7 +46,7 @@ export const Piano = (props) => {
         const style = Object.assign(
             {},
             name.length > 1 ? blackKey : whiteKey,
-            colors[name]
+            colors[name],
         );
 
         return (
