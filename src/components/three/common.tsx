@@ -8,6 +8,7 @@ import { useDerivedState } from "../../store/hooks";
 import { AppStore } from "../../store/state";
 import { SceneKey } from "../../store/types";
 import {
+    ChordNames,
     Orderings,
     ReactMouseEvent,
     RootReferences,
@@ -272,11 +273,32 @@ export const ScaleText: React.FC<ScaleTextProps> = ({ vertices }) => {
     const debug = false;
 
     function getLabel(vertices: VertexType[]) {
+        // symmetric labels are custom.
         if (vertices.length > 1) {
             const roots = vertices.map((vertex) => vertex.root).join(",");
             return `${roots}\n${vertices[0].scaleType}`;
         }
-        return `${vertices[0].root} ${vertices[0].scaleType}`;
+
+        // For the normal cases, build label out of root and scaleType.
+        let label = `${vertices[0].root} ${vertices[0].scaleType}`;
+
+        // Line break for long names.
+        if (label.length > 7) {
+            label = label.replace(" ", "\n");
+        }
+
+        // Long scale names get abbreviated.
+        if (
+            [
+                ChordNames.melMinScale,
+                ChordNames.harMajScale,
+                ChordNames.harMinScale,
+            ].includes(vertices[0].scaleType)
+        ) {
+            label = label.slice(0, -2);
+        }
+
+        return label;
     }
 
     useEffect(() => {
