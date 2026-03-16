@@ -24,6 +24,7 @@ const buttonStyle: CSSProperties = {
     boxShadow: "rgb(26, 26, 26, 0.4) 0px 2px 4px",
     backgroundColor: lightGrey,
     cursor: "pointer",
+    whiteSpace: "nowrap",
 };
 
 const toolBarTitleStyle: CSSProperties = {
@@ -138,7 +139,7 @@ export const ToolBar: React.FC<ToolBarProps> = ({
                 background: "rgb(220, 220, 220, 0.8)",
                 borderRadius: "4px",
                 height: "650px",
-                width: "140px",
+                width: "fit-content",
                 position: "relative",
                 top: "10px",
                 left: "10px",
@@ -151,7 +152,13 @@ export const ToolBar: React.FC<ToolBarProps> = ({
             {!hideToolBar && (
                 <>
                     <p style={toolBarTitleStyle}>Controls</p>
-                    <ul style={{ fontSize: "0.75rem", padding: "0 10px" }}>
+                    <ul
+                        style={{
+                            fontSize: "0.75rem",
+                            padding: "0 10px",
+                            width: "130px",
+                        }}
+                    >
                         <li>
                             {bulletPoint}
                             click and drag to rotate
