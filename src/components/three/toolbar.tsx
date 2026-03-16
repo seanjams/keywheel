@@ -3,7 +3,7 @@ import React, { CSSProperties, useEffect, useState } from "react";
 import { AppStore } from "../../store/state";
 import { ChordNames, NoteNames } from "../../types";
 import { SceneKey } from "../../store/types";
-import { grey, lighterGrey, lightGrey, NOTE_NAMES } from "../../util";
+import { grey, lightGrey, NOTE_NAMES } from "../../util";
 import { useDerivedState } from "../../store/hooks";
 
 interface ToolBarProps {
@@ -22,13 +22,33 @@ const buttonStyle: CSSProperties = {
     border: 0,
     borderRadius: "3px",
     boxShadow: "rgb(26, 26, 26, 0.4) 0px 2px 4px",
+    backgroundColor: lightGrey,
+    cursor: "pointer",
+};
+
+const toolBarTitleStyle: CSSProperties = {
+    fontWeight: "bold",
+    fontSize: "0.75rem",
+    margin: "16px 0 4px 0",
+};
+
+const pressedButtonStyle: CSSProperties = {
+    boxShadow: "rgb(26, 26, 26, 0.4) 0px 1px 4px inset",
     backgroundColor: grey,
 };
 
-const pressedButtonStyle = {
-    boxShadow: "rgb(52, 52, 52, 0.4) 0px 1px 4px inset",
-    backgroundColor: lightGrey,
-};
+const bulletPoint = (
+    <span
+        style={{
+            position: "relative",
+            left: "-8px",
+            marginRight: "-8px",
+            width: "0px",
+        }}
+    >
+        •{" "}
+    </span>
+);
 
 export const ToolBar: React.FC<ToolBarProps> = ({
     appStore,
@@ -81,60 +101,82 @@ export const ToolBar: React.FC<ToolBarProps> = ({
         setHideToolbar((prev) => !prev);
     };
 
-    // useEffect(() => {
-    //     appStore.dispatch.hideVerticesByType(
-    //         scene,
-    //         [
-    //             NoteNames.Db,
-    //             NoteNames.D,
-    //             NoteNames.Eb,
-    //             NoteNames.E,
-    //             NoteNames.F,
-    //             NoteNames.Gb,
-    //             NoteNames.G,
-    //             NoteNames.Ab,
-    //             NoteNames.A,
-    //             NoteNames.Bb,
-    //             NoteNames.B,
-    //         ],
-    //         [],
-    //     );
-    // }, []);
+    const hideToolBarButton = (
+        <div
+            style={{
+                ...buttonStyle,
+                height: "22px",
+                padding: "3px",
+                width: "fit-content",
+                margin: "0",
+            }}
+            onClick={onHide}
+        >
+            {hideToolBar ? "show toolbar" : "hide toolbar"}
+        </div>
+    );
+
+    if (hideToolBar) {
+        return (
+            <div
+                style={{
+                    position: "relative",
+                    top: "15px",
+                    left: "15px",
+                    height: "22px",
+                    marginBottom: "-22px",
+                }}
+            >
+                {hideToolBarButton}
+            </div>
+        );
+    }
 
     return (
         <div
             style={{
-                background: "rgb(220, 220, 220, 0.4)",
+                background: "rgb(220, 220, 220, 0.8)",
                 borderRadius: "4px",
-                height: "80px",
-                width: "fit-content",
+                height: "650px",
+                width: "140px",
                 position: "relative",
                 top: "10px",
                 left: "10px",
-                marginBottom: "-120px",
+                marginBottom: "-650px",
                 zIndex: "9999",
                 padding: "5px",
             }}
         >
-            <div
-                style={{
-                    height: "100%",
-                    display: "flex",
-                    alignItems: hideToolBar ? "center" : "end",
-                }}
-            >
-                {!hideToolBar && (
-                    <div style={{ height: "100%" }}>
+            {hideToolBarButton}
+            {!hideToolBar && (
+                <>
+                    <p style={toolBarTitleStyle}>Controls</p>
+                    <ul style={{ fontSize: "0.75rem", padding: "0 10px" }}>
+                        <li>
+                            {bulletPoint}
+                            click and drag to rotate
+                        </li>
+                        <li>{bulletPoint}right click and drag to move</li>
+                        <li>{bulletPoint}scroll to zoom</li>
+                    </ul>
+
+                    <p style={toolBarTitleStyle}>Visibility</p>
+
+                    <div
+                        style={{
+                            width: "100%",
+                            display: "flex",
+                            justifyContent: "start",
+                        }}
+                    >
                         <div
                             style={{
-                                height: "50%",
                                 display: "flex",
+                                flexDirection: "column",
                                 justifyContent: "flex-start",
                                 alignItems: "center",
-                                padding: "10px",
                             }}
                         >
-                            Root Note:&nbsp;
                             {NOTE_NAMES.map((noteName) => (
                                 <button
                                     key={`note-visible-button-${noteName}`}
@@ -155,14 +197,12 @@ export const ToolBar: React.FC<ToolBarProps> = ({
                         </div>
                         <div
                             style={{
-                                height: "50%",
                                 display: "flex",
+                                flexDirection: "column",
                                 justifyContent: "flex-start",
                                 alignItems: "center",
-                                padding: "10px",
                             }}
                         >
-                            Chord Quality:&nbsp;
                             {chordNames.map((chordName) => (
                                 <button
                                     key={`chord-visible-button-${chordName}`}
@@ -181,17 +221,8 @@ export const ToolBar: React.FC<ToolBarProps> = ({
                             ))}
                         </div>
                     </div>
-                )}
-                <div
-                    style={{
-                        textAlign: "center",
-                        cursor: "pointer",
-                    }}
-                    onClick={onHide}
-                >
-                    {hideToolBar ? "show" : "hide"}
-                </div>
-            </div>
+                </>
+            )}
         </div>
     );
 };
